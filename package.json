@@ -19,6 +19,9 @@
     "lint-staged": "^15.2.0"
   },
   "lint-staged": {
+    "**/*": [
+      "node scripts/check-secrets.js"
+    ],
     "solution-sideby/apps/api/**/*.{js,ts}": [
       "npm run lint --prefix solution-sideby/apps/api"
     ],
