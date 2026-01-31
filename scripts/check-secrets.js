@@ -21,7 +21,19 @@ let foundSecrets = false;
 
 files.forEach((file) => {
   try {
-    const content = fs.readFileSync(file, 'utf-8');
+    let content = fs.readFileSync(file, 'utf-8');
+    
+    // Remove BOM if present
+    if (content.charCodeAt(0) === 0xFEFF) {
+      content = content.slice(1);
+    }
+    
+    // Try to detect UTF-16 LE and convert
+    if (content.includes('\u0000')) {
+      // Re-read as UTF-16 LE
+      const buffer = fs.readFileSync(file);
+      content = buffer.toString('utf16le').replace(/^\uFEFF/, '');
+    }
     
     // Skip .env.example files, test files, and the check-secrets.js script itself
     if (file.includes('.env.example') || 
