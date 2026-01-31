@@ -1,0 +1,121 @@
+version: '3.8'
+
+services:
+  # MongoDB Database
+  mongo:
+    image: mongo:7.0
+    container_name: sideby-mongo
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGO_DATABASE}
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+      - mongo_config:/data/configdb
+    networks:
+      - sideby-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/sideby --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Mongo Express - MongoDB Admin UI
+  mongo-express:
+    image: mongo-express:latest
+    container_name: sideby-mongo-express
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGO_ROOT_USERNAME}
+      ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGO_ROOT_PASSWORD}
+      ME_CONFIG_MONGODB_URL: mongodb://${MONGO_ROOT_USERNAME}:${MONGO_ROOT_PASSWORD}@mongo:27017/
+      ME_CONFIG_BASICAUTH_USERNAME: ${ME_BASICAUTH_USERNAME}
+      ME_CONFIG_BASICAUTH_PASSWORD: ${ME_BASICAUTH_PASSWORD}
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - sideby-network
+
+  # API - Node.js Backend with hot-reload
+  api:
+    build:
+      context: ./solution-sideby/apps/api
+      dockerfile: Dockerfile
+      target: development
+    container_name: sideby-api
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD}
+      SEED_ADMIN_GOOGLE_ID: ${SEED_ADMIN_GOOGLE_ID}
+      SEED_ADMIN_NAME: ${SEED_ADMIN_NAME}
+    env_file:
+      - ./solution-sideby/apps/api/.env
+    volumes:
+      - ./solution-sideby/apps/api/src:/app/src
+      - ./solution-sideby/apps/api/package.json:/app/package.json
+      - ./solution-sideby/apps/api/tsconfig.json:/app/tsconfig.json
+      - api_node_modules:/app/node_modules
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - sideby-network
+    command: npm run dev
+
+  # Client - Vite Frontend with hot-reload
+  client:
+    build:
+      context: ./solution-sideby/apps/client
+      dockerfile: Dockerfile
+      target: development
+    container_name: sideby-client
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    environment:
+      NODE_ENV: development
+      VITE_API_URL: http://localhost:3000
+    env_file:
+      - ./solution-sideby/apps/client/.env
+    volumes:
+      - ./solution-sideby/apps/client/src:/app/src
+      - ./solution-sideby/apps/client/public:/app/public
+      - ./solution-sideby/apps/client/index.html:/app/index.html
+      - ./solution-sideby/apps/client/package.json:/app/package.json
+      - ./solution-sideby/apps/client/vite.config.ts:/app/vite.config.ts
+      - ./solution-sideby/apps/client/tsconfig.json:/app/tsconfig.json
+      - ./solution-sideby/apps/client/tsconfig.app.json:/app/tsconfig.app.json
+      - ./solution-sideby/apps/client/tailwind.config.js:/app/tailwind.config.js
+      - ./solution-sideby/apps/client/postcss.config.js:/app/postcss.config.js
+      - client_node_modules:/app/node_modules
+    depends_on:
+      - api
+    networks:
+      - sideby-network
+    command: npm run dev
+
+networks:
+  sideby-network:
+    driver: bridge
+
+volumes:
+  mongo_data:
+    driver: local
+  mongo_config:
+    driver: local
+  api_node_modules:
+    driver: local
+  client_node_modules:
+    driver: local

@@ -1,0 +1,29 @@
+{
+  "name": "sideby-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "SideBy - Monorepo for API and Client applications",
+  "workspaces": [
+    "solution-sideby/apps/*"
+  ],
+  "scripts": {
+    "prepare": "husky",
+    "lint:api": "npm run lint --prefix solution-sideby/apps/api",
+    "lint:client": "npm run lint --prefix solution-sideby/apps/client",
+    "build:api": "npm run build --prefix solution-sideby/apps/api",
+    "build:client": "npm run build --prefix solution-sideby/apps/client",
+    "build": "npm run build:api && npm run build:client"
+  },
+  "devDependencies": {
+    "husky": "^9.0.11",
+    "lint-staged": "^15.2.0"
+  },
+  "lint-staged": {
+    "solution-sideby/apps/api/**/*.{js,ts}": [
+      "npm run lint --prefix solution-sideby/apps/api"
+    ],
+    "solution-sideby/apps/client/**/*.{js,ts,tsx}": [
+      "npm run lint --prefix solution-sideby/apps/client"
+    ]
+  }
+}

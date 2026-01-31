@@ -1,0 +1,8 @@
+# 1. HARD BLOCK: Detect secrets
+echo "🔒 Running secret detection..."
+node .husky/detect-secrets.js
+
+# 2. Run lint-staged (solo si paso el bloqueo de secretos)
+echo "🧹 Running lint-staged..."
+echo "🔍 [HUSKY] Running pre-commit hook..."
+npx lint-staged
