@@ -65,13 +65,9 @@ apiClient.interceptors.request.use(
         config.headers = config.headers ?? {};
         config.headers.Authorization = `Bearer ${token}`;
       }
-    } catch (error) {
-      // Any unexpected error is logged but doesn't block the request
-      // Using a simple approach since we don't have a frontend logger yet
-      if (import.meta.env.DEV) {
-        // eslint-disable-next-line no-console
-        console.error("Failed to attach auth token to request:", error);
-      }
+    } catch {
+      // Any unexpected error is silently ignored to not block the request
+      // TODO: Implement proper frontend logging solution
     }
     return config;
   },

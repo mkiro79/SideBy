@@ -35,6 +35,7 @@ export const LoginPage = () => {
   // Clear error when component unmounts
   useEffect(() => {
     return () => clearError();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
