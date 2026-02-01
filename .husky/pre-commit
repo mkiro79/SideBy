@@ -1,3 +1,3 @@
 #!/usr/bin/env sh
-node .husky/detect-secrets.js
+node .husky/detect-secrets.js || exit 1
 npx lint-staged
