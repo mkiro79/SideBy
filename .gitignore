@@ -1,6 +1,10 @@
 # Esto pisa o crea tu .gitignore con lo esencial para Node/Mongo
 docker-compose.override.yml" > .gitignore
 
+
+# Test secret files
+temp-secret-test.js
+
 # Logs
 logs
 *.log
