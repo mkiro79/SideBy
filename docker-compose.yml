@@ -33,7 +33,7 @@ services:
     environment:
       ME_CONFIG_MONGODB_ADMINUSERNAME: ${MONGO_ROOT_USERNAME}
       ME_CONFIG_MONGODB_ADMINPASSWORD: ${MONGO_ROOT_PASSWORD}
-      ME_CONFIG_MONGODB_URL: mongodb://${MONGO_ROOT_USERNAME}:${MONGO_ROOT_PASSWORD}@mongo:27017/
+      ME_CONFIG_MONGODB_SERVER: mongo
       ME_CONFIG_BASICAUTH_USERNAME: ${ME_BASICAUTH_USERNAME}
       ME_CONFIG_BASICAUTH_PASSWORD: ${ME_BASICAUTH_PASSWORD}
     depends_on:
@@ -87,6 +87,7 @@ services:
     environment:
       NODE_ENV: development
       VITE_API_URL: http://localhost:3000
+      VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID}
     env_file:
       - ./solution-sideby/apps/client/.env
     volumes:
@@ -104,7 +105,7 @@ services:
       - api
     networks:
       - sideby-network
-    command: npm run dev
+    command: npm run dev -- --host 0.0.0.0
 
 networks:
   sideby-network:

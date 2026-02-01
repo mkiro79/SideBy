@@ -5,10 +5,10 @@ import {
   ErrorResponseSchema,
 } from "./auth.dto.js";
 
-// Registrar endpoint POST /api/auth/google
+// Registrar endpoint POST /api/v1/auth/google
 registry.registerPath({
   method: "post",
-  path: "/api/auth/google",
+  path: "/api/v1/auth/google",
   tags: ["Auth"],
   summary: "Autenticacion con Google OAuth",
   description:

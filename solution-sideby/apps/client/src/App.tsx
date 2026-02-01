@@ -1,35 +1,32 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { RouterProvider } from 'react-router-dom';
+import { GoogleOAuthProvider } from '@react-oauth/google';
+import { appRouter } from './router/AppRouter.js';
+
+// ============================================================================
+// APP COMPONENT
+// ============================================================================
 
 function App() {
-  const [count, setCount] = useState(0)
+  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
+  if (!googleClientId) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-destructive/10">
+        <div className="rounded-lg border border-destructive bg-background p-6 text-center">
+          <h2 className="text-xl font-bold text-destructive">Error de Configuración</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            VITE_GOOGLE_CLIENT_ID no está configurado en las variables de entorno.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <GoogleOAuthProvider clientId={googleClientId}>
+      <RouterProvider router={appRouter} />
+    </GoogleOAuthProvider>
+  );
 }
 
-export default App
+export default App;

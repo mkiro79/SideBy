@@ -602,6 +602,519 @@ p-3          // Insight items
 
 ---
 
+## 🌐 Landing Page Components
+
+### Hero Section Pattern
+
+**Propósito:** Sección hero con texto + visual en grid responsivo.
+
+**Características:**
+- Grid lg:grid-cols-2 para desktop
+- Hero text con gradiente en palabras clave
+- CTAs primario + secundario
+- Visual con split gradient (A/B comparison)
+
+**Código:**
+```tsx
+<section className="container pt-32 pb-20 md:pt-40 md:pb-28">
+  <div className="grid gap-12 lg:grid-cols-2 lg:gap-16 items-center">
+    {/* Hero Text */}
+    <div className="space-y-6 text-center lg:text-left">
+      <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
+        Compare anything,{" "}
+        <span className="text-primary">SideBy</span> Side
+      </h1>
+      <p className="text-lg text-muted-foreground max-w-xl mx-auto lg:mx-0">
+        Upload your datasets, map your metrics, and let AI uncover the insights.
+      </p>
+      <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+        <Button size="lg" asChild className="text-base px-8">
+          <Link to="/login">Get Started — It's Free</Link>
+        </Button>
+        <Button size="lg" variant="outline" asChild className="text-base">
+          <Link to="/login">See Demo</Link>
+        </Button>
+      </div>
+    </div>
+
+    {/* Hero Visual - Split Gradient */}
+    <div className="relative">
+      <div className="aspect-[4/3] rounded-2xl overflow-hidden shadow-elevated border">
+        <div className="absolute inset-0 flex">
+          <div className="w-1/2 bg-gradient-to-br from-data-primary/20 via-data-primary/40 to-data-primary/60" />
+          <div className="w-1/2 bg-gradient-to-bl from-data-comparative/20 via-data-comparative/40 to-data-comparative/60" />
+        </div>
+        {/* Overlay content aquí */}
+      </div>
+      
+      {/* Decorative blurs */}
+      <div className="absolute -bottom-4 -left-4 w-24 h-24 bg-data-primary/10 rounded-full blur-2xl" />
+      <div className="absolute -top-4 -right-4 w-32 h-32 bg-data-comparative/10 rounded-full blur-2xl" />
+    </div>
+  </div>
+</section>
+```
+
+---
+
+### Fixed Transparent Navbar
+
+**Propósito:** Navbar fijo con fondo transparente.
+
+**Código:**
+```tsx
+<header className="fixed top-0 left-0 right-0 z-50 bg-transparent">
+  <div className="container flex h-16 items-center justify-between">
+    <Link to="/" className="flex items-center gap-2">
+      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
+        <BarChart3 className="h-4 w-4 text-primary-foreground" />
+      </div>
+      <span className="text-xl font-bold tracking-tight">SideBy</span>
+    </Link>
+
+    <nav className="flex items-center gap-3">
+      <Button variant="outline" asChild>
+        <Link to="/login">Log In</Link>
+      </Button>
+      <Button asChild>
+        <Link to="/login">Start Free</Link>
+      </Button>
+    </nav>
+  </div>
+</header>
+```
+
+**Nota:** Main content necesita `pt-32` para compensar el header fijo.
+
+---
+
+### Card con variant="interactive"
+
+**Propósito:** Card con hover effect para secciones de features.
+
+**Características:**
+- Efecto hover en grupo
+- Icono con background que cambia de color
+- Transiciones suaves
+
+**Código:**
+```tsx
+<Card variant="interactive" className="group">
+  <CardContent className="p-8 text-center">
+    <div className="flex h-14 w-14 items-center justify-center rounded-xl 
+                    bg-primary/10 text-primary mx-auto mb-5 transition-colors 
+                    group-hover:bg-primary/20">
+      <Icon className="h-7 w-7" />
+    </div>
+    <h3 className="text-xl font-semibold mb-2">{title}</h3>
+    <p className="text-muted-foreground">{description}</p>
+  </CardContent>
+</Card>
+```
+
+**Nota:** Requiere agregar variant="interactive" al Card component de shadcn.
+
+---
+
+### Step Indicator Badge
+
+**Propósito:** Badge circular con número de paso.
+
+**Código:**
+```tsx
+<div className="inline-flex items-center justify-center w-8 h-8 rounded-full 
+                bg-muted text-sm font-semibold mb-4">
+  {index + 1}
+</div>
+```
+
+---
+
+### Gradient CTA Card
+
+**Propósito:** Card de llamada a la acción con gradient background.
+
+**Código:**
+```tsx
+<div className="relative rounded-2xl bg-gradient-to-r from-data-primary/10 
+                via-primary/5 to-data-comparative/10 p-12 text-center 
+                overflow-hidden">
+  <div className="relative z-10">
+    <h2 className="text-3xl font-bold tracking-tight mb-4">
+      Ready to compare?
+    </h2>
+    <p className="text-muted-foreground max-w-lg mx-auto mb-8">
+      Start benchmarking your data in minutes. No credit card required.
+    </p>
+    <Button size="lg" asChild className="text-base px-8">
+      <Link to="/login">Start Free Today</Link>
+    </Button>
+  </div>
+</div>
+```
+
+---
+
+### Footer Pattern
+
+**Propósito:** Footer completo con logo, copyright y links.
+
+**Código:**
+```tsx
+<footer className="border-t py-8">
+  <div className="container flex flex-col sm:flex-row items-center 
+                  justify-between gap-4">
+    <div className="flex items-center gap-2">
+      <div className="flex h-6 w-6 items-center justify-center rounded bg-primary">
+        <BarChart3 className="h-3 w-3 text-primary-foreground" />
+      </div>
+      <span className="text-sm font-medium">SideBy</span>
+    </div>
+    
+    <p className="text-sm text-muted-foreground">
+      © {new Date().getFullYear()} SideBy. All rights reserved.
+    </p>
+    
+    <nav className="flex items-center gap-6 text-sm text-muted-foreground">
+      <Link to="#" className="hover:text-foreground transition-colors">
+        Privacy
+      </Link>
+      <Link to="#" className="hover:text-foreground transition-colors">
+        Terms
+      </Link>
+      <Link to="#" className="hover:text-foreground transition-colors">
+        Contact
+      </Link>
+    </nav>
+  </div>
+</footer>
+```
+
+---
+
+## 🏠 Home Page Components
+
+### Premium Badge con Gradiente
+
+**Propósito:** Badge destacado para usuarios premium.
+
+**Código:**
+```tsx
+<Badge 
+  variant={userPlan === "premium" ? "default" : "secondary"}
+  className={userPlan === "premium" 
+    ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0" 
+    : ""
+  }
+>
+  {userPlan === "premium" ? (
+    <>
+      <Sparkles className="mr-1 h-3 w-3" />
+      Premium
+    </>
+  ) : (
+    "Freemium"
+  )}
+</Badge>
+```
+
+---
+
+### Recent Reports Grid
+
+**Propósito:** Grid de reportes recientes con timestamps.
+
+**Código:**
+```tsx
+<div className="grid gap-4 md:grid-cols-3">
+  {recentReports.map((report) => (
+    <Card key={report.id} variant="interactive" className="group">
+      <CardContent className="p-5">
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg 
+                          bg-data-primary/10">
+            <BarChart3 className="h-5 w-5 text-data-primary" />
+          </div>
+          <span className="text-xs text-muted-foreground">
+            {report.updatedAt}
+          </span>
+        </div>
+        <h3 className="font-medium mb-1 line-clamp-2">{report.title}</h3>
+        <p className="text-sm text-muted-foreground">
+          {report.kpiCount} KPIs comparados
+        </p>
+      </CardContent>
+    </Card>
+  ))}
+</div>
+```
+
+---
+
+### Dashed Border Card Pattern
+
+**Propósito:** Card con borde punteado para destacar ejemplos.
+
+**Código:**
+```tsx
+<Card className="border-2 border-dashed border-data-comparative/30 
+                 bg-data-comparative/5">
+  <CardHeader>
+    <div className="flex items-center gap-3">
+      <div className="flex h-12 w-12 items-center justify-center rounded-lg 
+                      bg-data-comparative/20">
+        <Play className="h-6 w-6 text-data-comparative" />
+      </div>
+      <div>
+        <CardTitle className="text-lg">Ejemplo de Dataset</CardTitle>
+        <CardDescription>
+          Descubre todo el potencial de SideBy con un ejemplo guiado
+        </CardDescription>
+      </div>
+    </div>
+  </CardHeader>
+  <CardContent>
+    {/* Contenido */}
+  </CardContent>
+</Card>
+```
+
+---
+
+### Ghost Variant Card con Tips
+
+**Propósito:** Card con background surface para tips/info.
+
+**Código:**
+```tsx
+<Card variant="ghost" className="bg-surface">
+  <CardContent className="p-5">
+    <div className="flex items-start gap-4">
+      <div className="flex h-10 w-10 items-center justify-center rounded-lg 
+                      bg-muted">
+        <Settings className="h-5 w-5 text-muted-foreground" />
+      </div>
+      <div className="flex-1">
+        <h3 className="font-medium mb-1">Personaliza tu experiencia</h3>
+        <p className="text-sm text-muted-foreground mb-3">
+          En <strong>Configuración</strong> puedes cambiar los colores
+          <Palette className="inline h-4 w-4 mx-1 text-data-primary" />
+          para tus datasets.
+        </p>
+        <Button variant="ghost" size="sm" asChild className="p-0 h-auto text-primary">
+          <Link to="/settings">
+            Ir a Configuración
+            <ArrowRight className="ml-1 h-4 w-4" />
+          </Link>
+        </Button>
+      </div>
+    </div>
+  </CardContent>
+</Card>
+```
+
+**Nota:** Icono inline con `className="inline h-4 w-4 mx-1"`.
+
+---
+
+## 🔐 Login Page Components
+
+### Login Form con Google Button
+
+**Propósito:** Formulario de login completo con OAuth y email.
+
+**Características:**
+- Google button destacado con SVG multicolor
+- Separator con texto superpuesto
+- Password toggle (Eye/EyeOff)
+- Inputs con iconos left-positioned
+
+**Estructura:**
+```tsx
+<div className="min-h-screen bg-gradient-to-br from-background via-background 
+                to-muted/30 flex items-center justify-center p-4">
+  <div className="w-full max-w-md space-y-6">
+    {/* Logo y título */}
+    <div className="text-center space-y-2">
+      <div className="flex items-center justify-center gap-2 mb-4">
+        <div className="p-2 rounded-lg bg-primary/10">
+          <BarChart3 className="h-8 w-8 text-primary" />
+        </div>
+        <span className="text-2xl font-bold text-foreground">SideBy</span>
+      </div>
+      <h1 className="text-2xl font-semibold text-foreground">Bienvenido de nuevo</h1>
+    </div>
+
+    <Card variant="elevated" className="border-0 shadow-xl">
+      {/* Contenido del card */}
+    </Card>
+  </div>
+</div>
+```
+
+---
+
+### Google Button con SVG Icon
+
+**Código:**
+```tsx
+<Button
+  variant="outline"
+  className="w-full h-12 text-base font-medium border-2 
+             hover:bg-accent/50 hover:border-primary/30 
+             transition-all duration-200"
+  onClick={handleGoogleLogin}
+>
+  <svg className="mr-3 h-5 w-5" viewBox="0 0 24 24">
+    <path
+      fill="#4285F4"
+      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+    />
+    <path
+      fill="#34A853"
+      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+    />
+    <path
+      fill="#FBBC05"
+      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+    />
+    <path
+      fill="#EA4335"
+      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+    />
+  </svg>
+  Continuar con Google
+</Button>
+```
+
+---
+
+### Separator con Texto Superpuesto
+
+**Código:**
+```tsx
+<div className="relative my-6">
+  <Separator />
+  <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 
+                   bg-card px-3 text-xs text-muted-foreground uppercase 
+                   tracking-wider">
+    o con email
+  </span>
+</div>
+```
+
+---
+
+### Input con Icono Left-Positioned
+
+**Código:**
+```tsx
+<div className="space-y-2">
+  <Label htmlFor="email" className="text-sm font-medium">
+    Correo electrónico
+  </Label>
+  <div className="relative">
+    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 
+                     text-muted-foreground" />
+    <Input
+      id="email"
+      type="email"
+      placeholder="tu@email.com"
+      className="pl-10 h-11"
+      value={formData.email}
+      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+      required
+    />
+  </div>
+</div>
+```
+
+---
+
+### Password Toggle Button
+
+**Código:**
+```tsx
+<div className="space-y-2">
+  <Label htmlFor="password" className="text-sm font-medium">
+    Contraseña
+  </Label>
+  <div className="relative">
+    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 
+                     text-muted-foreground" />
+    <Input
+      id="password"
+      type={showPassword ? "text" : "password"}
+      placeholder="••••••••"
+      className="pl-10 pr-10 h-11"
+      value={formData.password}
+      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+      required
+    />
+    <button
+      type="button"
+      onClick={() => setShowPassword(!showPassword)}
+      className="absolute right-3 top-1/2 -translate-y-1/2 
+                 text-muted-foreground hover:text-foreground transition-colors"
+    >
+      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+    </button>
+  </div>
+</div>
+```
+
+---
+
+### Card Elevated Variant
+
+**Código:**
+```tsx
+<Card variant="elevated" className="border-0 shadow-xl">
+  {/* Contenido */}
+</Card>
+```
+
+**Nota:** Requiere agregar variant="elevated" al Card component.
+
+---
+
+### Gradient Background Pattern
+
+**Código para página completa:**
+```tsx
+<div className="min-h-screen bg-gradient-to-br from-background via-background 
+                to-muted/30 flex items-center justify-center p-4">
+  {/* Contenido */}
+</div>
+```
+
+---
+
+## 🎨 Card Variants Custom
+
+Agregar estas variantes al `card.tsx` de shadcn:
+
+```typescript
+const cardVariants = cva(
+  "rounded-lg border bg-card text-card-foreground shadow-sm",
+  {
+    variants: {
+      variant: {
+        default: "",
+        interactive: "transition-all hover:shadow-md hover:border-primary/30 cursor-pointer",
+        elevated: "shadow-elevated",
+        ghost: "border-0 shadow-none",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+    },
+  }
+);
+```
+
+---
+
 ## ✅ Checklist de Implementación
 
 Para replicar estos componentes en otro repo:
@@ -618,10 +1131,14 @@ Para replicar estos componentes en otro repo:
    - [ ] `npx shadcn@latest add button`
    - [ ] `npx shadcn@latest add select`
    - [ ] `npx shadcn@latest add table`
+   - [ ] `npx shadcn@latest add separator`
+   - [ ] `npx shadcn@latest add input`
+   - [ ] `npx shadcn@latest add label`
 
 3. **Librerías adicionales:**
    - [ ] Instalar lucide-react
    - [ ] Instalar recharts (si necesitas gráficos)
+   - [ ] Instalar react-router-dom (para Links)
 
 4. **Componentes de negocio:**
    - [ ] KPICard
@@ -630,8 +1147,14 @@ Para replicar estos componentes en otro repo:
    - [ ] FilterBar
    - [ ] RevenueChart (opcional)
 
-5. **Variantes de Badge custom:**
-   - [ ] Modificar `badge.tsx` para agregar variantes `success`, `warning`, `dataPrimary`, `dataComparative`
+5. **Variantes custom:**
+   - [ ] Modificar `badge.tsx`: agregar variantes `success`, `warning`, `dataPrimary`, `dataComparative`
+   - [ ] Modificar `card.tsx`: agregar variantes `interactive`, `elevated`, `ghost`
+
+6. **Páginas de marketing:**
+   - [ ] Landing page con hero + features + CTA
+   - [ ] Login page con Google OAuth + form
+   - [ ] Home page con dashboard layout
 
 ---
 
