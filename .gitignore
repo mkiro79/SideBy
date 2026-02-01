@@ -4,6 +4,16 @@ docker-compose.override.yml" > .gitignore
 
 # Test secret files
 temp-secret-test.js
+# Secrets
+secrets/
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Credentials
+credentials.json
+service-account.json
 
 # Logs
 logs
