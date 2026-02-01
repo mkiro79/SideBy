@@ -33,6 +33,7 @@ export const LoginPage = () => {
   }, [isAuthenticated, navigate]);
 
   // Clear error when component unmounts
+  // Note: clearError is intentionally omitted from deps to prevent re-running on every render
   useEffect(() => {
     return () => clearError();
     // eslint-disable-next-line react-hooks/exhaustive-deps
