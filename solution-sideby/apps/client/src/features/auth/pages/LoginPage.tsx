@@ -25,19 +25,19 @@ export const LoginPage = () => {
   const { handleGoogleSuccess, handleGoogleError, isLoading, error, clearError } = useGoogleAuth();
   const [showPassword, setShowPassword] = useState(false);
 
-  // Redirect si ya está autenticado
+  // Redirect if already authenticated
   useEffect(() => {
-    console.log("🔍 LoginPage - isAuthenticated:", isAuthenticated);
     if (isAuthenticated) {
-      console.log("✅ Usuario autenticado - Redirigiendo a home...");
       navigate('/', { replace: true });
     }
   }, [isAuthenticated, navigate]);
 
-  // Limpiar error cuando se desmonta el componente
+  // Clear error when component unmounts
+  // Note: clearError is intentionally omitted from deps to prevent re-running on every render
   useEffect(() => {
     return () => clearError();
-  }, [clearError]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30 flex items-center justify-center p-4">
@@ -126,6 +126,7 @@ export const LoginPage = () => {
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                       disabled={isLoading}
+                      aria-label="Toggle password visibility"
                     >
                       {showPassword ? (
                         <EyeOff className="h-4 w-4" />
