@@ -29,11 +29,16 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
   - Dockerfiles multi-etapa para API y Client (development, builder, production)
   - Archivos `.dockerignore` optimizados para reducir contexto de build
 
-- **Versionado de API (v1)** implementado con rutas legacy deprecadas
-  - Endpoints disponibles en `/api/v1/auth/*` con estructura escalable
-  - Rutas legacy `/api/auth/*` marcadas como deprecadas con headers de aviso
+- **Versionado de API (v1)** implementado desde el inicio
+  - Endpoints versionados en `/api/v1/auth/*` con estructura escalable
   - Agregador centralizado de rutas versionadas en `v1/routes.ts`
   - Preparado para versionado futuro (v2, v3) sin breaking changes
+
+### Removed
+
+- **Rutas legacy sin versionar** eliminadas antes de producción
+  - Eliminado endpoint `/api/auth/*` (sin versión)
+  - Mantenido únicamente `/api/v1/auth/*` para evitar deuda técnica
 
 - **Tests de integración** separados de tests unitarios
   - Configuración Vitest específica (`vitest.integration.config.ts`) para tests de integración

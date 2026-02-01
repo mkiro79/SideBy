@@ -5,7 +5,6 @@ import swaggerUi from "swagger-ui-express";
 import { connectDB } from "./config/database.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import logger from "./utils/logger.js";
-import authRoutes from "./modules/auth/presentation/auth.routes.js";
 import v1Routes from "./v1/routes.js";
 import { generateOpenApiDocs } from "./infrastructure/openapi/openapi.registry.js";
 // Importar swagger definitions para registrar rutas
@@ -40,20 +39,8 @@ app.get("/api/docs.json", (req, res) => {
   res.json(openApiDocs);
 });
 
-// API v1 routes (recommended)
+// API v1 routes
 app.use("/api/v1", v1Routes);
-
-// Legacy routes (deprecated - mantener por compatibilidad)
-app.use(
-  "/api/auth",
-  (req, res, next) => {
-    logger.warn(
-      "⚠️  Deprecated: Use /api/v1/auth instead of /api/auth. Legacy endpoint will be removed in future versions.",
-    );
-    next();
-  },
-  authRoutes,
-);
 
 // Error handler middleware
 app.use(errorHandler);
