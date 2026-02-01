@@ -1,3 +1,4 @@
+#!/usr/bin/env sh
 echo "🚀 [HUSKY] Running pre-push hook..."
 # Temporarily skip client build due to pre-existing SWC native binding issue
 npm run build:api
