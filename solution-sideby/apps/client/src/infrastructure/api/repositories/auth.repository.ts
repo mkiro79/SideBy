@@ -15,21 +15,62 @@ const apiClient: AxiosInstance = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
-  timeout: 10000, // 10 segundos
+  timeout: 10000, // 10 seconds
 });
 
-// Interceptor para agregar token en requests (para futuras llamadas autenticadas)
+// Helper function to safely get auth token from localStorage
+const getValidAuthToken = (): string | null => {
+  const storedAuth = localStorage.getItem("sideby-auth-storage");
+  if (!storedAuth) {
+    return null;
+  }
+
+  try {
+    const parsed: unknown = JSON.parse(storedAuth);
+
+    if (
+      typeof parsed === "object" &&
+      parsed !== null &&
+      "state" in parsed &&
+      typeof (parsed as Record<string, unknown>).state === "object" &&
+      (parsed as Record<string, unknown>).state !== null
+    ) {
+      const state = (parsed as Record<string, unknown>).state as Record<
+        string,
+        unknown
+      >;
+      const maybeToken = state.token;
+      if (typeof maybeToken === "string" && maybeToken.trim() !== "") {
+        return maybeToken;
+      }
+    }
+
+    // Invalid structure: clear storage to prevent repeated errors
+    localStorage.removeItem("sideby-auth-storage");
+    return null;
+  } catch {
+    // Corrupted or non-parseable value: remove it and continue without token
+    localStorage.removeItem("sideby-auth-storage");
+    return null;
+  }
+};
+
+// Interceptor to add token to requests (for future authenticated calls)
 apiClient.interceptors.request.use(
   (config) => {
-    const storedAuth = localStorage.getItem("sideby-auth-storage");
-    if (storedAuth) {
-      try {
-        const { state } = JSON.parse(storedAuth);
-        if (state?.token) {
-          config.headers.Authorization = `Bearer ${state.token}`;
-        }
-      } catch (error) {
-        console.error("Error parsing auth token:", error);
+    try {
+      const token = getValidAuthToken();
+      if (token) {
+        // Ensure headers exists before mutating
+        config.headers = config.headers ?? {};
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    } catch (error) {
+      // Any unexpected error is logged but doesn't block the request
+      // Using a simple approach since we don't have a frontend logger yet
+      if (import.meta.env.DEV) {
+        // eslint-disable-next-line no-console
+        console.error("Failed to attach auth token to request:", error);
       }
     }
     return config;

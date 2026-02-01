@@ -25,10 +25,6 @@ export const useGoogleAuth = (): UseGoogleLoginReturn => {
   const handleGoogleSuccess = async (
     credentialResponse: CredentialResponse,
   ) => {
-    console.log(
-      "🔵 Google OAuth Success - Credential recibido",
-      credentialResponse,
-    );
     setIsLoading(true);
     setError(null);
 
@@ -36,50 +32,47 @@ export const useGoogleAuth = (): UseGoogleLoginReturn => {
       const idToken = credentialResponse.credential;
 
       if (!idToken) {
-        throw new Error("No se recibió el ID token de Google");
+        throw new Error("No ID token received from Google");
       }
 
-      console.log("🔵 Enviando ID token real al backend...");
+      // Validate that Google Client ID is configured
+      if (!import.meta.env.VITE_GOOGLE_CLIENT_ID) {
+        throw new Error("Google Client ID is not configured");
+      }
 
-      // Llamar al backend con el ID TOKEN REAL de Google
+      // Call backend with the real Google ID TOKEN
       const authResponse = await AuthRepository.loginWithGoogle(idToken);
 
-      console.log("🔵 Respuesta del backend:", authResponse);
-
       if (authResponse.success) {
-        // Guardar en Zustand (automáticamente persiste en localStorage)
+        // Save in Zustand (automatically persists in localStorage)
         setAuth(authResponse.data.user, authResponse.data.token);
-
-        console.log(
-          "✅ Login exitoso - Usuario guardado:",
-          authResponse.data.user.email,
-        );
-        console.log("✅ Token guardado en store");
       } else {
-        throw new Error("Error en la respuesta del servidor");
+        throw new Error("Error in server response");
       }
     } catch (err: unknown) {
-      const error = err as {
-        response?: { data?: { error?: { message?: string } } };
-        message?: string;
-      };
-      const errorMessage =
-        error.response?.data?.error?.message ||
-        error.message ||
-        "Error al iniciar sesión con Google";
+      let errorMessage = "Error logging in with Google";
+
+      if (err && typeof err === "object" && "response" in err) {
+        const axiosError = err as {
+          response?: { data?: { error?: { message?: string } } };
+          message?: string;
+        };
+        errorMessage =
+          axiosError.response?.data?.error?.message ||
+          axiosError.message ||
+          errorMessage;
+      } else if (err instanceof Error) {
+        errorMessage = err.message || errorMessage;
+      }
 
       setError(errorMessage);
-      console.error("❌ Error en login:", err);
-      console.error("❌ Mensaje de error:", errorMessage);
-      console.error("❌ Response completo:", err.response);
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleGoogleError = () => {
-    console.log("❌ Google OAuth Error - Usuario canceló o hubo error");
-    setError("Error al iniciar sesión con Google");
+    setError("Error logging in with Google");
     setIsLoading(false);
   };
 

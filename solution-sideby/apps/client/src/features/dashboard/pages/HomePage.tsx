@@ -18,7 +18,11 @@ export const HomePage = () => {
   };
 
   if (!user) {
-    return null;
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-surface">
+        <p className="text-sm text-muted-foreground">Loading your dashboard...</p>
+      </div>
+    );
   }
 
   return (
@@ -50,7 +54,7 @@ export const HomePage = () => {
             </div>
             <Button onClick={handleLogout} variant="outline" size="sm">
               <LogOut className="h-4 w-4" />
-              Salir
+              Logout
             </Button>
           </div>
         </div>
@@ -62,10 +66,10 @@ export const HomePage = () => {
           {/* Welcome Section */}
           <div>
             <h2 className="text-3xl font-bold tracking-tight">
-              Hola, {user.name.split(' ')[0]} 👋
+              Hello, {user.name.split(' ')[0]} 👋
             </h2>
             <p className="text-muted-foreground">
-              Bienvenido a tu plataforma de análisis comparativo
+              Welcome to your comparative analysis platform
             </p>
           </div>
 
@@ -79,7 +83,7 @@ export const HomePage = () => {
               <CardContent>
                 <div className="text-2xl font-bold">0</div>
                 <p className="text-xs text-muted-foreground">
-                  Todavía no hay datasets cargados
+                  No datasets loaded yet
                 </p>
               </CardContent>
             </Card>
@@ -92,7 +96,7 @@ export const HomePage = () => {
               <CardContent>
                 <div className="text-2xl font-bold">0</div>
                 <p className="text-xs text-muted-foreground">
-                  Crea tu primer reporte comparativo
+                  Create your first comparative report
                 </p>
               </CardContent>
             </Card>
@@ -105,7 +109,7 @@ export const HomePage = () => {
               <CardContent>
                 <div className="text-2xl font-bold">0</div>
                 <p className="text-xs text-muted-foreground">
-                  Análisis pendientes
+                  Pending analysis
                 </p>
               </CardContent>
             </Card>
@@ -116,10 +120,10 @@ export const HomePage = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <User className="h-5 w-5" />
-                Información de la Sesión
+                Session Information
               </CardTitle>
               <CardDescription>
-                Datos de tu cuenta autenticada con Google
+                Your Google-authenticated account data
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -139,9 +143,9 @@ export const HomePage = () => {
               </div>
 
               <div className="rounded-lg bg-data-primary/10 p-3 text-sm">
-                <p className="font-medium text-data-primary">✅ Sesión Activa</p>
+                <p className="font-medium text-data-primary">✅ Active Session</p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Tu sesión está protegida y persistirá al recargar la página.
+                  Your session is protected and will persist when you reload the page.
                 </p>
               </div>
             </CardContent>

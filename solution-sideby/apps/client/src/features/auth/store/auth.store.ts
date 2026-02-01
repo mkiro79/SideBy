@@ -32,16 +32,11 @@ export const useAuthStore = create<AuthState>()(
 
       // Action: Guardar autenticación
       setAuth: (user, token) => {
-        console.log("🟢 AuthStore - setAuth llamado:", {
-          user,
-          token: token.substring(0, 20) + "...",
-        });
         set({
           user,
           token,
           isAuthenticated: true,
         });
-        console.log("🟢 AuthStore - Estado actualizado, isAuthenticated: true");
       },
 
       // Action: Cerrar sesión
