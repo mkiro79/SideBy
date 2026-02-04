@@ -11,6 +11,12 @@ export default defineConfig({
       reporter: ["text", "json", "html"],
       exclude: ["node_modules", "dist", "**/*.test.ts"],
     },
+    env: {
+      NODE_ENV: "development",
+      ALLOW_GOOGLE_AUTH_BYPASS: "false",
+      GOOGLE_CLIENT_ID: "test-client-id",
+      JWT_SECRET: "test-jwt-secret",
+    },
   },
   resolve: {
     alias: {
