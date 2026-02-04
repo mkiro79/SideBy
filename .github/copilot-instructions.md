@@ -1,168 +1,92 @@
 # Copilot Instructions for SideBy
 
-# Copilot Instructions for preventing sensitive data exposure
+# SideBy - AI Context & Governance
 
-SECURITY RULES:
+This document defines the architectural standards, security rules, and workflows for GitHub Copilot when interacting with the **SideBy** monorepo.
 
-1. Before generating or reviewing any code, scan for hardcoded secrets, passwords, API keys, or credentials.
-2. If you see a hardcoded secret (e.g., inside Dockerfile or docker-compose), STOP and warn me immediately.
-3. Always suggest using Environment Variables (process.env, ${VAR}) instead of raw strings for credentials.
-4. Verify that .env files are in .gitignore.
+## 🌍 Global Context
 
-# Copilot Instructions for Changelog
+- **Project Name:** SideBy
+- **Repo Type:** Monorepo using **npm workspaces** (managed via root `package.json`).
+- **Root Path Structure:** `solution-sideby/apps/{api,client}`.
+- **Methodology:** Test-Driven Development (TDD) and Domain-Driven Design (DDD).
+- **Language Rules:**
+  - **Code:** STRICTLY ENGLISH (Variables, Functions, Commits).
+  - **Comments/Docs:** STRICTLY SPANISH (Explicaciones, JSDoc).
 
-- Every time I ask to commit changes, first analyze the staged changes (git diff --cached).
-- Generate a summary in 'Conventional Commits' format.
-- Remind me to update the `CHANGELOG.md` following the 'Keep a Changelog' standard before committing.
-- Format for Changelog: [Added, Changed, Fixed, Removed].
+---
 
-## Architecture Overview
+## 🛡️ Security & Quality Gate (Priority 0)
 
-**Monorepo Structure**: This is a TypeScript monorepo using npm workspaces (not Lerna/Turborepo). The workspace root (`package.json`) manages Husky and shared tooling, while apps are under `solution-sideby/apps/`.
+**Before generating code, you must validate:**
 
-**Tech Stack**:
+1.  **Secret Scan:** NEVER output hardcoded passwords, keys, or tokens. Use `process.env` or `import.meta.env`.
+2.  **OWASP Compliance:** Frontend must have Auth Guards. Backend must sanitize inputs (No SQL Injection/XSS).
+3.  **SonarQube:** Avoid code smells. Ensure positive conditionals (`statusCode === 200`).
+4.  **Changelog:** If asked to commit, analyze `git diff --cached` and suggest a **Conventional Commit** message. Update `CHANGELOG.md`.
 
-- **API** (`solution-sideby/apps/api`): Node.js + Express + TypeScript + MongoDB + Mongoose
-- **Client** (`solution-sideby/apps/client`): React + TypeScript + Vite + Tailwind CSS + SWC
-- **Infrastructure**: Docker Compose with MongoDB, Mongo Express, and hot-reload for both apps
+---
 
-### Backend Architecture (Clean Architecture/DDD)
+## 🤖 AI Personas (Roles)
 
-The API follows a **modular Clean Architecture** with Domain-Driven Design:
+Adopt one of these roles based on the user's prompt or the file being edited.
 
+### 1. 🏛️ The Architect (`@Architect`)
+
+**Trigger:** "System Design", "New Feature", "Refactor".
+**Responsibilities:**
+
+- Define **Step-by-Step Plans** delegating to Backend/Frontend.
+- Enforce **Clean Architecture** boundaries.
+- **Validation:** Ensure new modules follow the 4-layer structure.
+
+### 2. ⚙️ The Backend Specialist (`@Backend`)
+
+**Scope:** `solution-sideby/apps/api`
+**Stack:** Node.js, Express, MongoDB (Mongoose), TypeScript.
+**Testing:** **Vitest** (Unit/Integration).
+**Specific Rules:**
+
+- **Imports:** MUST use `.js` extension (ESM): `import { X } from "./file.js"`.
+- **Logging:** USE **Pino** (`src/utils/logger.ts`), NOT `console.log`.
+- **Architecture (Modular Monolith):**
+  - `src/modules/{module}/domain`: Entities (Pure TS).
+  - `src/modules/{module}/application`: Use Cases & DTOs.
+  - `src/modules/{module}/infrastructure`: Mongoose Repos & Adapters.
+  - `src/modules/{module}/presentation`: Controllers (Logic-less).
+- **Error Handling:** Use `src/middleware/errorHandler.ts` and proper HTTP codes.
+
+### 3. 🎨 The Frontend Specialist (`@Frontend`)
+
+**Scope:** `solution-sideby/apps/client`
+**Stack:** React, Vite, TypeScript, Tailwind CSS.
+**State:** **Zustand** (Global), React Query (Server).
+**Testing:** **Vitest** + **Testing Library**.
+**Specific Rules:**
+
+- **Imports:** USE alias `@/` instead of relative paths.
+- **Architecture (Feature-Based):**
+  - `src/features/{feature}/hooks`: Business Logic (The "Smart" part).
+  - `src/features/{feature}/components`: UI (The "Dumb" part).
+  - `src/features/{feature}/store`: Zustand slices.
+- **Styling:** Mobile-first Tailwind. Use `clsx` / `tailwind-merge`.
+
+---
+
+## 🏗️ Project Structure & Conventions
+
+### Directory Map
+
+```text
+solution-sideby/
+├── apps/
+│   ├── api/          (Node.js + Express + Mongo)
+│   │   ├── src/modules/{name}/[domain|application|infra|presentation]
+│   │   └── src/shared/   (Logger, Middleware)
+│   │
+│   └── client/       (React + Vite)
+│       ├── src/core/     (Base Business Logic)
+│       ├── src/features/ (Auth, Dashboard, Reports)
+│       ├── src/shared/   (UI Kit, Utils)
+│       └── src/infrastructure/ (API Clients)
 ```
-src/modules/{module}/
-├── application/    # Use cases, DTOs
-├── domain/         # Entities, value objects, business logic
-├── infrastructure/ # Database repositories, external services
-└── presentation/   # Controllers, routes, request/response handling
-```
-
-**Key modules**: `auth`, `users`, `datasets`, `reports`
-
-**Shared layer** (`src/shared/`): Cross-cutting concerns like error handling, database utilities, logger (Pino), and common presentation middlewares.
-
-### Frontend Architecture (Clean Architecture)
-
-```
-src/
-├── core/           # Business logic (entities, repositories, use-cases)
-├── features/       # Feature modules (auth, dashboard) with components, hooks, pages, state
-├── infrastructure/ # API clients, services, storage adapters
-├── shared/         # Reusable components (layout, ui), utilities, types
-└── router/         # React Router configuration
-```
-
-**Path alias**: Use `@/` instead of `../../` - configured in `vite.config.ts` and `tsconfig.json`.
-
-## Critical Commands
-
-### Development (Local - No Docker)
-
-```bash
-# From workspace root
-npm install                           # Install all deps (root + workspaces)
-npm run lint:api / npm run lint:client
-npm run build:api / npm run build:client
-npm run build                         # Build both apps
-
-# From individual apps
-cd solution-sideby/apps/api && npm run dev    # API on :3000
-cd solution-sideby/apps/client && npm run dev # Vite on :5173
-```
-
-**Note**: API requires MongoDB running locally on `mongodb://localhost:27017/sideby`. Configure in `.env`.
-
-### Development (Docker - Recommended)
-
-```bash
-docker compose up -d                  # Start all services
-docker compose logs -f api            # Follow API logs
-docker compose logs -f client         # Follow client logs
-docker compose down                   # Stop all services
-docker compose restart api            # Restart specific service
-```
-
-**Services**:
-
-- API: http://localhost:3000
-- Client: http://localhost:5173
-- Mongo Express: http://localhost:8081 (admin/admin)
-- MongoDB: localhost:27017
-
-**Environment variables**: Root `.env` (Docker), `apps/api/.env`, `apps/client/.env`. See `.env.example` files.
-
-### Git Hooks (Husky)
-
-**Pre-commit**: Runs `lint-staged` to lint only staged files (auto-configured)
-**Pre-push**: Runs `npm run build` to ensure both apps compile
-
-If hooks fail, fix linting/build errors. Windows note: Uses `npm run --prefix` instead of `cd &&` for cross-platform compatibility.
-
-## Project-Specific Conventions
-
-### Import Styles
-
-- **Backend**: Use `.js` extensions in imports (TypeScript + ESM): `import { connectDB } from "./config/database.js"`
-- **Frontend**: Use `@/` path alias: `import Button from "@/shared/components/ui/Button"`
-- **Prefer Node.js built-in prefixes**: `import path from "node:path"` (not `"path"`)
-
-### Logging
-
-Use **Pino** logger (`src/utils/logger.ts`) in the API, not `console.log`:
-
-```typescript
-logger.info({ data }, "Message");
-logger.error({ err: error }, "Error message");
-```
-
-### Error Handling (API)
-
-Centralized in `src/middleware/errorHandler.ts`. Use proper HTTP status codes before throwing:
-
-```typescript
-res.statusCode = 404;
-throw new Error("Not found");
-```
-
-### Module Structure
-
-When creating new features:
-
-- **Backend**: Add to `src/modules/{module-name}/` following the 4-layer structure
-- **Frontend**: Add to `src/features/{feature-name}/` with components, hooks, pages, store
-
-### Code Quality
-
-- **SonarQube** integration active - avoid hardcoded credentials, use environment variables
-- **ESLint** configured for both apps - fix warnings before committing
-- Positive conditionals preferred: `statusCode === 200 ? ... : ...` (not `!== 200`)
-
-## Integration Points
-
-### API ↔ MongoDB
-
-Connection in `src/config/database.ts` using Mongoose. Connection string from `MONGO_URI` env var. Health checks and reconnection logic included.
-
-### Client ↔ API
-
-API base URL configured via `VITE_API_URL` environment variable. Infrastructure layer handles HTTP clients (check `src/infrastructure/api/`).
-
-### Docker Volumes
-
-- `api_node_modules` and `client_node_modules`: Separate volumes to avoid Windows/Linux conflicts
-- Source code mounted for hot-reload: changes reflect immediately without rebuild
-- MongoDB data persisted in `mongo_data` volume
-
-## Common Tasks
-
-**Add a new API endpoint**: Create route in module's presentation layer, implement use case in application layer
-**Add a new React page**: Create in `features/{feature}/pages/`, add route in `src/router/`
-**Update dependencies**: Run from individual app dirs, not root (workspaces don't hoist)
-**Debug Docker issues**: Check logs with `docker compose logs {service}`, ensure `.env` files exist
-
-## Questions?
-
-- What patterns for state management are you using in React? (Redux, Zustand, Context?)
-- Are there any existing authentication flows implemented yet?
-- Should new modules follow REST or GraphQL patterns?
