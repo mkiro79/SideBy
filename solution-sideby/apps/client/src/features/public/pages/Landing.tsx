@@ -15,7 +15,7 @@ import { Card, CardContent } from "@/shared/components/ui/card.js";
 import { FileSpreadsheet, Columns, Bot, BarChart3 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/features/auth/store/auth.store.js";
-import { trackPageView, trackButtonClick } from "./services/mockServices.js";
+import { trackPageView, trackButtonClick } from "../services/mockServices.js";
 import { useEffect } from "react";
 
 // ============================================================================
