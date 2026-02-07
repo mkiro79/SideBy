@@ -3,6 +3,7 @@ import { LoginPage } from '@/features/auth/pages/LoginPage.js';
 import { Landing } from '@/features/public/pages/Landing.js';
 import Home from '@/features/dashboard/pages/Home.js';
 import { DatasetsList } from '@/features/dataset/pages/DatasetsList.js';
+import DataUploadWizard from '@/features/dataset/pages/DataUploadWizard.js';
 import { ProtectedRoute } from './ProtectedRoute.js';
 
 // ============================================================================
@@ -31,6 +32,10 @@ export const appRouter = createBrowserRouter([
       {
         index: true,
         element: <DatasetsList />,
+      },
+      {
+        path: 'upload',
+        element: <DataUploadWizard />,
       },
     ],
   },

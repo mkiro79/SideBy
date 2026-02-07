@@ -1,6 +1,7 @@
 import { RouterProvider } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { appRouter } from './router/AppRouter.js';
+import { Toaster } from '@/shared/components/Toaster.js';
 
 // ============================================================================
 // APP COMPONENT
@@ -25,6 +26,7 @@ function App() {
   return (
     <GoogleOAuthProvider clientId={googleClientId}>
       <RouterProvider router={appRouter} />
+      <Toaster />
     </GoogleOAuthProvider>
   );
 }

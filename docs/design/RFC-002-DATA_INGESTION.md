@@ -613,7 +613,7 @@ export const useFileUpload = (): UseFileUploadReturn => {
 ### 4.4 Client-Side Validation
 
 Before sending to API, validate:
-- File size < 2MB
+- File size <= 2MB
 - File extension is .csv, .xlsx, or .xls
 - Both files are selected
 - Dataset name is not empty
