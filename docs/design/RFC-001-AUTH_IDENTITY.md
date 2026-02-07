@@ -4,7 +4,7 @@
 | :--- | :--- |
 | **Author** | User |
 | **Status** | **Ready for Dev** |
-| **Date** | 2023-10-27 |
+| **Date** | 2026-02-07 |
 | **Scope** | `apps/api/src/modules/auth`, `apps/client/src/features/auth` |
 | **Based on** | UC-AUTH-01 to UC-AUTH-05, UC-USER-01 |
 
