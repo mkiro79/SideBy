@@ -40,7 +40,7 @@ interface User {
   createdAt: Date;
 }
 
-3.2 Application Layer (modules/auth/application)
+### 3.2 Application Layer (modules/auth/application)
 Use Cases:
 
 LoginWithGoogleUseCase:
@@ -61,7 +61,7 @@ DTOs:
 
 AuthResponseDTO: { token: string, user: UserDTO }
 
-3.3 Infrastructure Layer (modules/auth/infrastructure)
+### 3.3 Infrastructure Layer (modules/auth/infrastructure)
 Persistence: Mongoose Schema for users collection.
 
 Services:
@@ -70,7 +70,7 @@ GoogleAuthService: Wrapper around google-auth-library to verify tokens.
 
 JwtService: Wrapper around jsonwebtoken to sign/verify app tokens.
 
-3.4 Presentation Layer (API Contract / OpenAPI)
+### 3.4 Presentation Layer (API Contract / OpenAPI)
 POST /api/v1/auth/google
 
 Body: { "token": "eyJhbGciOi..." }
@@ -83,8 +83,9 @@ Headers: Authorization: Bearer <token>
 
 Response: 200 OK { user: ... }
 
-4. Frontend Specification (apps/client)
-4.1 Feature Structure (features/auth)
+## 4. Frontend Specification (apps/client)
+
+### 4.1 Feature Structure (features/auth)
 Hooks:
 
 useGoogleLogin: Handles the popup and API call.
@@ -105,14 +106,15 @@ RequireAuth (Guard): Higher-Order Component or Wrapper. Checks isAuthenticated. 
 
 RedirectIfAuthenticated: If true, redirects to /dashboard (UC-NAV-01).
 
-4.2 UX/UI
+### 4.2 UX/UI
 Landing Page (/): Public. Shows GoogleLoginButton.
 
 Dashboard (/dashboard): Protected. Only visible if logged in.
 
 Logout: Clears store & LocalStorage -> Redirects to / (UC-AUTH-04).
 
-5. TDD Strategy (Test Scenarios)
+## 5. TDD Strategy (Test Scenarios)
+
 Backend (Vitest)
 [LoginWithGoogleUseCase] should create a new user if email does not exist in DB.
 
@@ -129,7 +131,8 @@ Frontend (Vitest + Testing Library)
 
 [RequireAuth] should render children for authenticated users.
 
-6. Security (OWASP & Safety)
+## 6. Security (OWASP & Safety)
+
 Token Verification: NEVER trust the payload without verifying signature against Google's keys.
 
 Validation: Use Zod to validate req.body.token is a string.
@@ -138,7 +141,8 @@ Secrets: JWT_SECRET and GOOGLE_CLIENT_ID must be loaded from process.env.
 
 Environment: Ensure .env is in .gitignore.
 
-7. Configuration Variables needed
+## 7. Configuration Variables needed
+
 GOOGLE_CLIENT_ID
 
 GOOGLE_CLIENT_SECRET
