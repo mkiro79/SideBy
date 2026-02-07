@@ -3,5 +3,5 @@
  * Facilita las importaciones de componentes públicos
  */
 
-export { Landing } from './Landing.js';
-export * from './services/mockServices.js';
+export { Landing } from "./Landing.js";
+export * from "./services/mockServices.js";
