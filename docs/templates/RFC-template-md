@@ -1,0 +1,82 @@
+# [RFC-00X] Nombre de la Funcionalidad (ej: User Authentication)
+
+| Metadatos | Detalle |
+| :--- | :--- |
+| **Autor** | [Tu Nombre] |
+| **Estado** | Draft / Review / Approved / Implemented |
+| **Fecha** | YYYY-MM-DD |
+| **Reviewers** | @Architect, @LeadDev |
+| **Ticket/Epic** | [Enlace a Jira/Linear] |
+
+## 1. Contexto y Alcance (Context & Scope)
+*¿Qué problema estamos resolviendo? ¿Por qué ahora?*
+* **Resumen:** Breve descripción de la funcionalidad.
+* **User Stories:**
+    * Como [usuario], quiero [acción] para [beneficio].
+* **Fuera del Alcance (Non-Goals):** Qué NO vamos a hacer en esta iteración.
+
+## 2. Solución Propuesta (High Level Architecture)
+*Visión general de cómo interactúan las piezas.*
+* **Diagrama de Flujo:** (Opcional: Descripción textual o Mermaid).
+* **Componentes Afectados:**
+    * `apps/api`: Módulo `auth`.
+    * `apps/client`: Feature `auth`.
+    * `shared`: DTOs compartidos.
+
+## 3. Especificación Backend (`apps/api`)
+*Instrucciones para el Agente @Backend.*
+
+### 3.1 Modelo de Dominio (Domain Layer)
+*Entidades puras y reglas de negocio.*
+* **Entidades:** `User` (id, email, passwordHash, role).
+* **Reglas:** "El email debe ser único", "La contraseña requiere min 8 caracteres".
+
+### 3.2 Interfaz de API (Presentation Layer)
+*Contrato OpenAPI / Swagger.*
+* `POST /api/v1/auth/register`
+    * **Body:** `{ email, password, confirmPassword }`
+    * **Response:** `201 Created`
+* `POST /api/v1/auth/login`
+    * **Body:** `{ email, password }`
+    * **Response:** `200 OK { accessToken }` (HttpOnly Cookie preferible).
+
+### 3.3 Persistencia (Infrastructure Layer)
+*Schema de Base de datos (Mongoose).*
+* Colección: `users`
+* Índices: `email (unique)`.
+
+## 4. Especificación Frontend (`apps/client`)
+*Instrucciones para el Agente @Frontend.*
+
+### 4.1 UX/UI
+* **Páginas:** `/login`, `/register`.
+* **Componentes Clave:** `LoginForm`, `RegisterForm`, `AuthGuard`.
+* **Interacciones:** "Al hacer submit, deshabilitar botón y mostrar spinner".
+
+### 4.2 Gestión de Estado (Zustand/Query)
+* **Store:** `useAuthStore` (user, isAuthenticated, login(), logout()).
+* **Hooks:** `useLogin` (Maneja la llamada a la API y actualiza el store).
+
+## 5. Estrategia de Pruebas (TDD Strategy)
+*El corazón de la metodología SideBy.*
+
+* **Backend Scenarios (Vitest):**
+    * `RegisterUserUseCase` -> debe lanzar error si el email ya existe.
+    * `RegisterUserUseCase` -> debe hashear la contraseña antes de guardar.
+* **Frontend Scenarios (Testing Library):**
+    * `LoginForm` -> debe mostrar error de validación si el email es inválido.
+    * `useLogin` -> debe cambiar `isLoading` a true durante la petición.
+
+## 6. Seguridad y Observabilidad (OWASP)
+*Checklist de seguridad obligatorio.*
+* [ ] **Input Validation:** Usar Zod en el backend para validar emails.
+* [ ] **Auth:** Rate Limiting en el login (prevenir fuerza bruta).
+* [ ] **Logs:** Usar Pino para registrar "Login Success" (sin loguear passwords).
+* [ ] **Sensitive Data:** No guardar tokens en LocalStorage (usar Cookies o memoria).
+
+## 7. Plan de Migración y Despliegue
+* ¿Requiere script de migración de BD?
+* ¿Variables de entorno nuevas (`JWT_SECRET`)?
+
+## 8. Alternativas Consideradas
+* *¿Por qué usamos JWT y no Sesiones?* Explicación breve.

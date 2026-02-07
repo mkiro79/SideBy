@@ -13,7 +13,7 @@ import { useAuthStore } from '../store/auth.store.js';
 // ============================================================================
 // FEATURE FLAGS
 // ============================================================================
-const ENABLE_EMAIL_LOGIN = false; // TODO: Cambiar a true cuando implementes login por email
+const ENABLE_EMAIL_LOGIN = true;
 
 // ============================================================================
 // LOGIN PAGE
@@ -33,137 +33,167 @@ export const LoginPage = () => {
   }, [isAuthenticated, navigate]);
 
   // Clear error when component unmounts
-  // Note: clearError is intentionally omitted from deps to prevent re-running on every render
   useEffect(() => {
     return () => clearError();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30 flex items-center justify-center p-4">
-      <div className="w-full max-w-[440px]">
-        {/* Card Elevado según VISUAL_COMPONENTS_REFERENCE */}
-        <Card className="border-0 shadow-xl">
-          {/* Logo y Branding */}
-          <CardHeader className="space-y-3 text-center pb-8">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-primary/80">
-              <BarChart3 className="h-8 w-8 text-primary-foreground" />
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 flex items-center justify-center p-4 sm:p-6 lg:p-8">
+      <div className="w-full max-w-md">
+        {/* Card con elevación y bordes suaves según Style Guide */}
+        <Card className="border-slate-200 dark:border-slate-800 shadow-2xl backdrop-blur-sm">
+          {/* Logo y Branding - Spacing según 8px grid */}
+          <CardHeader className="space-y-6 text-center pb-8 pt-10">
+            {/* Logo con gradiente brand */}
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-blue-600 to-indigo-600 shadow-lg shadow-blue-500/30">
+              <BarChart3 className="h-10 w-10 text-white" strokeWidth={2} />
             </div>
-            <div className="space-y-1">
-              <CardTitle className="text-2xl">SideBy</CardTitle>
-              <CardDescription>
+            
+            {/* Títulos con tipografía Geist */}
+            <div className="space-y-2">
+              <CardTitle className="text-3xl font-bold tracking-tight bg-gradient-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-300 bg-clip-text text-transparent">
+                SideBy
+              </CardTitle>
+              <CardDescription className="text-base text-slate-600 dark:text-slate-400 max-w-sm mx-auto">
                 Inicia sesión para acceder a tus reportes y comparativas
               </CardDescription>
             </div>
           </CardHeader>
 
-          <CardContent className="space-y-6 pb-8">
-            {/* Error Alert */}
+          <CardContent className="space-y-6 pb-10 px-8">
+            {/* Error Alert - Semantic colors */}
             {error && (
-              <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
-                <p className="font-medium">Error al iniciar sesión</p>
-                <p className="mt-1 text-xs opacity-90">{error}</p>
+              <div className="rounded-xl border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/30 p-4 text-sm animate-in fade-in-0 slide-in-from-top-2 duration-300">
+                <p className="font-semibold text-red-900 dark:text-red-200">
+                  Error al iniciar sesión
+                </p>
+                <p className="mt-1.5 text-sm text-red-700 dark:text-red-300/90">
+                  {error}
+                </p>
               </div>
             )}
 
-            {/* Google Login Button - Componente oficial */}
+            {/* Google Login Button Container */}
             <div className="flex w-full justify-center">
               <GoogleLogin
                 onSuccess={handleGoogleSuccess}
                 onError={handleGoogleError}
                 text="continue_with"
                 size="large"
-                width="100%"
+                width="368"
               />
             </div>
 
-            {/* Separator con texto superpuesto - VISUAL_COMPONENTS_REFERENCE */}
+            {/* Separator con texto - Visual hierarchy */}
             {ENABLE_EMAIL_LOGIN && (
-              <div className="relative my-6">
-                <Separator />
-                <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-3 text-xs text-muted-foreground uppercase">
+              <div className="relative my-8">
+                <Separator className="bg-slate-200 dark:bg-slate-800" />
+                <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-slate-900 px-4 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                   O con email
                 </span>
               </div>
             )}
 
-            {/* Email/Password Form - Feature Flag */}
+            {/* Email/Password Form */}
             {ENABLE_EMAIL_LOGIN && (
-              <form className="space-y-4">
-                {/* Input con icono left-positioned - VISUAL_COMPONENTS_REFERENCE */}
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-sm font-medium">
+              <form className="space-y-5" onSubmit={(e) => e.preventDefault()}>
+                {/* Email Input - Icon + Input pattern */}
+                <div className="space-y-2.5">
+                  <Label 
+                    htmlFor="email" 
+                    className="text-sm font-semibold text-slate-700 dark:text-slate-300"
+                  >
                     Correo electrónico
                   </Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                  <div className="relative group">
+                    <Mail className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 dark:group-focus-within:text-blue-400 transition-colors pointer-events-none" />
                     <Input
                       id="email"
                       type="email"
                       placeholder="tu@email.com"
-                      className="h-11 pl-10"
+                      className="h-12 pl-12 pr-4 text-base rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 dark:focus:border-blue-400 transition-all"
                       disabled={isLoading}
                     />
                   </div>
                 </div>
 
-                {/* Password con toggle - VISUAL_COMPONENTS_REFERENCE */}
-                <div className="space-y-2">
-                  <Label htmlFor="password" className="text-sm font-medium">
+                {/* Password Input - Icon + Toggle pattern */}
+                <div className="space-y-2.5">
+                  <Label 
+                    htmlFor="password" 
+                    className="text-sm font-semibold text-slate-700 dark:text-slate-300"
+                  >
                     Contraseña
                   </Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                  <div className="relative group">
+                    <Lock className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 dark:group-focus-within:text-blue-400 transition-colors pointer-events-none" />
                     <Input
                       id="password"
                       type={showPassword ? 'text' : 'password'}
                       placeholder="••••••••"
-                      className="h-11 pl-10 pr-10"
+                      className="h-12 pl-12 pr-12 text-base rounded-xl border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 dark:focus:border-blue-400 transition-all"
                       disabled={isLoading}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors focus:outline-none focus:text-blue-600 dark:focus:text-blue-400"
                       disabled={isLoading}
-                      aria-label="Toggle password visibility"
+                      aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                      tabIndex={0}
                     >
                       {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
+                        <EyeOff className="h-5 w-5" />
                       ) : (
-                        <Eye className="h-4 w-4" />
+                        <Eye className="h-5 w-5" />
                       )}
                     </button>
                   </div>
                 </div>
 
-                {/* Login Button */}
+                {/* Submit Button - Primary action */}
                 <Button
                   type="submit"
-                  className="w-full h-11"
+                  className="w-full h-12 rounded-xl text-base font-semibold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 transition-all duration-200 mt-6"
                   disabled={isLoading}
                 >
-                  {isLoading ? 'Iniciando sesión...' : 'Iniciar sesión'}
+                  {isLoading ? (
+                    <span className="flex items-center gap-2">
+                      <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Iniciando sesión...
+                    </span>
+                  ) : (
+                    'Iniciar sesión'
+                  )}
                 </Button>
               </form>
             )}
-
-            {/* Footer Links */}
-            <div className="text-center text-sm text-muted-foreground">
-              <p>
-                Al continuar, aceptas nuestros{' '}
-                <a href="/terms" className="text-primary hover:underline">
-                  Términos de Servicio
-                </a>
-                {' y '}
-                <a href="/privacy" className="text-primary hover:underline">
-                  Política de Privacidad
-                </a>
-                .
-              </p>
-            </div>
           </CardContent>
         </Card>
+
+        {/* Footer Links - Muted text hierarchy - Fuera de la Card */}
+        <div className="text-center text-sm text-slate-600 dark:text-slate-400 leading-relaxed pt-6 px-4">
+          <p>
+            Al continuar, aceptas nuestros{' '}
+            <a 
+              href="/terms" 
+              className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 underline underline-offset-2 font-medium transition-colors"
+            >
+              Términos de Servicio
+            </a>
+            {' y '}
+            <a 
+              href="/privacy" 
+              className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 underline underline-offset-2 font-medium transition-colors"
+            >
+              Política de Privacidad
+            </a>              
+          </p>
+        </div>
       </div>
     </div>
   );
