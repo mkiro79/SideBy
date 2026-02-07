@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
 import { Mail, Lock, Eye, EyeOff, BarChart3 } from 'lucide-react';
-import { Button } from '@/shared/components/ui/Button.js';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/Card.js';
+import { Button } from '@/shared/components/ui/button.js';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card.js';
 import { Input } from '@/shared/components/ui/Input.js';
 import { Label } from '@/shared/components/ui/Label.js';
 import { Separator } from '@/shared/components/ui/Separator.js';
@@ -13,7 +13,7 @@ import { useAuthStore } from '../store/auth.store.js';
 // ============================================================================
 // FEATURE FLAGS
 // ============================================================================
-const ENABLE_EMAIL_LOGIN = true;
+const ENABLE_EMAIL_LOGIN = false;
 
 // ============================================================================
 // LOGIN PAGE

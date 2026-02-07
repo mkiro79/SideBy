@@ -69,7 +69,9 @@ Adopt one of these roles based on the user's prompt or the file being edited.
   - `src/features/{feature}/hooks`: Business Logic (The "Smart" part).
   - `src/features/{feature}/components`: UI (The "Dumb" part).
   - `src/features/{feature}/store`: Zustand slices.
-- **Styling:** Mobile-first Tailwind. Use `clsx` / `tailwind-merge`.
+- **Styling:** 
+  - Use Tailwind CSS for styling. Follow the Mobile-first Tailwind. Use `clsx` / `tailwind-merge`.
+  - Use guide visual reference in this repo in docs\STYLE_GUIDE_SIDEBY.md
 
 ---
 

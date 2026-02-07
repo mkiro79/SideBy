@@ -1,4 +1,4 @@
-# Scripts PowerShell para SideBy
+   # Scripts PowerShell para SideBy
 
 Scripts para facilitar la ejecución y testing de la aplicación SideBy.
 

@@ -1,6 +1,6 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { LoginPage } from '@/features/auth/pages/LoginPage.js';
-import { HomePage } from '@/features/dashboard/pages/HomePage.js';
+import Home from '@/features/dashboard/pages/Home.js';
 import { ProtectedRoute } from './ProtectedRoute.js';
 
 // ============================================================================
@@ -14,7 +14,7 @@ export const appRouter = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <HomePage />,
+        element: <Home />,
       },
     ],
   },
