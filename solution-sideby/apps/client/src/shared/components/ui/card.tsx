@@ -1,23 +1,51 @@
+/**
+ * Card - Componente de tarjeta con variantes
+ * Soporta diferentes estilos según STYLE_GUIDE: default, elevated, ghost, interactive
+ */
 import * as React from "react";
+import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/shared/utils/cn.js";
+
+// ============================================================================
+// CARD VARIANTS
+// ============================================================================
+
+const cardVariants = cva(
+  "rounded-lg bg-card text-card-foreground transition-all duration-200",
+  {
+    variants: {
+      variant: {
+        default: "border shadow-[var(--shadow-subtle)]",
+        elevated: "border shadow-[var(--shadow-soft)] hover:shadow-[var(--shadow-elevated)]",
+        ghost: "border-0 shadow-none",
+        interactive: "border shadow-[var(--shadow-subtle)] hover:shadow-[var(--shadow-soft)] hover:border-border/80 cursor-pointer",
+        dataPrimary: "border-l-4 border-l-data-primary border shadow-[var(--shadow-subtle)]",
+        dataComparative: "border-l-4 border-l-data-comparative border shadow-[var(--shadow-subtle)]",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+    },
+  }
+);
 
 // ============================================================================
 // CARD - Componente principal
 // ============================================================================
 
-const Card = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn(
-      "rounded-lg border border-border bg-card text-card-foreground shadow-sm",
-      className,
-    )}
-    {...props}
-  />
-));
+export interface CardProps
+  extends React.HTMLAttributes<HTMLDivElement>,
+    VariantProps<typeof cardVariants> {}
+
+const Card = React.forwardRef<HTMLDivElement, CardProps>(
+  ({ className, variant, ...props }, ref) => (
+    <div
+      ref={ref}
+      className={cn(cardVariants({ variant, className }))}
+      {...props}
+    />
+  )
+);
 Card.displayName = "Card";
 
 // ============================================================================
@@ -99,4 +127,5 @@ const CardFooter = React.forwardRef<
 ));
 CardFooter.displayName = "CardFooter";
 
-export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent };
+// eslint-disable-next-line react-refresh/only-export-components
+export { Card, CardHeader, CardFooter, CardTitle, CardDescription, CardContent, cardVariants };

@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { LogOut, User, BarChart3 } from 'lucide-react';
-import { Button } from '@/shared/components/ui/Button.js';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/Card.js';
+import { Button } from '@/shared/components/ui/button.js';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card.js';
 import { useAuthStore } from '@/features/auth/store/auth.store.js';
 
 // ============================================================================
