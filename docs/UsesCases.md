@@ -68,7 +68,166 @@ UC-CORE-01: Carga de Archivos (Data Ingestion)
 
 Actor: Usuario.
 
-Descripción: El usuario debe poder subir archivos (CSV, Excel) a la plataforma para ser analizados. No debe de ocupar mas de un limite definido por configuración de la aplicacion. Los archivos deben ser validados antes de ser procesados.
+Descripción: El usuario debe poder subir archivos (CSV, Excel) a la plataforma para ser analizados. No debe de ocupar mas de un limite definido por configuración de la aplicacion. Los archivos deben ser validados antes de ser procesados. 
+Normas de validación:
+- Maximo de 2Mb por archivo.
+- Solo formatos CSV y Excel.
+- Validación de estructura (ej: mínimo 2 columnas, al menos una fila de datos).
+- Validar que el archivo no contenga datos maliciosos (ej: scripts, macros).
+- Validar que el archivo no exceda el límite de almacenamiento permitido para su plan (free vs premium).
+- Proporcionar feedback claro al usuario en caso de error (ej: "Archivo demasiado grande", "Formato no soportado", "Archivo mal formado").
+- Que la primera fila se interprete como encabezados de columna para facilitar el mapeo posterior.
+- Que la cabecera de los 2 archivos sea igual para facilitar la comparación.
+
+Ejemplo de Datos a guardar:
+
+**Nombre en Mongo:** `datasets`
+
+JSON
+
+`{
+  "_id": "ObjectId('98z7y6x5w4v3u2t1s0r9q8p7')",
+  "ownerId": "ObjectId('65a1b2c3d4e5f6g7h8i9j0k1')", // Referencia al User
+  "status": "ready", // "processing" | "ready" | "error"
+  
+  // Metadatos Generales
+  "meta": {
+    "name": "Q1 2024 vs Q1 2023 - Marketing",
+    "description": "Comparativa de rendimiento de campañas.",
+    "createdAt": "2024-01-26T10:00:00Z"
+  },
+
+  // Configuración de los Grupos (A vs B)
+  // Esto define qué es cada color en la gráfica
+  "sourceConfig": {
+    "groupA": {
+      "label": "Año Actual (2024)",
+      "color": "#2563EB", // Azul SideBy
+      "originalFileName": "ventas_2024.csv"
+    },
+    "groupB": {
+      "label": "Año Anterior (2023)",
+      "color": "#F97316", // Naranja SideBy
+      "originalFileName": "ventas_2023.csv"
+    }
+  },
+
+  // El Mapeo (Resultado del Wizard)
+  "schemaMapping": {
+    "dimensionField": "fecha", // La columna que actúa de Eje X
+    "kpiFields": [
+      { "id": "ingresos", "label": "Ingresos Totales", "format": "currency" },
+      { "id": "visitas", "label": "Tráfico Web", "format": "number" },
+      { "id": "rebote", "label": "Tasa de Rebote", "format": "percentage" }
+    ]
+  },
+
+  // Configuración Visual (Templates)
+  "dashboardLayout": {
+    "templateId": "sideby_standard_v1",
+    "highlightedKpis": ["ingresos", "visitas", "rebote"], // IDs de los KPIs arriba
+    "rows": [
+      // Aquí guardamos la disposición de widgets (como definimos antes)
+      {
+        "id": "row_main",
+        "type": "full_width",
+        "widgets": [{ "type": "chart_line", "title": "Tendencia", "dataConfig": { "kpi": "ingresos" } }]
+      }
+    ]
+  },
+
+  // Configuración de IA (Genkit)
+  "aiConfig": {
+    "enabled": true,
+    "userContext": "Analiza esto como un CFO agresivo buscando recortar gastos."
+  },
+
+  // LOS DATOS UNIFICADOS (Array de Objetos Planos)
+  // Nota: Mongo aguanta documentos de hasta 16MB. 
+  // Para un MVP con CSVs de <50k filas, esto entra sobrado aquí.
+  "data": [
+    {
+      "fecha": "2024-01-01",
+      "pais": "España",
+      "ingresos": 1500,
+      "visitas": 300,
+      "rebote": 0.45,
+      "_source_group": "groupA" // <--- LA CLAVE MÁGICA
+    },
+    {
+      "fecha": "2024-01-01", // Misma fecha, diferente grupo
+      "pais": "España",
+      "ingresos": 1200,
+      "visitas": 280,
+      "rebote": 0.50,
+      "_source_group": "groupB" // <--- LA CLAVE MÁGICA
+    }
+    // ... miles de filas más
+  ]
+}`
+
+Ejemplo de entidad en typescript:
+
+```typescript   
+`// Tipos auxiliares
+export type DatasetStatus = 'processing' | 'ready' | 'error';
+
+export interface KPIField {
+  id: string; // key en el objeto data
+  label: string;
+  format: 'number' | 'currency' | 'percentage';
+}
+
+export interface GroupConfig {
+  label: string;
+  color: string;
+  originalFileName: string;
+}
+
+// Tipo flexible para la fila de datos (ya que las columnas cambian según el CSV)
+export interface DataRow {
+  _source_group: 'groupA' | 'groupB';
+  [key: string]: string | number | boolean; // Índice de firma para propiedades dinámicas
+}
+
+// La Entidad Principal
+export interface Dataset {
+  id: string;
+  ownerId: string;
+  status: DatasetStatus;
+  
+  meta: {
+    name: string;
+    description?: string;
+    createdAt: Date;
+  };
+
+  sourceConfig: {
+    groupA: GroupConfig;
+    groupB: GroupConfig;
+  };
+
+  schemaMapping: {
+    dimensionField: string;
+    kpiFields: KPIField[];
+  };
+
+  dashboardLayout: {
+    templateId: string;
+    highlightedKpis: string[];
+    rows: any[]; // Puedes tipar esto más estricto con la interfaz de Widgets que hicimos antes
+  };
+
+  aiConfig?: {
+    enabled: boolean;
+    userContext?: string;
+    lastAnalysis?: string; // Cache del resultado de la IA
+  };
+
+  data: DataRow[];
+}`
+
+
 
 UC-CORE-02: Mapeo de Columnas (Normalization)
 
