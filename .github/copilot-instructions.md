@@ -69,9 +69,12 @@ Adopt one of these roles based on the user's prompt or the file being edited.
   - `src/features/{feature}/hooks`: Business Logic (The "Smart" part).
   - `src/features/{feature}/components`: UI (The "Dumb" part).
   - `src/features/{feature}/store`: Zustand slices.
-- **Styling:** 
+- **Styling:**
   - Use Tailwind CSS for styling. Follow the Mobile-first Tailwind. Use `clsx` / `tailwind-merge`.
   - Use guide visual reference in this repo in docs\STYLE_GUIDE_SIDEBY.md
+    Nota: En la versión 4 de tailwind css, ya no se necesita el plugin tailwindcss-animate de forma externa sino que se usan nuevas capacidades nativas, ayudame a convertir esas animaciones de tailwind.config.ts a CSS puro para no depender de librerias externas
+
+---
 
 ---
 
