@@ -69,29 +69,33 @@ export function ColumnMappingStep({
   const uploadedFile = wizardState.uploadedFiles?.[0];
   const legacyFile = wizardState.fileA;
 
-  // Extraer headers y rows del formato disponible
-  const headers = uploadedFile 
-    ? uploadedFile.preview?.headers || []
-    : legacyFile?.parsedData?.headers || [];
+  // Extraer headers y rows del formato disponible (memoizados para estabilidad)
+  const headers = useMemo(() => {
+    return uploadedFile 
+      ? uploadedFile.preview?.headers || []
+      : legacyFile?.parsedData?.headers || [];
+  }, [uploadedFile, legacyFile]);
   
   // Convertir rows de Record<string, unknown>[] a string[][]
-  let rows: string[][] = [];
-  if (uploadedFile) {
-    rows = uploadedFile.preview?.rows || [];
-  } else if (legacyFile?.parsedData) {
-    rows = legacyFile.parsedData.rows.map(row => 
-      headers.map(header => {
-        const value = row[header];
-        if (value === null || value === undefined) return '';
-        if (typeof value === 'string') return value;
-        // eslint-disable-next-line @typescript-eslint/no-base-to-string
-        if (typeof value === 'number') return value.toString();
-        if (typeof value === 'boolean') return value.toString();
-        // Objetos/arrays: stringify
-        return JSON.stringify(value);
-      })
-    );
-  }
+  const rows: string[][] = useMemo(() => {
+    if (uploadedFile) {
+      return uploadedFile.preview?.rows || [];
+    } 
+    if (legacyFile?.parsedData) {
+      return legacyFile.parsedData.rows.map(row => 
+        headers.map(header => {
+          const value = row[header];
+          if (value === null || value === undefined) return '';
+          if (typeof value === 'string') return value;
+          if (typeof value === 'number') return value.toString();
+          if (typeof value === 'boolean') return value.toString();
+          // Objetos/arrays: stringify
+          return JSON.stringify(value);
+        })
+      );
+    }
+    return [];
+  }, [uploadedFile, legacyFile, headers]);
 
   // Auto-clasificar columnas al montar
   const classifiedColumns: ClassifiedColumns = useMemo(() => {
@@ -113,8 +117,11 @@ export function ColumnMappingStep({
 
   // Inicializar selección de fecha con la primera columna de fecha detectada
   useEffect(() => {
-    if (classifiedColumns.dateColumns.length > 0 && !selectedDate) {
-      setSelectedDate(classifiedColumns.dateColumns[0]);
+    if (classifiedColumns.dateColumns.length > 0 && selectedDate === null) {
+      // Inicialización en el siguiente tick para evitar setState síncrono
+      Promise.resolve().then(() => {
+        setSelectedDate(classifiedColumns.dateColumns[0]);
+      });
     }
   }, [classifiedColumns.dateColumns, selectedDate]);
 

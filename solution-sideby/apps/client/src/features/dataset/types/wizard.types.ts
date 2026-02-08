@@ -68,7 +68,7 @@ export interface ColumnMapping {
   dimensionField?: string | null;
   dateField?: string | null; // Opcional: columna de fecha para análisis temporal
   kpiFields?: KPIMappingField[];
-  [key: string]: any; // Permitir propiedades dinámicas para RFC-003-A
+  [key: string]: unknown; // Permitir propiedades dinámicas para RFC-003-A
 }
 
 export interface KPIMappingField {

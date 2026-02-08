@@ -15,7 +15,8 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, fireEvent, cleanup } from "@testing-library/react";
+import { render, screen, fireEvent, cleanup, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { ColumnMappingStep } from "../components/wizard/ColumnMappingStep.simplified.js";
 import type { WizardState } from "../types/wizard.types.js";
 
@@ -188,7 +189,8 @@ describe("[TDD] ColumnMappingStep - Simplified Auto-Mapping UI", () => {
       expect(dateSelect).toBeInTheDocument();
     });
 
-    it("[RED] should allow changing date column selection", () => {
+    it("[RED] should allow changing date column selection", async () => {
+      const user = userEvent.setup();
       const mockSetMapping = vi.fn();
       const mockState = createMockState({
         uploadedFiles: [
@@ -214,12 +216,20 @@ describe("[TDD] ColumnMappingStep - Simplified Auto-Mapping UI", () => {
         />
       );
 
+      // Radix UI Select: necesitamos hacer click en el trigger y luego en la opción
       const dateSelect = screen.getByRole("combobox");
       
-      // Cambiar selección debe actualizar el mapping
-      fireEvent.change(dateSelect, { target: { value: "fecha_fin" } });
+      // Abrir el dropdown
+      await user.click(dateSelect);
       
-      expect(mockSetMapping).toHaveBeenCalled();
+      // Buscar y hacer click en la opción "fecha_fin"
+      const option = await screen.findByRole("option", { name: /fecha_fin/i });
+      await user.click(option);
+      
+      // Verificar que se llamó setMapping con el nuevo valor
+      await waitFor(() => {
+        expect(mockSetMapping).toHaveBeenCalled();
+      });
     });
 
     it("[RED] should show warning if no date column detected", () => {
@@ -533,7 +543,8 @@ describe("[TDD] ColumnMappingStep - Simplified Auto-Mapping UI", () => {
   // SECCIÓN 5: VALIDACIÓN Y NAVEGACIÓN
   // ========================================
   describe("Validación y navegación", () => {
-    it("[RED] should disable Next button if no date selected", () => {
+    // NOTA: Tests de navegación deshabilitados - botones movidos al wizard padre
+    it.skip("[SKIP] should disable Next button if no date selected", () => {
       const mockState = createMockState({
         uploadedFiles: [
           {
@@ -560,7 +571,7 @@ describe("[TDD] ColumnMappingStep - Simplified Auto-Mapping UI", () => {
       expect(nextButton).toBeDisabled();
     });
 
-    it("[RED] should disable Next button if no metrics selected", () => {
+    it.skip("[SKIP] should disable Next button if no metrics selected", () => {
       const mockState = createMockState({
         uploadedFiles: [
           {
@@ -593,7 +604,7 @@ describe("[TDD] ColumnMappingStep - Simplified Auto-Mapping UI", () => {
       expect(nextButton).toBeDisabled();
     });
 
-    it("[RED] should enable Next button when date and at least 1 metric selected", () => {
+    it.skip("[SKIP] should enable Next button when date and at least 1 metric selected", () => {
       const mockState = createMockState({
         uploadedFiles: [
           {
@@ -631,7 +642,7 @@ describe("[TDD] ColumnMappingStep - Simplified Auto-Mapping UI", () => {
       expect(nextButton).toBeEnabled();
     });
 
-    it("[RED] should call onNext when Next button clicked", () => {
+    it.skip("[SKIP] should call onNext when Next button clicked", () => {
       const mockState = createMockState({
         uploadedFiles: [
           {
@@ -671,7 +682,7 @@ describe("[TDD] ColumnMappingStep - Simplified Auto-Mapping UI", () => {
       // Navigation is now handled by parent wizard component
     });
 
-    it("[RED] should call onBack when Back button clicked", () => {
+    it.skip("[SKIP] should call onBack when Back button clicked", () => {
       const mockState = createMockState({
         uploadedFiles: [
           {
