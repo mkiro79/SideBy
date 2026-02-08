@@ -17,14 +17,14 @@ import { Alert, AlertDescription } from '@/shared/components/ui/alert.js';
 import { Checkbox } from '@/shared/components/ui/checkbox.js';
 import { useWizardState } from '../../hooks/useWizardState.js';
 import { FilePreview } from '../FilePreview.js';
-import type { KPIMappingField } from '../../types/wizard.types.js';
+import type { KPIMappingField, KPIFormat } from '../../types/wizard.types.js';
 
 export function ColumnMappingStep() {
   const { fileA, fileB, mapping, setMapping, addKPIField, removeKPIField } = useWizardState();
   
   const [newKPIColumn, setNewKPIColumn] = useState('');
   const [newKPILabel, setNewKPILabel] = useState('');
-  const [newKPIFormat, setNewKPIFormat] = useState<'number' | 'currency' | 'percentage'>('number');
+  const [newKPIFormat, setNewKPIFormat] = useState<KPIFormat>('number');
   
   const availableColumns = fileA.parsedData?.headers || [];
   const dimensionField = mapping.dimensionField;
@@ -294,7 +294,7 @@ export function ColumnMappingStep() {
               <Label htmlFor="kpi-format">Formato</Label>
               <Select
                 value={newKPIFormat}
-                onValueChange={(value: string) => setNewKPIFormat(value as 'number' | 'currency' | 'percentage')}
+                onValueChange={(value: string) => setNewKPIFormat(value as KPIFormat)}
               >
                 <SelectTrigger id="kpi-format">
                   <SelectValue />

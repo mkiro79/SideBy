@@ -65,13 +65,14 @@ function formatCellValue(value: unknown): string {
   if (value === null || value === undefined) {
     return '';
   }
-  if (typeof value === 'symbol') {
-    return value.toString();
-  }
   if (typeof value === 'object') {
     return JSON.stringify(value);
   }
-  return String(value);
+  if (typeof value === 'symbol') {
+    return value.toString();
+  }
+  // En este punto value es string, number, boolean o bigint
+  return String(value as string | number | boolean | bigint);
 }
 
 // ============================================================================

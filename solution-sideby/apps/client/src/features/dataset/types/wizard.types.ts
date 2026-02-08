@@ -46,6 +46,8 @@ export interface FileGroup {
 // COLUMN MAPPING TYPES
 // ============================================================================
 
+export type KPIFormat = "number" | "currency" | "percentage";
+
 export interface ColumnMapping {
   dimensionField: string | null;
   dateField?: string | null; // Opcional: columna de fecha para análisis temporal
@@ -56,7 +58,7 @@ export interface KPIMappingField {
   id: string;
   columnName: string;
   label: string;
-  format: "number" | "currency" | "percentage";
+  format: KPIFormat;
   highlighted?: boolean; // Opcional: indica si el KPI se destaca en el dashboard (max 4)
 }
 
@@ -97,9 +99,9 @@ export interface KPIField {
   id: string;
   sourceColumn: string;
   label: string;
-  type: "number" | "currency" | "percentage";
+  type: KPIFormat;
   aggregation: "sum" | "avg" | "count";
-  format: "number" | "currency" | "percentage";
+  format: KPIFormat;
 }
 
 export interface CreateDatasetPayload {

@@ -10,7 +10,7 @@
 /**
  * Feature Flags disponibles en la aplicación
  */
-export const FEATURES = {
+export const FEATURES = Object.freeze({
   /**
    * Habilita/deshabilita el login con Email/Password
    * Por defecto usa solo Google OAuth
@@ -32,7 +32,7 @@ export const FEATURES = {
   // Futuras features...
   // ADVANCED_FILTERS: import.meta.env.VITE_FEATURE_ADVANCED_FILTERS === 'true' || false,
   // EXPORT_PDF: import.meta.env.VITE_FEATURE_EXPORT_PDF === 'true' || false,
-} as const;
+} as const);
 
 export type FeatureFlags = typeof FEATURES;
 

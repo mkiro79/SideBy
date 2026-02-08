@@ -10,6 +10,10 @@
     "preview": "vite preview",
     "test": "vitest",
     "test:run": "vitest run",
+    "test:unit": "vitest run src --exclude 'src/**/*integration*.test.{ts,tsx}'",
+    "test:unit:watch": "vitest src --exclude 'src/**/*integration*.test.{ts,tsx}'",
+    "test:integration": "vitest run src 'src/**/*integration*.test.{ts,tsx}'",
+    "test:integration:watch": "vitest src 'src/**/*integration*.test.{ts,tsx}'",
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {

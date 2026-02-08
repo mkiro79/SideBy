@@ -5,7 +5,8 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
+import { renderComponent } from '@/test/utils/test-utils';
 import { FileUploadStep } from '../components/wizard/FileUploadStep.js';
 import * as useFileUploadModule from '../hooks/useFileUpload.js';
 import * as useWizardStateModule from '../hooks/useWizardState.js';
@@ -30,6 +31,7 @@ const createMockFile = (
 
 describe('[TDD] FileUploadStep Component', () => {
   beforeEach(() => {
+    cleanup();
     vi.clearAllMocks();
 
     // Mock useWizardState hook
@@ -95,7 +97,7 @@ describe('[TDD] FileUploadStep Component', () => {
 
   describe('UI Rendering', () => {
     it('[RED] should render upload zones for File A and File B', () => {
-      render(<FileUploadStep />);
+      renderComponent(<FileUploadStep />);
 
       expect(screen.getByText(/archivo a \(datos actuales\)/i)).toBeInTheDocument();
       expect(screen.getByText(/archivo b \(datos comparativos\)/i)).toBeInTheDocument();
@@ -104,9 +106,9 @@ describe('[TDD] FileUploadStep Component', () => {
     it('[RED] should display requirements alert', () => {
       render(<FileUploadStep />);
 
-      expect(screen.getByText(/requisitos:/i)).toBeInTheDocument();
-      expect(screen.getByText(/máximo 2mb/i)).toBeInTheDocument();
-      expect(screen.getByText(/csv o excel/i)).toBeInTheDocument();
+      expect(screen.getAllByText(/requisitos:/i)[0]).toBeInTheDocument();
+      expect(screen.getAllByText(/máximo 2mb/i)[0]).toBeInTheDocument();
+      expect(screen.getAllByText(/csv o excel/i)[0]).toBeInTheDocument();
     });
 
     it('[RED] should show drag and drop instructions when no files uploaded', () => {
@@ -117,7 +119,7 @@ describe('[TDD] FileUploadStep Component', () => {
     });
 
     it('[RED] should not show clear button when no files uploaded', () => {
-      render(<FileUploadStep />);
+      renderComponent(<FileUploadStep />);
 
       const clearButton = screen.queryByRole('button', { name: /limpiar archivos/i });
       expect(clearButton).not.toBeInTheDocument();
@@ -247,9 +249,9 @@ describe('[TDD] FileUploadStep Component', () => {
 
       render(<FileUploadStep />);
 
-      expect(screen.getByText('sales_2024.csv')).toBeInTheDocument();
-      expect(screen.getByText('150 filas')).toBeInTheDocument();
-      expect(screen.getByText(/archivo procesado correctamente/i)).toBeInTheDocument();
+      expect(screen.getAllByText('sales_2024.csv')[0]).toBeInTheDocument();
+      expect(screen.getAllByText('150 filas')[0]).toBeInTheDocument();
+      expect(screen.getAllByText(/archivo procesado correctamente/i)[0]).toBeInTheDocument();
     });
 
     it('[RED] should show clear button when at least one file is uploaded', () => {
@@ -613,3 +615,4 @@ describe('[TDD] FileUploadStep Component', () => {
     });
   });
 });
+

@@ -6,10 +6,23 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import DataUploadWizard from '../pages/DataUploadWizard';
 import { BrowserRouter } from 'react-router-dom';
+import * as useFileUploadModule from '../hooks/useFileUpload.js';
+
+// Mock de useFileUpload para simular procesamiento de archivos
+const mockProcessFile = vi.fn();
+
+vi.mock('../hooks/useFileUpload.js', () => ({
+  useFileUpload: vi.fn(() => ({
+    processFile: mockProcessFile,
+    processFilePair: vi.fn(),
+    quickValidate: vi.fn().mockReturnValue(null),
+    isProcessing: false,
+  })),
+}));
 
 // Mock de React Router
 const mockNavigate = vi.fn();
@@ -51,7 +64,25 @@ const createMockCSVFile = (
 
 describe('[INTEGRATION] Dataset Creation Wizard', () => {
   beforeEach(() => {
+    cleanup();
     vi.clearAllMocks();
+    
+    // Configurar mock de processFile para devolver archivos procesados
+    mockProcessFile.mockImplementation((file: File) => {
+      return Promise.resolve({
+        file,
+        parsedData: {
+          headers: ['fecha', 'region', 'ventas'],
+          rows: [
+            ['2024-01', 'Norte', '45000'],
+            ['2024-02', 'Sur', '38000'],
+          ],
+          rowCount: 2,
+        },
+        error: null,
+        isValid: true,
+      });
+    });
   });
 
   // ==========================================================================
@@ -73,11 +104,11 @@ describe('[INTEGRATION] Dataset Creation Wizard', () => {
       // ======================================================================
 
       // Verificar que estamos en Step 1
-      expect(screen.getByText(/carga de archivos/i)).toBeInTheDocument();
-      expect(screen.getByText(/sube dos archivos csv/i)).toBeInTheDocument();
+      expect(screen.getAllByText(/carga de archivos/i)[0]).toBeInTheDocument();
+      expect(screen.getAllByText(/sube dos archivos csv/i)[0]).toBeInTheDocument();
 
       // El botón "Siguiente" debería estar deshabilitado inicialmente
-      const nextButton = screen.getByRole('button', { name: /siguiente/i });
+      const nextButton = screen.getAllByRole('button', { name: /siguiente/i })[0];
       expect(nextButton).toBeDisabled();
 
       // Cargar Archivo A
@@ -87,7 +118,7 @@ describe('[INTEGRATION] Dataset Creation Wizard', () => {
 
       // Esperar a que se procese
       await waitFor(() => {
-        expect(screen.getByText('ventas_2024.csv')).toBeInTheDocument();
+        expect(screen.getAllByText('ventas_2024.csv')[0]).toBeInTheDocument();
       }, { timeout: 3000 });
 
       // Cargar Archivo B
@@ -97,7 +128,7 @@ describe('[INTEGRATION] Dataset Creation Wizard', () => {
 
       // Esperar a que se procese
       await waitFor(() => {
-        expect(screen.getByText('ventas_2023.csv')).toBeInTheDocument();
+        expect(screen.getAllByText('ventas_2023.csv')[0]).toBeInTheDocument();
       }, { timeout: 3000 });
 
       // El botón "Siguiente" debería habilitarse
@@ -113,22 +144,31 @@ describe('[INTEGRATION] Dataset Creation Wizard', () => {
       // ======================================================================
 
       await waitFor(() => {
-        expect(screen.getByText(/mapeo de columnas/i)).toBeInTheDocument();
+        expect(screen.getAllByText(/mapeo de columnas/i)[0]).toBeInTheDocument();
       });
 
       // Seleccionar campo de dimensión
       const dimensionSelect = screen.getByRole('combobox', { name: /campo de dimensión/i });
       await user.click(dimensionSelect);
 
-      const regionOption = screen.getByText('region');
-      await user.click(regionOption);
+      // Buscar option específicamente (no el <th> de la tabla)
+      const options = screen.getAllByRole('option');
+      const regionOption = options.find(opt => opt.textContent?.includes('region'));
+      if (regionOption) {
+        await user.click(regionOption);
+      }
 
       // Agregar KPI
-      const kpiColumnSelect = screen.getByRole('combobox', { name: /columna/i });
+      const kpiColumnSelects = screen.getAllByRole('combobox', { name: /columna/i });
+      const kpiColumnSelect = kpiColumnSelects[0]; // El primer combobox de "Columna"
       await user.click(kpiColumnSelect);
 
-      const ventasOption = screen.getAllByText('ventas')[1]; // El segundo "ventas" es el de la opción
-      await user.click(ventasOption);
+      // Buscar option de "ventas" específicamente (no el <th> de tabla)
+      const kpiOptions = screen.getAllByRole('option');
+      const ventasOption = kpiOptions.find(opt => opt.textContent?.includes('ventas'));
+      if (ventasOption) {
+        await user.click(ventasOption);
+      }
 
       // Ingresar label del KPI
       const kpiLabelInput = screen.getByLabelText(/etiqueta para mostrar/i);
@@ -138,7 +178,7 @@ describe('[INTEGRATION] Dataset Creation Wizard', () => {
       const formatSelect = screen.getByRole('combobox', { name: /formato/i });
       await user.click(formatSelect);
 
-      const currencyOption = screen.getByText(/moneda/i);
+      const currencyOption = screen.getAllByText(/moneda/i)[0];
       await user.click(currencyOption);
 
       // Agregar KPI
@@ -147,12 +187,12 @@ describe('[INTEGRATION] Dataset Creation Wizard', () => {
 
       // Verificar que el KPI se agregó
       await waitFor(() => {
-        expect(screen.getByText('Ventas Totales')).toBeInTheDocument();
+        expect(screen.getAllByText('Ventas Totales')[0]).toBeInTheDocument();
       });
 
       // El botón "Siguiente" debería estar habilitado
       await waitFor(() => {
-        expect(screen.getByRole('button', { name: /siguiente/i })).not.toBeDisabled();
+        expect(screen.getAllByRole('button', { name: /siguiente/i })[0]).not.toBeDisabled();
       });
 
       // Avanzar al Step 3
@@ -164,11 +204,11 @@ describe('[INTEGRATION] Dataset Creation Wizard', () => {
       // ======================================================================
 
       await waitFor(() => {
-        expect(screen.getByText(/configuración final/i)).toBeInTheDocument();
+        expect(screen.getAllByText(/configuración final/i)[0]).toBeInTheDocument();
       });
 
       // Verificar que se muestra el resumen
-      expect(screen.getByText(/datos unificados correctamente/i)).toBeInTheDocument();
+      expect(screen.getAllByText(/datos unificados correctamente/i)[0]).toBeInTheDocument();
 
       // Ingresar nombre del dataset
       const nameInput = screen.getByLabelText(/nombre/i);
@@ -247,7 +287,7 @@ describe('[INTEGRATION] Dataset Creation Wizard', () => {
 
       // Esperar a que la página se cargue
       await waitFor(() => {
-        expect(screen.getByText(/carga de archivos/i)).toBeInTheDocument();
+        expect(screen.getAllByText(/carga de archivos/i)[0]).toBeInTheDocument();
       });
 
       // El botón "Anterior" debería estar deshabilitado en Step 1
@@ -263,9 +303,11 @@ describe('[INTEGRATION] Dataset Creation Wizard', () => {
       );
 
       // Verificar que se muestra el indicador de pasos
-      expect(screen.getByText('Carga de archivos')).toBeInTheDocument();
-      expect(screen.getByText('Mapeo de columnas')).toBeInTheDocument();
-      expect(screen.getByText('Configuración')).toBeInTheDocument();
+      const stepLabels = screen.getAllByText('Carga de archivos');
+      expect(stepLabels.length).toBeGreaterThan(0);
+      
+      expect(screen.getAllByText('Mapeo de columnas').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('Configuración').length).toBeGreaterThan(0);
     });
   });
 
@@ -283,8 +325,9 @@ describe('[INTEGRATION] Dataset Creation Wizard', () => {
         </BrowserRouter>
       );
 
-      const cancelButton = screen.getByRole('button', { name: /cancelar/i });
-      await user.click(cancelButton);
+      const cancelButtons = screen.getAllByRole('button', { name: /cancelar/i });
+      // Tomar el primer botón de cancelar (el del wizard, no del sidebar)
+      await user.click(cancelButtons[0]);
 
       await waitFor(() => {
         expect(mockNavigate).toHaveBeenCalledWith('/datasets');
