@@ -13,6 +13,33 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Core React libraries
+          "react-vendor": ["react", "react-dom", "react-router-dom"],
+
+          // UI libraries (Radix UI components)
+          "ui-vendor": [
+            "@radix-ui/react-alert-dialog",
+            "@radix-ui/react-checkbox",
+            "@radix-ui/react-label",
+            "@radix-ui/react-progress",
+            "@radix-ui/react-select",
+            "@radix-ui/react-separator",
+            "@radix-ui/react-slot",
+          ],
+
+          // Data parsing utilities
+          "csv-parser": ["papaparse"],
+
+          // Auth
+          "auth-vendor": ["@react-oauth/google"],
+        },
+      },
+    },
+  },
   test: {
     globals: false,
     environment: "jsdom",
