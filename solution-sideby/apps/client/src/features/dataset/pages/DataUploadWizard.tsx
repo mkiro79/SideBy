@@ -17,7 +17,7 @@ import { uploadDataset } from '../services/datasetUpload.mock.js';
 import { unifyDatasets } from '../utils/csvParser.js';
 import { StepIndicator } from '../components/wizard/StepIndicator.js';
 import { FileUploadStep } from '../components/wizard/FileUploadStep.js';
-import { ColumnMappingStep } from '../components/wizard/ColumnMappingStep.js';
+import { ColumnMappingStep } from '../components/wizard/ColumnMappingStep.simplified.js';
 import { ConfigurationStep } from '../components/wizard/ConfigurationStep.js';
 import type { StepStatus, CreateDatasetPayload } from '../types/wizard.types.js';
 
@@ -117,7 +117,7 @@ export default function DataUploadWizard() {
         fileB: fileB.file!,
         mapping: {
           dimensionField: mapping.dimensionField!,
-          kpiFields: mapping.kpiFields.map((kpi) => ({
+          kpiFields: (mapping.kpiFields || []).map((kpi) => ({
             id: kpi.id,
             sourceColumn: kpi.columnName,
             label: kpi.label,

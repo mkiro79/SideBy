@@ -42,16 +42,33 @@ export interface FileGroup {
   isValid: boolean;
 }
 
+// Nueva estructura simplificada para RFC-003-A
+export interface UploadedFilePreview {
+  file: File;
+  name: string;
+  size: number;
+  preview: {
+    headers: string[];
+    rows: string[][];
+  };
+}
+
 // ============================================================================
 // COLUMN MAPPING TYPES
 // ============================================================================
 
-export type KPIFormat = "number" | "currency" | "percentage";
+export type KPIFormat =
+  | "number"
+  | "currency"
+  | "percentage"
+  | "date"
+  | "string";
 
 export interface ColumnMapping {
-  dimensionField: string | null;
+  dimensionField?: string | null;
   dateField?: string | null; // Opcional: columna de fecha para análisis temporal
-  kpiFields: KPIMappingField[];
+  kpiFields?: KPIMappingField[];
+  [key: string]: any; // Permitir propiedades dinámicas para RFC-003-A
 }
 
 export interface KPIMappingField {
@@ -69,9 +86,12 @@ export interface KPIMappingField {
 export interface WizardState {
   currentStep: WizardStep;
 
-  // Step 1: File Upload
+  // Step 1: File Upload (Legacy structure)
   fileA: FileGroup;
   fileB: FileGroup;
+
+  // Step 1: File Upload (RFC-003-A simplified structure)
+  uploadedFiles?: UploadedFilePreview[];
 
   // Step 2: Column Mapping
   mapping: ColumnMapping;

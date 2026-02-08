@@ -34,7 +34,7 @@ export function ColumnMappingStep() {
   const availableKPIColumns = availableColumns.filter(
     (col) =>
       col !== dimensionField &&
-      !kpiFields.some((kpi) => kpi.columnName === col)
+      !(kpiFields || []).some((kpi) => kpi.columnName === col)
   );
   
   // Detectar posibles columnas de fecha
@@ -68,7 +68,7 @@ export function ColumnMappingStep() {
    * Handler para toggle de KPI destacado
    */
   const handleToggleHighlighted = (kpiId: string) => {
-    const updatedKPIs = kpiFields.map((kpi) => {
+    const updatedKPIs = (kpiFields || []).map((kpi) => {
       if (kpi.id === kpiId) {
         return { ...kpi, highlighted: !kpi.highlighted };
       }
@@ -79,7 +79,7 @@ export function ColumnMappingStep() {
   };
   
   // Contar KPIs destacados
-  const highlightedCount = kpiFields.filter((kpi) => kpi.highlighted).length;
+  const highlightedCount = (kpiFields || []).filter((kpi) => kpi.highlighted).length;
   
   return (
     <div className="space-y-8">
@@ -185,7 +185,7 @@ export function ColumnMappingStep() {
         </div>
         
         {/* Lista de KPIs configurados */}
-        {kpiFields.length > 0 && (
+        {(kpiFields || []).length > 0 && (
           <div className="space-y-3">
             {highlightedCount < 4 ? (
               <Alert>
@@ -202,7 +202,7 @@ export function ColumnMappingStep() {
               </Alert>
             )}
             
-            {kpiFields.map((kpi) => (
+            {(kpiFields || []).map((kpi) => (
               <div
                 key={kpi.id}
                 className="flex items-center justify-between p-3 bg-accent/50 rounded-lg"
@@ -320,7 +320,7 @@ export function ColumnMappingStep() {
         </div>
         
         {/* Alert si no hay columnas disponibles */}
-        {availableKPIColumns.length === 0 && kpiFields.length === 0 && (
+        {availableKPIColumns.length === 0 && (kpiFields || []).length === 0 && (
           <Alert variant="warning">
             <AlertDescription>
               {dimensionField
@@ -338,8 +338,10 @@ export function ColumnMappingStep() {
 // CONSTANTS
 // ============================================================================
 
-const formatLabels: Record<KPIMappingField['format'], string> = {
+const formatLabels: Record<KPIFormat, string> = {
   number: 'Número',
   currency: 'Moneda',
   percentage: 'Porcentaje',
+  date: 'Fecha',
+  string: 'Texto',
 };

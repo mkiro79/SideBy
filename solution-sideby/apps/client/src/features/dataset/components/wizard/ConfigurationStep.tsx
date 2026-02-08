@@ -257,7 +257,7 @@ export function ConfigurationStep() {
               KPIs Configurados
             </div>
             <p className="text-2xl font-semibold">
-              {mapping.kpiFields.length}
+              {(mapping.kpiFields || []).length}
             </p>
           </div>
         </div>
@@ -266,14 +266,14 @@ export function ConfigurationStep() {
         <div className="space-y-2 pt-4 border-t">
           <h4 className="text-sm font-semibold">KPIs Seleccionados:</h4>
           <div className="flex flex-wrap gap-2">
-            {mapping.kpiFields.map((kpi) => (
+            {(mapping.kpiFields || []).map((kpi) => (
               <Badge key={kpi.id} variant="outline" className="text-xs">
                 {kpi.label} ({kpi.format})
                 {kpi.highlighted && ' ⭐'}
               </Badge>
             ))}
           </div>
-          {mapping.kpiFields.length === 0 && (
+          {(mapping.kpiFields || []).length === 0 && (
             <p className="text-sm text-muted-foreground">No hay KPIs configurados</p>
           )}
         </div>
@@ -315,7 +315,7 @@ export function ConfigurationStep() {
           
           <div>
             <p className="font-medium text-muted-foreground">KPIs configurados</p>
-            <p>{mapping.kpiFields.length} campo(s)</p>
+            <p>{(mapping.kpiFields || []).length} campo(s)</p>
           </div>
         </div>
         

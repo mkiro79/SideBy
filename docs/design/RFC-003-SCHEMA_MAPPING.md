@@ -1045,5 +1045,356 @@ VITE_FEATURE_AI_ENABLED=false  # Set to 'true' to enable AI prompt functionality
 - **RFC-005:** AI Insights Generation (Future - AI backend)
 
 ---
+## Adding UI Actions
+**@Frontend MERN Agent:**
+
+> **⚠️ UPDATE (2026-02-08):**
+> This RFC has been superseded by **[RFC-003-A: Simplified Auto-Mapping UI](./RFC-003-A-SIMPLIFIED_MAPPING.md)**.
+> Implement the simplified auto-detection wizard instead of the complex row-by-row mapping.
+
+### 🎯 IMPLEMENTATION TASK: Simplified Mapping UI (RFC-003-A)
+
+**Context:** Replace the complex ColumnMappingStep with a user-friendly auto-detecting wizard that:
+- Auto-classifies columns (Date, Numeric, String) based on CSV data
+- Shows 3 clear sections: Time Reference → Metrics → Dimensions
+- Limits cognitive load (max 4 KPIs, no type editing, no renaming in this step)
+
+---
+
+#### 📋 STEP 1: TDD - Write Tests FIRST
+
+**File:** `apps/client/src/features/dataset/__tests__/ColumnMappingStep.test.tsx`
+
+**Test Suite Structure:**
+```typescript
+describe('[RFC-003-A] Simplified ColumnMappingStep', () => {
+  describe('Auto-Detection Logic', () => {
+    it('should auto-detect date column and pre-select it');
+    it('should classify numeric columns as Metrics');
+    it('should classify string columns as Dimensions');
+    it('should allow "No Date" selection if no date detected');
+  });
+
+  describe('Section A: Time Reference', () => {
+    it('should render date column dropdown with auto-detected value');
+    it('should show "No Date" option in dropdown');
+    it('should update mapping state when date selection changes');
+  });
+
+  describe('Section B: Metrics (KPIs)', () => {
+    it('should display all numeric columns as checkboxes');
+    it('should check first 4 numeric columns by default');
+    it('should prevent selecting more than 4 metrics (MVP constraint)');
+    it('should show warning when trying to select 5th metric');
+    it('should update kpiFields state when checkbox toggled');
+  });
+
+  describe('Section C: Dimensions (Categories)', () => {
+    it('should display all string columns as checkboxes');
+    it('should check all dimension columns by default');
+    it('should allow unchecking dimensions (e.g., Internal_ID)');
+    it('should update mapping state when dimension toggled');
+  });
+
+  describe('Validation', () => {
+    it('should allow proceeding with 0 date field (optional)');
+    it('should require at least 1 metric selected');
+    it('should allow proceeding with 0 dimensions (edge case)');
+  });
+
+  describe('Visual Layout', () => {
+    it('should render 3 sections vertically: Date → Metrics/Dimensions split');
+    it('should show metric count badge (e.g., "2/4 selected")');
+  });
+});
+```
+
+**Key Test Assertions:**
+- Use `getAllByRole('checkbox')` to find metric/dimension checkboxes
+- Verify `disabled` attribute appears on 5th checkbox when 4 already selected
+- Mock `useWizardState` to verify `setMapping()` is called correctly
+
+---
+
+#### 🎨 STEP 2: Update Component Implementation
+
+**File:** `apps/client/src/features/dataset/components/wizard/ColumnMappingStep.tsx`
+
+**New Component Structure:**
+```tsx
+export function ColumnMappingStep() {
+  const { fileA, fileB, mapping, setMapping } = useWizardState();
+  
+  // Auto-Detection Logic
+  const { dateColumns, numericColumns, stringColumns } = useMemo(() => {
+    const headers = fileA.parsedData?.headers || [];
+    const rows = fileA.parsedData?.rows || [];
+    
+    return autoClassifyColumns(headers, rows);
+  }, [fileA.parsedData]);
+
+  // State
+  const [selectedDate, setSelectedDate] = useState(dateColumns[0] || null);
+  const [selectedMetrics, setSelectedMetrics] = useState<string[]>(
+    numericColumns.slice(0, 4) // Auto-select first 4
+  );
+  const [selectedDimensions, setSelectedDimensions] = useState<string[]>(
+    stringColumns // All checked by default
+  );
+
+  // Handlers
+  const handleMetricToggle = (column: string) => {
+    if (selectedMetrics.includes(column)) {
+      setSelectedMetrics(prev => prev.filter(c => c !== column));
+    } else {
+      if (selectedMetrics.length >= 4) {
+        toast.warning('Máximo 4 KPIs permitidos en el MVP');
+        return;
+      }
+      setSelectedMetrics(prev => [...prev, column]);
+    }
+  };
+
+  // Update wizard state
+  useEffect(() => {
+    setMapping({
+      dimensionField: selectedDate,
+      kpiFields: selectedMetrics.map(col => ({
+        id: `kpi_${col}`,
+        columnName: col,
+        label: col, // Use header name directly
+        format: 'number', // Default, can be refined post-MVP
+        highlighted: selectedMetrics.indexOf(col) < 4,
+      })),
+      // Store dimensions for filtering (future use)
+      _selectedDimensions: selectedDimensions,
+    });
+  }, [selectedDate, selectedMetrics, selectedDimensions]);
+
+  return (
+    <div className="space-y-8">
+      {/* Section A: Date Selection */}
+      <Card>
+        <CardHeader>
+          <h3>1. Campo de Fecha (Opcional)</h3>
+          <p className="text-sm text-muted-foreground">
+            Para análisis de tendencias temporales
+          </p>
+        </CardHeader>
+        <CardContent>
+          <Select value={selectedDate || 'none'} onValueChange={setSelectedDate}>
+            <SelectTrigger>
+              <SelectValue placeholder="Seleccionar columna de fecha" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Sin fecha</SelectItem>
+              {dateColumns.map(col => (
+                <SelectItem key={col} value={col}>{col}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </CardContent>
+      </Card>
+
+      {/* Section B & C: Metrics + Dimensions */}
+      <div className="grid grid-cols-2 gap-6">
+        {/* Left: Metrics */}
+        <Card>
+          <CardHeader>
+            <h3>2. Métricas (KPIs)</h3>
+            <p className="text-sm text-muted-foreground">
+              Selecciona hasta 4 campos numéricos
+            </p>
+            <Badge variant="secondary">
+              {selectedMetrics.length}/4 seleccionados
+            </Badge>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {numericColumns.map(col => (
+              <div key={col} className="flex items-center space-x-2">
+                <Checkbox 
+                  id={`metric-${col}`}
+                  checked={selectedMetrics.includes(col)}
+                  onCheckedChange={() => handleMetricToggle(col)}
+                  disabled={
+                    !selectedMetrics.includes(col) && 
+                    selectedMetrics.length >= 4
+                  }
+                />
+                <Label htmlFor={`metric-${col}`}>{col}</Label>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        {/* Right: Dimensions */}
+        <Card>
+          <CardHeader>
+            <h3>3. Dimensiones (Filtros)</h3>
+            <p className="text-sm text-muted-foreground">
+              Campos de texto para segmentar
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {stringColumns.map(col => (
+              <div key={col} className="flex items-center space-x-2">
+                <Checkbox 
+                  id={`dim-${col}`}
+                  checked={selectedDimensions.includes(col)}
+                  onCheckedChange={(checked) => {
+                    if (checked) {
+                      setSelectedDimensions(prev => [...prev, col]);
+                    } else {
+                      setSelectedDimensions(prev => prev.filter(c => c !== col));
+                    }
+                  }}
+                />
+                <Label htmlFor={`dim-${col}`}>{col}</Label>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}
+```
+
+---
+
+#### 🛠️ STEP 3: Create Auto-Classification Utility
+
+**File:** `apps/client/src/features/dataset/utils/autoClassify.ts`
+
+```typescript
+/**
+ * Auto-classify CSV columns based on first 50 rows
+ * 
+ * Rules:
+ * - Date: Matches common date formats (YYYY-MM-DD, DD/MM/YYYY, ISO)
+ * - Numeric: All values are numbers or empty
+ * - String: Everything else
+ */
+export function autoClassifyColumns(
+  headers: string[],
+  rows: Record<string, unknown>[]
+): {
+  dateColumns: string[];
+  numericColumns: string[];
+  stringColumns: string[];
+} {
+  const sample = rows.slice(0, 50);
+  const dateColumns: string[] = [];
+  const numericColumns: string[] = [];
+  const stringColumns: string[] = [];
+
+  headers.forEach(header => {
+    const values = sample.map(row => row[header]);
+    
+    // Date detection
+    if (isDateColumn(values)) {
+      dateColumns.push(header);
+      return;
+    }
+
+    // Numeric detection
+    if (isNumericColumn(values)) {
+      numericColumns.push(header);
+      return;
+    }
+
+    // Default to string
+    stringColumns.push(header);
+  });
+
+  return { dateColumns, numericColumns, stringColumns };
+}
+
+function isDateColumn(values: unknown[]): boolean {
+  const datePatterns = [
+    /^\d{4}-\d{2}-\d{2}$/, // YYYY-MM-DD
+    /^\d{2}\/\d{2}\/\d{4}$/, // DD/MM/YYYY
+    /^\d{4}-\d{2}-\d{2}T/, // ISO8601
+  ];
+
+  const matches = values.filter(v => {
+    if (typeof v !== 'string') return false;
+    return datePatterns.some(pattern => pattern.test(v));
+  });
+
+  return matches.length / values.length > 0.8; // 80% threshold
+}
+
+function isNumericColumn(values: unknown[]): boolean {
+  const numericValues = values.filter(v => {
+    if (v === null || v === undefined || v === '') return true;
+    return typeof v === 'number' || !isNaN(Number(v));
+  });
+
+  return numericValues.length / values.length > 0.9; // 90% threshold
+}
+```
+
+**Test File:** `apps/client/src/features/dataset/utils/__tests__/autoClassify.test.ts`
+
+---
+
+#### 🎨 STEP 4: Visual Reference Adaptation
+
+**Source:** `SideBy-Design/src/pages/DataMappingWizard.tsx`
+
+**Adaptations Required:**
+- Remove complex table UI
+- Keep card-based layout with badges
+- Use Checkbox groups instead of individual selects
+- Add metric count badge (X/4)
+- Show InfoIcon tooltip for constraint explanations
+
+---
+
+#### ✅ STEP 5: Integration Checklist
+
+- [ ] Tests pass: `npm run test:unit`
+- [ ] Lint passes: `npm run lint`
+- [ ] TypeScript builds: `npm run build`
+- [ ] Wizard flow works: Upload → Mapping → Config → Dashboard
+- [ ] State persists when navigating back to Step 2
+- [ ] Max 4 metrics constraint enforced
+- [ ] Auto-detection works with example CSVs in `docs/ejemplos/`
+
+---
+
+#### 📊 Success Criteria
+
+1. **UX:** User completes Step 2 in <30 seconds (down from 2+ min with old UI)
+2. **Accuracy:** Auto-detection correctly classifies 95%+ of common CSV formats
+3. **Test Coverage:** Step component has >90% coverage
+4. **No Breaking Changes:** Existing Step 1 (FileUploadStep) and Step 3 (ConfigurationStep) still work
+
+---
+
+#### 🚀 Implementation Priority
+
+**Phase 1 (Core):**
+1. Auto-classification logic + tests
+2. Section A (Date selection)
+3. Section B (Metrics with 4-limit)
+
+**Phase 2 (Polish):**
+4. Section C (Dimensions)
+5. Visual refinements (badges, tooltips)
+6. Integration with Step 3
+
+**Phase 3 (Validation):**
+7. E2E wizard test
+8. Real CSV testing with `docs/ejemplos/` files
+
+---
+
+**⚠️ MVP Constraints (DO NOT IMPLEMENT YET):**
+- Column renaming (future: add editable labels)
+- Type override (future: allow manual number→text conversion)
+- Aggregation method selection (future: SUM/AVG/COUNT toggle)
+- Advanced date parsing (future: custom format detection)
 
 **END OF RFC-003**

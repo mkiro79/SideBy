@@ -4,6 +4,8 @@
  * Hook de Zustand que gestiona el estado completo del wizard de carga de datos.
  * Implementa navegación entre pasos, validación y reset.
  * Incluye persistencia en localStorage para mantener el estado entre sesiones.
+ *
+ * UPDATED: Fixed kpiFields optional chaining (2026-02-08)
  */
 
 import { create } from "zustand";
@@ -13,6 +15,7 @@ import type {
   WizardStep,
   FileGroup,
   ColumnMapping,
+  KPIMappingField,
 } from "../types/wizard.types.js";
 
 // ============================================================================
@@ -65,7 +68,7 @@ interface WizardActions {
 
   // Mapping
   setMapping: (mapping: Partial<ColumnMapping>) => void;
-  addKPIField: (field: ColumnMapping["kpiFields"][0]) => void;
+  addKPIField: (field: KPIMappingField) => void;
   removeKPIField: (fieldId: string) => void;
 
   // Configuration
@@ -150,7 +153,7 @@ export const useWizardState = create<WizardState & WizardActions>()(
         set((state) => ({
           mapping: {
             ...state.mapping,
-            kpiFields: [...state.mapping.kpiFields, field],
+            kpiFields: [...(state.mapping.kpiFields || []), field],
           },
         }));
       },
@@ -159,7 +162,9 @@ export const useWizardState = create<WizardState & WizardActions>()(
         set((state) => ({
           mapping: {
             ...state.mapping,
-            kpiFields: state.mapping.kpiFields.filter((f) => f.id !== fieldId),
+            kpiFields: (state.mapping.kpiFields || []).filter(
+              (f) => f.id !== fieldId,
+            ),
           },
         }));
       },
@@ -212,7 +217,10 @@ export const useWizardState = create<WizardState & WizardActions>()(
 
       canProceedToStep3: () => {
         const { mapping } = get();
-        return mapping.dimensionField !== null && mapping.kpiFields.length > 0;
+        return (
+          mapping.dimensionField !== null &&
+          (mapping.kpiFields || []).length > 0
+        );
       },
 
       canSubmit: () => {
