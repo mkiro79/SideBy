@@ -2,10 +2,11 @@
  * Column Mapping Step Component
  * 
  * Paso 2: Configurar mapping de columnas (dimensión + KPIs)
+ * Incluye vista previa lado a lado de ambos archivos
  */
 
 import { useState } from 'react';
-import { Plus, X, TrendingUp } from 'lucide-react';
+import { Plus, X, TrendingUp, Star, Calendar } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button.js';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select.js';
 import { Input } from '@/shared/components/ui/Input.js';
@@ -13,11 +14,13 @@ import { Label } from '@/shared/components/ui/Label.js';
 import { Badge } from '@/shared/components/ui/badge.js';
 import { Card } from '@/shared/components/ui/card.js';
 import { Alert, AlertDescription } from '@/shared/components/ui/alert.js';
+import { Checkbox } from '@/shared/components/ui/checkbox.js';
 import { useWizardState } from '../../hooks/useWizardState.js';
+import { FilePreview } from '../FilePreview.js';
 import type { KPIMappingField } from '../../types/wizard.types.js';
 
 export function ColumnMappingStep() {
-  const { fileA, mapping, setMapping, addKPIField, removeKPIField } = useWizardState();
+  const { fileA, fileB, mapping, setMapping, addKPIField, removeKPIField } = useWizardState();
   
   const [newKPIColumn, setNewKPIColumn] = useState('');
   const [newKPILabel, setNewKPILabel] = useState('');
@@ -34,6 +37,11 @@ export function ColumnMappingStep() {
       !kpiFields.some((kpi) => kpi.columnName === col)
   );
   
+  // Detectar posibles columnas de fecha
+  const dateColumns = availableColumns.filter((col) =>
+    /fecha|date|time|periodo|year|mes|month/i.test(col)
+  );
+  
   /**
    * Handler para agregar KPI
    */
@@ -45,6 +53,7 @@ export function ColumnMappingStep() {
       columnName: newKPIColumn,
       label: newKPILabel,
       format: newKPIFormat,
+      highlighted: false, // Por defecto no destacado
     };
     
     addKPIField(newField);
@@ -55,6 +64,23 @@ export function ColumnMappingStep() {
     setNewKPIFormat('number');
   };
   
+  /**
+   * Handler para toggle de KPI destacado
+   */
+  const handleToggleHighlighted = (kpiId: string) => {
+    const updatedKPIs = kpiFields.map((kpi) => {
+      if (kpi.id === kpiId) {
+        return { ...kpi, highlighted: !kpi.highlighted };
+      }
+      return kpi;
+    });
+    
+    setMapping({ kpiFields: updatedKPIs });
+  };
+  
+  // Contar KPIs destacados
+  const highlightedCount = kpiFields.filter((kpi) => kpi.highlighted).length;
+  
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -64,6 +90,31 @@ export function ColumnMappingStep() {
           Define qué columna contiene las dimensiones (ej: categorías, regiones) y cuáles son los KPIs numéricos (ej: ventas, inventario).
         </p>
       </div>
+      
+      {/* Vista previa lado a lado */}
+      {fileA.parsedData && fileB.parsedData && (
+        <div className="space-y-3">
+          <h3 className="text-sm font-semibold">Vista previa de los archivos</h3>
+          <div className="grid gap-6 lg:grid-cols-2">
+            <FilePreview
+              fileName={fileA.file?.name || 'Archivo A'}
+              label="Archivo A (Datos Actuales)"
+              variant="primary"
+              headers={fileA.parsedData.headers}
+              rows={fileA.parsedData.rows.slice(0, 5)}
+              totalRows={fileA.parsedData.rowCount}
+            />
+            <FilePreview
+              fileName={fileB.file?.name || 'Archivo B'}
+              label="Archivo B (Datos Comparativos)"
+              variant="comparative"
+              headers={fileB.parsedData.headers}
+              rows={fileB.parsedData.rows.slice(0, 5)}
+              totalRows={fileB.parsedData.rowCount}
+            />
+          </div>
+        </div>
+      )}
       
       {/* Dimension Field Selection */}
       <Card className="p-6 space-y-4">
@@ -91,6 +142,35 @@ export function ColumnMappingStep() {
             ))}
           </SelectContent>
         </Select>
+        
+        {/* Selector de columna de fecha (opcional) */}
+        {dateColumns.length > 0 && (
+          <div className="pt-4 border-t space-y-3">
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4 h-4 text-muted-foreground" />
+              <Label htmlFor="date-field">Columna de fecha (opcional)</Label>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Detectamos posibles columnas de fecha. Selecciona una para análisis temporal.
+            </p>
+            <Select
+              value={mapping.dateField || 'none'}
+              onValueChange={(value: string) => setMapping({ dateField: value === 'none' ? null : value })}
+            >
+              <SelectTrigger id="date-field">
+                <SelectValue placeholder="Ninguna (omitir análisis temporal)" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Ninguna</SelectItem>
+                {dateColumns.map((col) => (
+                  <SelectItem key={col} value={col}>
+                    {col}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
       </Card>
       
       {/* KPI Fields Configuration */}
@@ -107,14 +187,29 @@ export function ColumnMappingStep() {
         {/* Lista de KPIs configurados */}
         {kpiFields.length > 0 && (
           <div className="space-y-3">
+            {highlightedCount < 4 ? (
+              <Alert>
+                <Star className="h-4 w-4" />
+                <AlertDescription>
+                  <strong>KPIs Destacados:</strong> Marca hasta 4 KPIs como destacados para mostrarlos en las tarjetas principales del dashboard ({highlightedCount}/4 seleccionados).
+                </AlertDescription>
+              </Alert>
+            ) : (
+              <Alert variant="warning">
+                <AlertDescription>
+                  Has alcanzado el límite de 4 KPIs destacados. Desmarca uno para destacar otro.
+                </AlertDescription>
+              </Alert>
+            )}
+            
             {kpiFields.map((kpi) => (
               <div
                 key={kpi.id}
                 className="flex items-center justify-between p-3 bg-accent/50 rounded-lg"
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 flex-1">
                   <TrendingUp className="w-5 h-5 text-primary" />
-                  <div>
+                  <div className="flex-1">
                     <p className="font-medium">{kpi.label}</p>
                     <p className="text-sm text-muted-foreground">
                       Columna: <code className="text-xs">{kpi.columnName}</code>
@@ -123,14 +218,35 @@ export function ColumnMappingStep() {
                   <Badge variant="outline">{formatLabels[kpi.format]}</Badge>
                 </div>
                 
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => removeKPIField(kpi.id)}
-                  aria-label={`Eliminar ${kpi.label}`}
-                >
-                  <X className="w-4 h-4" />
-                </Button>
+                <div className="flex items-center gap-2">
+                  {/* Toggle para destacar */}
+                  <div className="flex items-center gap-1.5">
+                    <Checkbox
+                      id={`highlight-${kpi.id}`}
+                      checked={kpi.highlighted || false}
+                      onCheckedChange={() => handleToggleHighlighted(kpi.id)}
+                      disabled={!kpi.highlighted && highlightedCount >= 4}
+                    />
+                    <Label
+                      htmlFor={`highlight-${kpi.id}`}
+                      className="text-xs cursor-pointer flex items-center gap-1"
+                    >
+                      <Star
+                        className={`w-3.5 h-3.5 ${kpi.highlighted ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground'}`}
+                      />
+                      Destacar
+                    </Label>
+                  </div>
+                  
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removeKPIField(kpi.id)}
+                    aria-label={`Eliminar ${kpi.label}`}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
             ))}
           </div>

@@ -43,23 +43,32 @@ export default function DataUploadWizard() {
   } = useWizardState();
   
   /**
+   * Calcula el status de un step
+   */
+  const getStepStatus = (stepNumber: number): 'current' | 'complete' | 'upcoming' => {
+    if (currentStep === stepNumber) return 'current';
+    if (currentStep > stepNumber) return 'complete';
+    return 'upcoming';
+  };
+
+  /**
    * Define los pasos del wizard
    */
   const steps: StepStatus[] = [
     {
       id: 1,
       name: 'Carga de archivos',
-      status: currentStep === 1 ? 'current' : currentStep > 1 ? 'complete' : 'upcoming',
+      status: getStepStatus(1),
     },
     {
       id: 2,
       name: 'Mapeo de columnas',
-      status: currentStep === 2 ? 'current' : currentStep > 2 ? 'complete' : 'upcoming',
+      status: getStepStatus(2),
     },
     {
       id: 3,
       name: 'Configuración',
-      status: currentStep === 3 ? 'current' : 'upcoming',
+      status: getStepStatus(3),
     },
   ];
   
@@ -126,13 +135,16 @@ export default function DataUploadWizard() {
         unifiedData,
       };
       
-      // Hacer upload (promesa con toast)
-      const dataset = await toast.promise(uploadDataset(payload), {
+      // Hacer upload con toast
+      const uploadPromise = uploadDataset(payload);
+      
+      toast.promise(uploadPromise, {
         loading: 'Creando dataset...',
         success: 'Dataset creado exitosamente',
         error: 'Error al crear el dataset',
       });
       
+      const dataset = await uploadPromise;
       console.log('✅ Dataset creado:', dataset);
       
       // Reset y navegar
@@ -154,10 +166,10 @@ export default function DataUploadWizard() {
   const handleCancel = () => {
     if (currentStep > 1) {
       // Confirmar si ya avanzó pasos
-      const confirm = window.confirm(
+      const userConfirmed = globalThis.confirm(
         '¿Estás seguro de que quieres cancelar? Perderás todo el progreso.'
       );
-      if (!confirm) return;
+      if (!userConfirmed) return;
     }
     
     reset();
@@ -205,6 +217,7 @@ export default function DataUploadWizard() {
                 disabled={currentStep === 1 || isLoading}
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
+                {' '}
                 Anterior
               </Button>
               
@@ -218,14 +231,16 @@ export default function DataUploadWizard() {
                   }
                 >
                   Siguiente
+                  {' '}
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
               ) : (
                 <Button
                   onClick={handleSubmit}
-                  disabled={!canSubmit() || isLoading}
+                  disabled={isLoading || !canSubmit()}
                 >
                   <Check className="w-4 h-4 mr-2" />
+                  {' '}
                   Crear dataset
                 </Button>
               )}

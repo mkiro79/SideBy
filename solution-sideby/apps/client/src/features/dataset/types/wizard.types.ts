@@ -48,6 +48,7 @@ export interface FileGroup {
 
 export interface ColumnMapping {
   dimensionField: string | null;
+  dateField?: string | null; // Opcional: columna de fecha para análisis temporal
   kpiFields: KPIMappingField[];
 }
 
@@ -56,6 +57,7 @@ export interface KPIMappingField {
   columnName: string;
   label: string;
   format: "number" | "currency" | "percentage";
+  highlighted?: boolean; // Opcional: indica si el KPI se destaca en el dashboard (max 4)
 }
 
 // ============================================================================

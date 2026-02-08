@@ -211,12 +211,12 @@ export function FileUploadStep() {
 // ============================================================================
 
 interface FileDropZoneProps {
-  label: string;
-  fileGroup: FileGroup;
-  onDrop: (e: React.DragEvent<HTMLDivElement>) => void;
-  onFileSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onDragOver: (e: React.DragEvent<HTMLDivElement>) => void;
-  isProcessing: boolean;
+  readonly label: string;
+  readonly fileGroup: FileGroup;
+  readonly onDrop: (e: React.DragEvent<HTMLDivElement>) => void;
+  readonly onFileSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  readonly onDragOver: (e: React.DragEvent<HTMLDivElement>) => void;
+  readonly isProcessing: boolean;
 }
 
 function FileDropZone({
@@ -231,6 +231,13 @@ function FileDropZone({
   const hasError = fileGroup.error !== null;
   const isValid = fileGroup.isValid;
   
+  // Calcula el estilo del borde
+  const getBorderStyle = () => {
+    if (hasError) return 'border-destructive bg-destructive/5';
+    if (isValid) return 'border-data-success bg-data-success/5';
+    return 'border-border hover:border-primary/50 hover:bg-accent/5';
+  };
+  
   return (
     <div className="space-y-3">
       {/* Label */}
@@ -238,22 +245,25 @@ function FileDropZone({
       
       {/* Drop Zone */}
       <div
+        role="button"
+        tabIndex={0}
         onDrop={onDrop}
         onDragOver={onDragOver}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            document.getElementById(`file-input-${label}`)?.click();
+          }
+        }}
         className={`
           relative border-2 border-dashed rounded-lg p-8
           transition-colors duration-200
-          ${
-            hasError
-              ? 'border-destructive bg-destructive/5'
-              : isValid
-              ? 'border-data-success bg-data-success/5'
-              : 'border-border hover:border-primary/50 hover:bg-accent/5'
-          }
+          ${getBorderStyle()}
           ${isProcessing ? 'opacity-50 pointer-events-none' : 'cursor-pointer'}
         `}
       >
         <input
+          id={`file-input-${label}`}
           type="file"
           accept=".csv,.xlsx,.xls"
           onChange={onFileSelect}
