@@ -4,7 +4,7 @@
  * Verifica que el sistema de feature flags centralizado funcione correctamente
  */
 
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import { FEATURES, isFeatureEnabled } from "../features.js";
 
 describe("[TDD] Feature Flags System", () => {
@@ -55,8 +55,8 @@ describe("[TDD] Feature Flags System", () => {
       try {
         // @ts-expect-error - Testing immutability
         FEATURES.EMAIL_LOGIN = !original;
-      } catch (e) {
-        // Expected in strict mode
+      } catch {
+        // Expected in strict mode - Object.freeze previene modificación
       }
       // El valor NO debe cambiar
       expect(FEATURES.EMAIL_LOGIN).toBe(original);

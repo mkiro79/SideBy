@@ -1,3 +1,4 @@
 #!/usr/bin/env sh
 node .husky/detect-secrets.js || exit 1
-npx lint-staged
+npm run lint --prefix solution-sideby/apps/client
+# npx lint-staged

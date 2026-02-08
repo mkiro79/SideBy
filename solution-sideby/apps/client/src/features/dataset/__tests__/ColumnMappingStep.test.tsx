@@ -4,7 +4,7 @@
  * Pruebas del segundo paso del wizard: mapeo de columnas (dimensión + KPIs)
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import { ColumnMappingStep } from '../components/wizard/ColumnMappingStep.js';
 import * as useWizardStateModule from '../hooks/useWizardState.js';
