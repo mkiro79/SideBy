@@ -23,6 +23,7 @@ export function useFileUpload() {
    */
   const processFile = async (file: File): Promise<FileGroup> => {
     setIsProcessing(true);
+    let toastId: string | number | undefined;
 
     try {
       // Paso 1: Validación básica (tamaño y formato)
@@ -38,14 +39,13 @@ export function useFileUpload() {
       }
 
       // Paso 2: Parsear archivo
-      toast.loading(`Procesando ${file.name}...`);
+      toastId = toast.loading(`Procesando ${file.name}...`);
       const parsedData = await parseFile(file);
-      toast.dismiss(); // Cerrar loading toast
+      toast.dismiss(toastId); // Cerrar loading toast
 
       // Paso 3: Validación de estructura
       const structureError = validateFile(file, parsedData);
       if (structureError) {
-        toast.dismiss(); // Asegurar que se cierre el loading
         toast.error("Error de estructura", structureError.message);
         return {
           file,
@@ -68,7 +68,9 @@ export function useFileUpload() {
         isValid: true,
       };
     } catch (error: unknown) {
-      toast.dismiss(); // Asegurar que se cierre el loading
+      if (toastId) {
+        toast.dismiss(toastId);
+      }
       const fileError: FileValidationError = {
         code: "PARSE_ERROR",
         message:
