@@ -49,9 +49,9 @@ export function ConfigurationStep() {
       </div>
       
       {/* Success Message con Check Circle */}
-      <div className="flex flex-col items-center justify-center py-6 px-4 bg-data-positive/5 border border-data-positive/20 rounded-lg">
-        <div className="mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-data-positive/10">
-          <CheckCircle2 className="h-8 w-8 text-data-positive" />
+      <div className="flex flex-col items-center justify-center py-6 px-4 bg-data-success/5 border border-data-success/20 rounded-lg">
+        <div className="mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-data-success/10">
+          <CheckCircle2 className="h-8 w-8 text-data-success" />
         </div>
         <h3 className="text-lg font-semibold mb-1">¡Datos unificados correctamente!</h3>
         <p className="text-center text-sm text-muted-foreground">

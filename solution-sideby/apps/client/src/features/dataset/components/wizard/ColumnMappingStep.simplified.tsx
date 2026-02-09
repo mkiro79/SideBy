@@ -29,8 +29,9 @@ import { Alert, AlertDescription } from "@/shared/components/ui/alert.js";
 import { Checkbox } from "@/shared/components/ui/checkbox.js";
 import { FilePreview } from "../FilePreview.js";
 import { autoClassifyColumns } from "../../utils/autoClassify.js";
+import { inferKPIFormat } from "../../utils/inferKPIFormat.js";
 import { useWizardState } from "../../hooks/useWizardState.js";
-import type { WizardState, ColumnMapping, KPIFormat } from "../../types/wizard.types.js";
+import type { WizardState, ColumnMapping } from "../../types/wizard.types.js";
 
 export interface ColumnMappingStepProps {
   readonly state?: WizardState;
@@ -180,12 +181,12 @@ export function ColumnMappingStep({
       newMapping.dateField = date;
     }
 
-    // Agregar métricas como kpiFields
+    // Agregar métricas como kpiFields con formato inferido
     newMapping.kpiFields = Array.from(metrics).map((metric) => ({
       id: metric,
       columnName: metric,
       label: metric,
-      format: "currency" as KPIFormat,
+      format: inferKPIFormat(metric),
     }));
 
     // Agregar primera dimensión como dimensionField (requerido para canProceedToStep3)
