@@ -68,13 +68,321 @@ UC-CORE-01: Carga de Archivos (Data Ingestion)
 
 Actor: Usuario.
 
-Descripción: El usuario debe poder subir archivos (CSV, Excel) a la plataforma para ser analizados. No debe de ocupar mas de un limite definido por configuración de la aplicacion. Los archivos deben ser validados antes de ser procesados.
+Descripción: El usuario debe poder subir archivos (CSV, Excel) a la plataforma para ser analizados. No debe de ocupar mas de un limite definido por configuración de la aplicacion. Los archivos deben ser validados antes de ser procesados. 
+Normas de validación:
+- Maximo de 2Mb por archivo.
+- Solo formatos CSV y Excel.
+- Validación de estructura (ej: mínimo 2 columnas, al menos una fila de datos).
+- Validar que el archivo no contenga datos maliciosos (ej: scripts, macros).
+- Validar que el archivo no exceda el límite de almacenamiento permitido para su plan (free vs premium).
+- Proporcionar feedback claro al usuario en caso de error (ej: "Archivo demasiado grande", "Formato no soportado", "Archivo mal formado").
+- Que la primera fila se interprete como encabezados de columna para facilitar el mapeo posterior.
+- Que la cabecera de los 2 archivos sea igual para facilitar la comparación.
 
-UC-CORE-02: Mapeo de Columnas (Normalization)
+Ejemplo de Datos a guardar:
+
+**Nombre en Mongo:** `datasets`
+
+JSON
+
+`{
+  "_id": "ObjectId('98z7y6x5w4v3u2t1s0r9q8p7')",
+  "ownerId": "ObjectId('65a1b2c3d4e5f6g7h8i9j0k1')", // Referencia al User
+  "status": "ready", // "processing" | "ready" | "error"
+  
+  // Metadatos Generales
+  "meta": {
+    "name": "Q1 2024 vs Q1 2023 - Marketing",
+    "description": "Comparativa de rendimiento de campañas.",
+    "createdAt": "2024-01-26T10:00:00Z"
+  },
+
+  // Configuración de los Grupos (A vs B)
+  // Esto define qué es cada color en la gráfica
+  "sourceConfig": {
+    "groupA": {
+      "label": "Año Actual (2024)",
+      "color": "#2563EB", // Azul SideBy
+      "originalFileName": "ventas_2024.csv"
+    },
+    "groupB": {
+      "label": "Año Anterior (2023)",
+      "color": "#F97316", // Naranja SideBy
+      "originalFileName": "ventas_2023.csv"
+    }
+  },
+
+  // El Mapeo (Resultado del Wizard)
+  "schemaMapping": {
+    "dimensionField": "fecha", // La columna que actúa de Eje X
+    "kpiFields": [
+      { "id": "ingresos", "label": "Ingresos Totales", "format": "currency" },
+      { "id": "visitas", "label": "Tráfico Web", "format": "number" },
+      { "id": "rebote", "label": "Tasa de Rebote", "format": "percentage" }
+    ]
+  },
+
+  // Configuración Visual (Templates)
+  "dashboardLayout": {
+    "templateId": "sideby_standard_v1",
+    "highlightedKpis": ["ingresos", "visitas", "rebote"], // IDs de los KPIs arriba
+    "rows": [
+      // Aquí guardamos la disposición de widgets (como definimos antes)
+      {
+        "id": "row_main",
+        "type": "full_width",
+        "widgets": [{ "type": "chart_line", "title": "Tendencia", "dataConfig": { "kpi": "ingresos" } }]
+      }
+    ]
+  },
+
+  // Configuración de IA (Genkit)
+  "aiConfig": {
+    "enabled": true,
+    "userContext": "Analiza esto como un CFO agresivo buscando recortar gastos."
+  },
+
+  // LOS DATOS UNIFICADOS (Array de Objetos Planos)
+  // Nota: Mongo aguanta documentos de hasta 16MB. 
+  // Para un MVP con CSVs de <50k filas, esto entra sobrado aquí.
+  "data": [
+    {
+      "fecha": "2024-01-01",
+      "pais": "España",
+      "ingresos": 1500,
+      "visitas": 300,
+      "rebote": 0.45,
+      "_source_group": "groupA" // <--- LA CLAVE MÁGICA
+    },
+    {
+      "fecha": "2024-01-01", // Misma fecha, diferente grupo
+      "pais": "España",
+      "ingresos": 1200,
+      "visitas": 280,
+      "rebote": 0.50,
+      "_source_group": "groupB" // <--- LA CLAVE MÁGICA
+    }
+    // ... miles de filas más
+  ]
+}`
+
+Ejemplo de entidad en typescript:
+
+```typescript   
+`// Tipos auxiliares
+export type DatasetStatus = 'processing' | 'ready' | 'error';
+
+export interface KPIField {
+  id: string; // key en el objeto data
+  label: string;
+  format: 'number' | 'currency' | 'percentage';
+}
+
+export interface GroupConfig {
+  label: string;
+  color: string;
+  originalFileName: string;
+}
+
+// Tipo flexible para la fila de datos (ya que las columnas cambian según el CSV)
+export interface DataRow {
+  _source_group: 'groupA' | 'groupB';
+  [key: string]: string | number | boolean; // Índice de firma para propiedades dinámicas
+}
+
+// La Entidad Principal
+export interface Dataset {
+  id: string;
+  ownerId: string;
+  status: DatasetStatus;
+  
+  meta: {
+    name: string;
+    description?: string;
+    createdAt: Date;
+  };
+
+  sourceConfig: {
+    groupA: GroupConfig;
+    groupB: GroupConfig;
+  };
+
+  schemaMapping: {
+    dimensionField: string;
+    kpiFields: KPIField[];
+  };
+
+  dashboardLayout: {
+    templateId: string;
+    highlightedKpis: string[];
+    rows: any[]; // Puedes tipar esto más estricto con la interfaz de Widgets que hicimos antes
+  };
+
+  aiConfig?: {
+    enabled: boolean;
+    userContext?: string;
+    lastAnalysis?: string; // Cache del resultado de la IA
+  };
+
+  data: DataRow[];
+}`
+
+
+
+UC-CORE-02: Mapeo de Columnas y Configuración Final (Wizard Steps 2 & 3)
 
 Actor: Usuario.
 
-Descripción: Tras subir un archivo, el usuario debe poder seleccionar qué columnas representan qué datos (ej: "Columna A es Precio", "Columna B es Nombre") para estandarizar la comparación.
+Descripción: Tras subir dos archivos CSV/Excel (Grupo A vs Grupo B), el usuario debe completar un wizard de 2 pasos adicionales para preparar el dataset para visualización:
+
+**PASO 2: Mapeo de Columnas (ColumnMappingStep)**
+- El usuario selecciona qué columna actúa como "Dimensión" (Eje X, ej: fecha, producto, región).
+- El usuario configura los "KPIs Numéricos" (Eje Y, métricas a comparar):
+  - Añade/remueve KPIs de la lista de columnas disponibles
+  - Asigna un label descriptivo a cada KPI
+  - Selecciona el formato de cada KPI: número, moneda (currency), o porcentaje
+- El sistema valida que al menos 1 dimensión y 1 KPI estén configurados antes de continuar.
+
+**PASO 3: Configuración y Revisión Final (ConfigurationStep)**
+- El usuario debe proporcionar un **nombre** para el report (obligatorio, máximo 100 caracteres).
+- (Opcional - Controlado por Feature Flag) Si `FEATURE_AI_ENABLED=true`:
+  - El usuario puede habilitar el "Análisis con IA"
+  - Si está habilitado, puede proporcionar un **prompt de contexto** para la IA (máximo 500 caracteres)
+  - Ejemplo: "Analiza esto como un CFO buscando optimizar costos"
+- El sistema muestra un **resumen completo** de la configuración:
+  - Información de archivos (Archivo A, Archivo B: nombres, cantidad de filas, periodos detectados)
+  - Métricas del dataset unificado (filas totales, campo de dimensión, campo de fecha si aplica, cantidad de KPIs)
+  - Lista de KPIs seleccionados con sus formatos
+- El usuario revisa el resumen y confirma para finalizar.
+- Al confirmar, el sistema guarda la configuración completa (metadata, schemaMapping, dashboardLayout, aiConfig) via `PATCH /api/v1/datasets/:id`.
+- El dataset cambia a status `ready` y el usuario es redirigido al Dashboard del dataset.
+
+Reglas de Negocio:
+- **Paso 2 - Mapping:**
+  - Al menos 1 columna debe ser seleccionada como "Dimensión" (Eje X).
+  - Al menos 1 columna debe ser configurada como "KPI Numérico" (Eje Y).
+  - Los KPIs pueden configurarse con 3 formatos: number, currency, percentage.
+  - Si existe una columna de tipo "fecha", puede marcarse para habilitar gráficos de series temporales.
+  - Las columnas categóricas (texto no numérico) se identifican para uso futuro en filtros.
+
+- **Paso 3 - Configuration:**
+  - El nombre del report es obligatorio (min 1 carácter, máximo 100 caracteres).
+  - El campo "descripción" existe en el modelo de datos pero se mantiene como opcional en la UI para no complicar el proceso.
+  - El prompt de IA solo es accesible si la feature flag `VITE_FEATURE_AI_ENABLED=true` en el Frontend.
+  - Si el prompt de IA está habilitado y el usuario lo proporciona, máximo 500 caracteres.
+  - El resumen debe mostrar:
+    - Tarjetas separadas para Archivo A y Archivo B con badges de cantidad de filas
+    - Métricas totales del dataset unificado (suma de filas, campo dimensión, campo fecha, cantidad de KPIs)
+    - Lista de KPIs configurados con sus etiquetas y formatos
+  - El botón "Finalizar" debe estar deshabilitado hasta que el nombre del report sea válido.
+  - Máximo 4 KPIs pueden ser destacados como "KPI Cards" en el dashboard (highlightedKpis en dashboardLayout).
+
+- **Auto-asignación de Template:**
+  - El sistema asigna automáticamente el template `sideby_executive` (KPI Cards + 1 Gráfico Principal + Tabla Resumen).
+
+- **Validaciones Backend:**
+  - Solo el propietario del dataset (ownerId) puede actualizar la configuración.
+  - Todas las validaciones de campos (nombre, dimensión, KPIs, prompt IA) se realizan en el Backend mediante Zod schemas.
+
+- **Testing (TDD Obligatorio):**
+  - **Backend:** Tests unitarios deben verificar todas las validaciones (nombre vacío, dimensión faltante, exceso de KPIs destacados, prompt IA demasiado largo).
+  - **Frontend:** Tests de componentes deben verificar:
+    - ColumnMappingStep: Validación de dimensión/KPI, funcionalidad de añadir/remover KPIs
+    - ConfigurationStep: Validación de nombre, visibilidad del prompt IA según feature flag, cálculo correcto del resumen, habilitación del botón "Finalizar"
+
+Datos a Guardar (Schema de Dataset - actualizado):
+
+```json
+{
+  "_id": "ObjectId('...')",
+  "ownerId": "ObjectId('...')",
+  "status": "ready",  // Cambia de "processing" a "ready" al completar el wizard
+  
+  // PASO 3: Metadata
+  "meta": {
+    "name": "Q1 2024 vs Q1 2023 - Ventas",  // Obligatorio
+    "description": "",  // Opcional, oculto en UI
+    "createdAt": "2024-01-26T10:00:00Z"
+  },
+
+  "sourceConfig": {
+    "groupA": {
+      "label": "Año Actual (2024)",
+      "color": "#2563EB",
+      "originalFileName": "ventas_2024.csv"
+    },
+    "groupB": {
+      "label": "Año Anterior (2023)",
+      "color": "#F97316",
+      "originalFileName": "ventas_2023.csv"
+    }
+  },
+
+  // PASO 2: El Mapeo
+  "schemaMapping": {
+    "dimensionField": "fecha",  // Columna seleccionada como Eje X
+    "dateField": "fecha",  // (Opcional) Columna de fecha si aplica
+    "kpiFields": [
+      {
+        "id": "kpi_1234567890",  // ID único generado
+        "columnName": "ingresos",  // Nombre de columna del CSV
+        "label": "Ingresos Totales",  // Label amigable del usuario
+        "format": "currency"  // number | currency | percentage
+      },
+      {
+        "id": "kpi_0987654321",
+        "columnName": "visitas",
+        "label": "Tráfico Web",
+        "format": "number"
+      }
+    ],
+    "categoricalFields": ["pais", "canal"]  // Columnas categóricas identificadas
+  },
+
+  // Template Auto-asignado
+  "dashboardLayout": {
+    "templateId": "sideby_executive",
+    "highlightedKpis": ["kpi_1234567890", "kpi_0987654321"],  // Máximo 4
+    "rows": [
+      // Configuración de widgets (se define en RFC-004 Dashboard)
+    ]
+  },
+
+  // PASO 3: Configuración de IA (Feature Flag)
+  "aiConfig": {
+    "enabled": true,  // Si el usuario habilitó IA
+    "userContext": "Analiza esto como un CFO optimizando costos",  // Prompt opcional
+    "lastAnalysis": null  // Cache del resultado de la IA (se llena después)
+  },
+
+  // Datos unificados (de RFC-001)
+  "data": [
+    {
+      "fecha": "2024-01-01",
+      "pais": "España",
+      "ingresos": 1500,
+      "visitas": 300,
+      "_source_group": "groupA"
+    },
+    {
+      "fecha": "2024-01-01",
+      "pais": "España",
+      "ingresos": 1200,
+      "visitas": 280",
+      "_source_group": "groupB"
+    }
+    // ...
+  ]
+}
+```
+
+**Referencia RFC:** [RFC-003-SCHEMA_MAPPING.md](./design/RFC-003-SCHEMA_MAPPING.md)
+**Componentes Frontend:**
+- `apps/client/src/features/dataset/components/wizard/ColumnMappingStep.tsx`
+- `apps/client/src/features/dataset/components/wizard/ConfigurationStep.tsx`
+**Referencia Visual:**
+- DataMappingWizard: `SideBy-Design/src/pages/DataMappingWizard.tsx`
+- DataFinishWizard: `SideBy-Design/src/pages/DataFinishWizard.tsx`
 
 UC-CORE-03: Visualización "Side-by-Side" (Comparación)
 

@@ -9,11 +9,7 @@ import { Label } from '@/shared/components/ui/Label.js';
 import { Separator } from '@/shared/components/ui/Separator.js';
 import { useGoogleAuth } from '../hooks/useGoogleAuth.js';
 import { useAuthStore } from '../store/auth.store.js';
-
-// ============================================================================
-// FEATURE FLAGS
-// ============================================================================
-const ENABLE_EMAIL_LOGIN = false;
+import { FEATURES } from '@/config/features.js';
 
 // ============================================================================
 // LOGIN PAGE
@@ -86,7 +82,7 @@ export const LoginPage = () => {
             </div>
 
             {/* Separator con texto - Visual hierarchy */}
-            {ENABLE_EMAIL_LOGIN && (
+            {FEATURES.EMAIL_LOGIN && (
               <div className="relative my-8">
                 <Separator className="bg-slate-200 dark:bg-slate-800" />
                 <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-slate-900 px-4 text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
@@ -96,7 +92,7 @@ export const LoginPage = () => {
             )}
 
             {/* Email/Password Form */}
-            {ENABLE_EMAIL_LOGIN && (
+            {FEATURES.EMAIL_LOGIN && (
               <form className="space-y-5" onSubmit={(e) => e.preventDefault()}>
                 {/* Email Input - Icon + Input pattern */}
                 <div className="space-y-2.5">

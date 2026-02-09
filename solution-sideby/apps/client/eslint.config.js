@@ -17,4 +17,11 @@ export default [
       globals: globals.browser,
     },
   },
+  {
+    // Deshabilitar react-refresh/only-export-components en archivos de test
+    files: ['**/*.test.{ts,tsx}', '**/test/**/*.{ts,tsx}'],
+    rules: {
+      'react-refresh/only-export-components': 'off',
+    },
+  },
 ]
