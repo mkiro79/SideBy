@@ -8,7 +8,7 @@ npm run build:api
 # Run tests only for changed files (intelligent detection)
 # node .husky/run-changed-tests.mjs
 npm run test:unit --prefix solution-sideby/apps/api
-# Temporarily skip client tests due to @swc/core native binding issue in CI
+# Temporarily skip client tests due to @swc/core native binding issue in pre-push environment
 # npm run test:unit --prefix solution-sideby/apps/client
 # Skip integration tests due to known environment issues
 # TODO: Re-enable once MongoDB connection and Google OAuth env vars are properly configured
