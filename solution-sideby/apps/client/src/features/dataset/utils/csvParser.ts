@@ -116,11 +116,20 @@ export function unifyDatasets(
   // para búsqueda O(1) en lugar de asumir alineación por índice
   const dataBMap = new Map<unknown, Record<string, unknown>>();
   dataB.rows.forEach((row) => {
-    const dimensionValue = row[dimensionField];
+    const dimensionValue = dimensionField ? row[dimensionField] : null;
     if (dimensionValue !== null && dimensionValue !== undefined) {
       dataBMap.set(dimensionValue, row);
     }
   });
+
+  // Iterar sobre cada fila del dataset A
+  dataA.rows.forEach((rowA, i) => {
+    // Buscar fila correspondiente en B usando dimensionField
+    const dimensionValue = dimensionField ? rowA[dimensionField] : null;
+    const rowB =
+      dimensionValue !== null && dimensionValue !== undefined
+        ? dataBMap.get(dimensionValue)
+        : undefined;
 
     // Crear fila unificada
     const unifiedRow: Record<string, unknown> = {};
