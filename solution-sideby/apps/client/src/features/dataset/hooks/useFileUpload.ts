@@ -23,7 +23,7 @@ export function useFileUpload() {
    */
   const processFile = async (file: File): Promise<FileGroup> => {
     setIsProcessing(true);
-    let toastId: string | number | undefined;
+    let toastId: string | number;
 
     try {
       // Paso 1: Validación básica (tamaño y formato)
@@ -68,7 +68,7 @@ export function useFileUpload() {
         isValid: true,
       };
     } catch (error: unknown) {
-      if (toastId !== undefined) {
+      if (toastId) {
         toast.dismiss(toastId);
       }
       const fileError: FileValidationError = {
