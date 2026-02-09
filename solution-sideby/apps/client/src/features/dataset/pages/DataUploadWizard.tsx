@@ -82,7 +82,7 @@ export default function DataUploadWizard() {
     }
     
     if (currentStep === 2 && !canProceedToStep3()) {
-      toast.warning('Mapeo incompleto', 'Debes configurar al menos un campo KPI');
+      toast.warning('Mapeo incompleto', 'Debes seleccionar al menos una métrica para continuar');
       return;
     }
     
@@ -102,21 +102,21 @@ export default function DataUploadWizard() {
     setError(null);
     
     try {
-      // Unificar datos
+      // Unificar datos (dimensionField puede ser null)
       const unifiedData = unifyDatasets(
         fileA.parsedData!,
         fileB.parsedData!,
-        mapping.dimensionField!
+        mapping.dimensionField ?? null
       );
       
-      // Crear payload
+      // Crear payload - dimensionField puede ser undefined si es null
       const payload: CreateDatasetPayload = {
         name: metadata.name,
         description: metadata.description || undefined,
         fileA: fileA.file!,
         fileB: fileB.file!,
         mapping: {
-          dimensionField: mapping.dimensionField!,
+          dimensionField: mapping.dimensionField || '',
           kpiFields: (mapping.kpiFields || []).map((kpi) => ({
             id: kpi.id,
             sourceColumn: kpi.columnName,
