@@ -217,10 +217,8 @@ export const useWizardState = create<WizardState & WizardActions>()(
 
       canProceedToStep3: () => {
         const { mapping } = get();
-        return (
-          mapping.dimensionField !== null &&
-          (mapping.kpiFields || []).length > 0
-        );
+        // dimensionField es opcional, solo requerimos al menos un KPI
+        return (mapping.kpiFields || []).length > 0;
       },
 
       canSubmit: () => {

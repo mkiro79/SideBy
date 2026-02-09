@@ -103,13 +103,12 @@ export async function parseFile(file: File): Promise<ParsedFileData> {
 
 /**
  * Unifica los datos de ambos archivos en el formato DataRow
- * Realiza un join basado en el campo de dimensión para manejar
- * correctamente filas desordenadas o faltantes entre datasets
+ * Si dimensionField es null/undefined, usa índice de fila como identificador
  */
 export function unifyDatasets(
   dataA: ParsedFileData,
   dataB: ParsedFileData,
-  dimensionField: string,
+  dimensionField: string | null | undefined,
 ): Record<string, unknown>[] {
   const unifiedData: Record<string, unknown>[] = [];
 
@@ -123,17 +122,17 @@ export function unifyDatasets(
     }
   });
 
-  // Iterar sobre las filas del archivo A y hacer join por dimensionField
-  dataA.rows.forEach((rowA) => {
-    const dimensionValue = rowA[dimensionField];
+    // Crear fila unificada
+    const unifiedRow: Record<string, unknown> = {};
 
-    // Buscar la fila correspondiente en B por el valor de dimensión
-    const rowB = dataBMap.get(dimensionValue);
-
-    // Crear fila unificada con estructura: { [dimension]: value, ...kpisA, ...kpisB }
-    const unifiedRow: Record<string, unknown> = {
-      [dimensionField]: dimensionValue,
-    };
+    // Si hay dimensionField, incluirlo en la fila unificada
+    if (dimensionField) {
+      const dimensionValue = rowA[dimensionField];
+      unifiedRow[dimensionField] = dimensionValue;
+    } else {
+      // Sin dimensión, usar índice de fila como identificador de fallback
+      unifiedRow.rowIdentifier = i;
+    }
 
     // Copiar todas las columnas de A con sufijo "_current"
     Object.keys(rowA).forEach((key) => {
