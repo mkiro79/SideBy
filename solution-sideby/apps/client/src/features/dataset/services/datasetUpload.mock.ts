@@ -9,14 +9,28 @@ import type { CreateDatasetPayload } from "../types/wizard.types.js";
 import type { Dataset } from "../types/dataset.types.js";
 
 /**
+ * Opciones de configuración para el mock
+ */
+export interface UploadMockOptions {
+  /** Simular un error en el upload */
+  simulateError?: boolean;
+  /** Delay en milisegundos (por defecto 1500) */
+  delay?: number;
+}
+
+/**
  * Simula el upload de un dataset al servidor
  *
  * @param payload - Datos completos del dataset a crear
+ * @param options - Opciones de configuración del mock (opcional)
  * @returns Dataset creado con ID generado
  */
 export async function uploadDataset(
   payload: CreateDatasetPayload,
+  options: UploadMockOptions = {},
 ): Promise<Dataset> {
+  const { simulateError = false, delay = 1500 } = options;
+
   console.log("📤 [MOCK] uploadDataset called with payload:", {
     name: payload.name,
     description: payload.description,
@@ -27,11 +41,11 @@ export async function uploadDataset(
     dataRows: payload.unifiedData.length,
   });
 
-  // Simular delay de red (1.5 segundos)
-  await new Promise((resolve) => setTimeout(resolve, 1500));
+  // Simular delay de red
+  await new Promise((resolve) => setTimeout(resolve, delay));
 
-  // Simular error aleatorio (10% de probabilidad)
-  if (Math.random() < 0.1) {
+  // Simular error si está configurado
+  if (simulateError) {
     throw new Error(
       "Error simulado del servidor: No se pudo procesar el archivo",
     );
@@ -52,6 +66,18 @@ export async function uploadDataset(
   console.log("✅ [MOCK] Dataset created successfully:", mockDataset);
 
   return mockDataset;
+}
+
+/**
+ * Helper para simular un upload que falla (útil en tests)
+ *
+ * @param payload - Datos completos del dataset a crear
+ * @returns Rechaza con un error simulado
+ */
+export async function uploadDatasetWithError(
+  payload: CreateDatasetPayload,
+): Promise<Dataset> {
+  return uploadDataset(payload, { simulateError: true });
 }
 
 /**
