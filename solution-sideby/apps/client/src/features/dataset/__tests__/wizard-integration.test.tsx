@@ -34,7 +34,7 @@ vi.mock('react-router-dom', async () => {
 });
 
 // Mock del servicio de upload
-vi.mock('../../../services/datasetUpload.mock.js', () => ({
+vi.mock('../services/datasetUpload.mock.js', () => ({
   uploadDataset: vi.fn().mockResolvedValue({
     id: 'dataset-123',
     name: 'Test Dataset',

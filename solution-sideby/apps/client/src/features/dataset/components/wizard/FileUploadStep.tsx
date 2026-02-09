@@ -4,7 +4,7 @@
  * Paso 1 del wizard: carga de archivos A y B con drag & drop
  */
 
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import { Upload, FileText, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/shared/components/ui/alert.js';
 import { Button } from '@/shared/components/ui/button.js';
@@ -227,6 +227,7 @@ function FileDropZone({
   onDragOver,
   isProcessing,
 }: FileDropZoneProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const hasFile = fileGroup.file !== null;
   const hasError = fileGroup.error !== null;
   const isValid = fileGroup.isValid;
@@ -252,7 +253,7 @@ function FileDropZone({
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
-            document.getElementById(`file-input-${label}`)?.click();
+            fileInputRef.current?.click();
           }
         }}
         className={`
@@ -263,7 +264,7 @@ function FileDropZone({
         `}
       >
         <input
-          id={`file-input-${label}`}
+          ref={fileInputRef}
           type="file"
           accept=".csv,.xlsx,.xls"
           onChange={onFileSelect}
