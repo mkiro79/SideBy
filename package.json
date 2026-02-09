@@ -25,5 +25,8 @@
     "solution-sideby/apps/client/**/*.{js,ts,tsx}": [
       "npm run lint --prefix solution-sideby/apps/client"
     ]
+  },
+  "optionalDependencies": {
+    "@swc/core-linux-x64-gnu": "^1.15.11"
   }
 }
