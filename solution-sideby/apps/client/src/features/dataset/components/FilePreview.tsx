@@ -9,7 +9,7 @@
 import { FileText } from 'lucide-react';
 import { Card } from '@/shared/components/ui/card.js';
 import { Badge } from '@/shared/components/ui/badge.js';
-import { cn } from '@/lib/utils';
+import { cn } from '@/shared/utils/cn.js';
 
 // ============================================================================
 // TYPES
