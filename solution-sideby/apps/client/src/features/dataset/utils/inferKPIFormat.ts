@@ -25,8 +25,6 @@ import type { KPIFormat } from "../types/wizard.types.js";
  * ```
  */
 export function inferKPIFormat(columnName: string): KPIFormat {
-  const normalized = columnName.toLowerCase();
-
   // Detectar currency (dinero, ventas, precios, costos, ingresos)
   const currencyPatterns = [
     /precio/i,
@@ -50,7 +48,7 @@ export function inferKPIFormat(columnName: string): KPIFormat {
     /eur/i,
   ];
 
-  if (currencyPatterns.some((pattern) => pattern.test(normalized))) {
+  if (currencyPatterns.some((pattern) => pattern.test(columnName))) {
     return "currency";
   }
 
@@ -71,7 +69,7 @@ export function inferKPIFormat(columnName: string): KPIFormat {
     /variation/i,
   ];
 
-  if (percentagePatterns.some((pattern) => pattern.test(normalized))) {
+  if (percentagePatterns.some((pattern) => pattern.test(columnName))) {
     return "percentage";
   }
 
