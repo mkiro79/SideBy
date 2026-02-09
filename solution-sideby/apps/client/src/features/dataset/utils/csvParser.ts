@@ -103,6 +103,8 @@ export async function parseFile(file: File): Promise<ParsedFileData> {
 
 /**
  * Unifica los datos de ambos archivos en el formato DataRow
+ * Realiza un join basado en el campo de dimensión para manejar
+ * correctamente filas desordenadas o faltantes entre datasets
  */
 export function unifyDatasets(
   dataA: ParsedFileData,
@@ -111,12 +113,22 @@ export function unifyDatasets(
 ): Record<string, unknown>[] {
   const unifiedData: Record<string, unknown>[] = [];
 
-  // Iterar sobre las filas del archivo A
-  for (let i = 0; i < dataA.rows.length; i++) {
-    const rowA = dataA.rows[i];
-    const rowB = dataB.rows[i]; // Asumimos mismo índice
+  // Crear un mapa del dataset B usando dimensionField como clave
+  // para búsqueda O(1) en lugar de asumir alineación por índice
+  const dataBMap = new Map<unknown, Record<string, unknown>>();
+  dataB.rows.forEach((row) => {
+    const dimensionValue = row[dimensionField];
+    if (dimensionValue !== null && dimensionValue !== undefined) {
+      dataBMap.set(dimensionValue, row);
+    }
+  });
 
+  // Iterar sobre las filas del archivo A y hacer join por dimensionField
+  dataA.rows.forEach((rowA) => {
     const dimensionValue = rowA[dimensionField];
+
+    // Buscar la fila correspondiente en B por el valor de dimensión
+    const rowB = dataBMap.get(dimensionValue);
 
     // Crear fila unificada con estructura: { [dimension]: value, ...kpisA, ...kpisB }
     const unifiedRow: Record<string, unknown> = {
@@ -131,6 +143,7 @@ export function unifyDatasets(
     });
 
     // Copiar todas las columnas de B con sufijo "_comparative"
+    // Solo si existe una fila matching en B
     if (rowB) {
       Object.keys(rowB).forEach((key) => {
         if (key !== dimensionField) {
@@ -140,7 +153,7 @@ export function unifyDatasets(
     }
 
     unifiedData.push(unifiedRow);
-  }
+  });
 
   return unifiedData;
 }
