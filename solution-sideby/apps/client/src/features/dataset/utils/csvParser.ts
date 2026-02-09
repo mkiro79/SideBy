@@ -125,8 +125,8 @@ export function unifyDatasets(
       const dimensionValue = rowA[dimensionField];
       unifiedRow[dimensionField] = dimensionValue;
     } else {
-      // Sin dimensión, usar índice de fila como identificador
-      unifiedRow._rowIndex = i;
+      // Sin dimensión, usar índice de fila como identificador de fallback
+      unifiedRow.rowIdentifier = i;
     }
 
     // Copiar todas las columnas de A con sufijo "_current"

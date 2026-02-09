@@ -110,6 +110,7 @@ export default function DataUploadWizard() {
       );
       
       // Crear payload - dimensionField puede ser undefined si es null
+      // Se usa string vacío como fallback porque el tipo CreateDatasetPayload requiere string
       const payload: CreateDatasetPayload = {
         name: metadata.name,
         description: metadata.description || undefined,
