@@ -102,11 +102,10 @@ export default function DataUploadWizard() {
     setError(null);
     
     try {
-      // Unificar datos (dimensionField puede ser null)
+      // Unificar datos con tags _source_group (Long Format)
       const unifiedData = unifyDatasets(
         fileA.parsedData!,
-        fileB.parsedData!,
-        mapping.dimensionField ?? null
+        fileB.parsedData!
       );
       
       // Crear payload - dimensionField puede ser undefined si es null

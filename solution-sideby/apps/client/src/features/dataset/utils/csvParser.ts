@@ -102,68 +102,33 @@ export async function parseFile(file: File): Promise<ParsedFileData> {
 // ============================================================================
 
 /**
- * Unifica los datos de ambos archivos en el formato DataRow
- * Si dimensionField es null/undefined, usa índice de fila como identificador
+ * Unifica los datos de ambos archivos en formato Long (dos filas por registro)
+ * Cada fila se etiqueta con _source_group: 'groupA' | 'groupB'
+ *
+ * Formato de salida:
+ * [
+ *   { fecha: "2024-01", ventas: 1500, _source_group: "groupA" },
+ *   { fecha: "2024-01", ventas: 1200, _source_group: "groupB" }
+ * ]
  */
 export function unifyDatasets(
   dataA: ParsedFileData,
   dataB: ParsedFileData,
-  dimensionField: string | null | undefined,
 ): Record<string, unknown>[] {
-  const unifiedData: Record<string, unknown>[] = [];
+  // Añadir tag _source_group a cada fila del dataset A
+  const unifiedA = dataA.rows.map((row) => ({
+    ...row,
+    _source_group: "groupA" as const,
+  }));
 
-  // Crear un mapa del dataset B usando dimensionField como clave
-  // para búsqueda O(1) en lugar de asumir alineación por índice
-  const dataBMap = new Map<unknown, Record<string, unknown>>();
-  dataB.rows.forEach((row) => {
-    const dimensionValue = dimensionField ? row[dimensionField] : null;
-    if (dimensionValue !== null && dimensionValue !== undefined) {
-      dataBMap.set(dimensionValue, row);
-    }
-  });
+  // Añadir tag _source_group a cada fila del dataset B
+  const unifiedB = dataB.rows.map((row) => ({
+    ...row,
+    _source_group: "groupB" as const,
+  }));
 
-  // Iterar sobre cada fila del dataset A
-  dataA.rows.forEach((rowA, i) => {
-    // Buscar fila correspondiente en B usando dimensionField
-    const dimensionValue = dimensionField ? rowA[dimensionField] : null;
-    const rowB =
-      dimensionValue !== null && dimensionValue !== undefined
-        ? dataBMap.get(dimensionValue)
-        : undefined;
-
-    // Crear fila unificada
-    const unifiedRow: Record<string, unknown> = {};
-
-    // Si hay dimensionField, incluirlo en la fila unificada
-    if (dimensionField) {
-      const dimensionValue = rowA[dimensionField];
-      unifiedRow[dimensionField] = dimensionValue;
-    } else {
-      // Sin dimensión, usar índice de fila como identificador de fallback
-      unifiedRow.rowIdentifier = i;
-    }
-
-    // Copiar todas las columnas de A con sufijo "_current"
-    Object.keys(rowA).forEach((key) => {
-      if (key !== dimensionField) {
-        unifiedRow[`${key}_current`] = rowA[key];
-      }
-    });
-
-    // Copiar todas las columnas de B con sufijo "_comparative"
-    // Solo si existe una fila matching en B
-    if (rowB) {
-      Object.keys(rowB).forEach((key) => {
-        if (key !== dimensionField) {
-          unifiedRow[`${key}_comparative`] = rowB[key];
-        }
-      });
-    }
-
-    unifiedData.push(unifiedRow);
-  });
-
-  return unifiedData;
+  // Concatenar ambos arrays (Long Format)
+  return [...unifiedA, ...unifiedB];
 }
 
 /**
