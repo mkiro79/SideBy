@@ -1,6 +1,8 @@
+// NOTA: Las variables de entorno se cargan con --env-file en package.json
+// Esto es necesario porque con ESM los imports se ejecutan antes que cualquier código top-level
+
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
 import swaggerUi from "swagger-ui-express";
 import { connectDB } from "./config/database.js";
 import { errorHandler } from "./middleware/errorHandler.js";
@@ -9,8 +11,8 @@ import v1Routes from "./v1/routes.js";
 import { generateOpenApiDocs } from "./infrastructure/openapi/openapi.registry.js";
 // Importar swagger definitions para registrar rutas
 import "./modules/auth/presentation/auth.swagger.js";
-
-dotenv.config();
+import "./modules/auth/presentation/dev-auth.swagger.js";
+import "./modules/datasets/presentation/datasets.swagger.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;

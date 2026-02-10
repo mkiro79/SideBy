@@ -24,7 +24,112 @@ _Pendiente: Agregar mejoras identificadas para autenticación e identidad_
 
 ### Mejoras Planificadas
 
-_Pendiente: Agregar mejoras identificadas para ingesta de datos_
+### 🧹 Dataset Cleanup Job (Limpieza Automática de Datasets Abandonados)
+
+**Estado:** Propuesta  
+**Prioridad:** Baja  
+**Esfuerzo Estimado:** 1-2 días  
+**Versión Target:** v0.4.0
+
+#### Contexto
+
+Durante la implementación del módulo de Datasets (RFC-003), se identificó la necesidad de un mecanismo de limpieza automática para datasets que quedan en estado `processing` indefinidamente. Estos datasets "abandonados" ocupan espacio en la base de datos sin aportar valor.
+
+**Escenario problemático:**
+1. Usuario sube dos archivos CSV (Paso 1)
+2. Los archivos se procesan correctamente y el dataset queda en `status: processing`
+3. Usuario abandona el flujo sin completar el Paso 3 (configuración de mapping)
+4. El dataset queda huérfano, ocupando espacio innecesariamente
+
+#### Solución Propuesta
+
+Implementar un **Cron Job** que ejecute periódicamente una tarea de limpieza:
+
+1. **Buscar datasets abandonados:**
+   ```typescript
+   const cutoffDate = new Date();
+   cutoffDate.setHours(cutoffDate.getHours() - 24); // 24 horas
+   
+   const abandoned = await repository.findAbandoned(cutoffDate);
+   // Retorna datasets con status="processing" y createdAt < cutoffDate
+   ```
+
+2. **Eliminar datasets automáticamente:**
+   ```typescript
+   for (const dataset of abandoned) {
+     await repository.delete(dataset.id);
+     logger.info(`Deleted abandoned dataset: ${dataset.id}`);
+   }
+   ```
+
+3. **Configuración vía variables de entorno:**
+   ```env
+   CLEANUP_JOB_ENABLED=true
+   CLEANUP_JOB_SCHEDULE="0 2 * * *"  # Diario a las 2 AM
+   ABANDONED_DATASET_HOURS=24        # Considerar abandonado después de 24h
+   ```
+
+#### Implementación
+
+**Archivo:** `src/modules/datasets/jobs/cleanup-abandoned.job.ts`
+
+```typescript
+import { MongoDatasetRepository } from '../infrastructure/mongoose/MongoDatasetRepository.js';
+import { DatasetRules } from '../domain/validation.rules.js';
+import logger from '@/utils/logger.js';
+
+export async function cleanupAbandonedDatasets(): Promise<void> {
+  try {
+    const repository = new MongoDatasetRepository();
+    const cutoffDate = new Date();
+    cutoffDate.setHours(cutoffDate.getHours() - DatasetRules.ABANDONED_DATASET_HOURS);
+
+    const abandoned = await repository.findAbandoned(cutoffDate);
+    logger.info(`Found ${abandoned.length} abandoned datasets`);
+
+    for (const dataset of abandoned) {
+      await repository.delete(dataset.id);
+      logger.info(`Deleted abandoned dataset: ${dataset.id}`);
+    }
+
+    logger.info('Cleanup job completed successfully');
+  } catch (error) {
+    logger.error({ err: error }, 'Cleanup job failed');
+  }
+}
+```
+
+**Integración con node-cron:**
+
+```typescript
+// En src/index.ts o src/jobs/scheduler.ts
+import cron from 'node-cron';
+import { cleanupAbandonedDatasets } from '@/modules/datasets/jobs/cleanup-abandoned.job.js';
+
+// Ejecutar diariamente a las 2 AM
+if (process.env.CLEANUP_JOB_ENABLED === 'true') {
+  cron.schedule('0 2 * * *', async () => {
+    logger.info('Starting dataset cleanup job');
+    await cleanupAbandonedDatasets();
+  });
+}
+```
+
+#### Tareas de Implementación
+
+- [ ] Crear archivo `cleanup-abandoned.job.ts`
+- [ ] Instalar dependencia `node-cron`
+- [ ] Añadir configuración en `.env` y `.env.example`
+- [ ] Integrar scheduler en `index.ts`
+- [ ] Crear tests unitarios del job
+- [ ] Documentar en README de operaciones
+- [ ] Configurar monitoreo/alertas (opcional)
+
+#### Consideraciones
+
+- **Notificación al usuario:** En v0.5.0, considerar enviar email de aviso antes de eliminar
+- **Soft delete:** Implementar eliminación lógica en lugar de física (preservar para auditoría)
+- **Métricas:** Trackear número de datasets eliminados para análisis de abandono
 
 ---
 
