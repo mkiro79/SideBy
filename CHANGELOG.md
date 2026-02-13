@@ -7,6 +7,64 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Added - RFC-003 Part 1: Dataset Creation API & Frontend Integration (2026-02-13)
+
+- **Backend: Datasets Module (2-Phase Flow)**
+  - POST `/api/v1/datasets` endpoint para upload de archivos CSV
+  - PATCH `/api/v1/datasets/:id` endpoint para configuración de mapping
+  - GET `/api/v1/datasets/:id` endpoint para obtener dataset completo
+  - GET `/api/v1/datasets` endpoint para listar datasets del usuario
+  - DELETE `/api/v1/datasets/:id` endpoint para eliminar datasets
+  - MongoDatasetRepository con persistencia completa en MongoDB
+  - Validación de DTOs con Zod (UploadFilesDTO, UpdateMappingDTO)
+  - Soporte para datos en formato Long Format con `_source_group` tag
+  - Configuración de `schemaMapping`, `dashboardLayout`, y `sourceConfig`
+
+- **Frontend: Dataset Creation Wizard (2-Phase)**
+  - Hook `useDatasetUpload` para POST (Fase 1: Upload archivos)
+  - Hook `useDatasetMapping` para PATCH (Fase 2: Configuración de mapping)
+  - Hook `useDataset` para GET (Cargar dataset completo)
+  - Hook `useDatasetsList` para listar datasets del usuario
+  - Servicio `datasets.api.ts` con cliente axios y interceptores de autenticación
+  - Componente `DataUploadWizard` refactorizado para flujo 2-phase
+  - Componente `KPICard` para mostrar métricas comparativas con cambio porcentual
+  - Componente `DatasetTable` para tabla de datos con badges de grupo
+  - Página `DatasetDashboard` para visualizar datasets creados con KPIs destacados
+  - Integración completa con backend: Upload → Mapping → Dashboard
+
+- **Testing: Unit Tests for Dataset Hooks**
+  - Tests para `useDatasetUpload` hook (upload de archivos, manejo de errores)
+  - Tests para `useDatasetMapping` hook (actualización de mapping, validación)
+  - Tests para `useDataset` hook (carga de dataset por ID, reload)
+  - Tests para `useDatasetsList` hook (lista de datasets, recargas)
+  - Tests para `datasets.api.ts` service (construcción de requests, manejo de responses)
+  - Mock completo de axios con `isAxiosError` y `interceptors` para evitar errores en tests
+
+- **Docker: Environment Variables for API**
+  - Variables de entorno agregadas a docker-compose.yml para API service
+  - `MONGO_URI`, `JWT_SECRET`, `JWT_EXPIRES_IN`, `CORS_ORIGIN`, `LOG_LEVEL`
+  - `ALLOW_GOOGLE_AUTH_BYPASS` para desarrollo local sin Google OAuth
+  - Script `dev:docker` en package.json para hot-reload sin `--env-file`
+
+- **Documentation: React Query Migration Proposal**
+  - Nueva propuesta en ROADMAP.md para migrar server state a TanStack Query
+  - Justificación técnica: cache inteligente, invalidación automática, deduplicación
+  - Alcance de migración: todos los hooks de datasets + auth (opcional)
+  - Tareas de implementación detalladas con ejemplos de código
+
+### Fixed
+
+- **MongoDB Path Conflict in Dataset Update**
+  - Refactorizado `MongoDatasetRepository.update()` para evitar conflicto de paths
+  - Convertir objeto `meta: { name, description }` a dot notation (`meta.name`, `meta.description`)
+  - Previene error: "Updating the path 'meta.updatedAt' would create a conflict at 'meta'"
+  - Implementación de conversión dinámica de nested fields a dot notation antes de `$set`
+
+- **Frontend Test Fixes**
+  - Agregado `datasetId: null` en `ColumnMappingStep.new.test.tsx` para cumplir con `WizardState` type
+  - Corregido reference de `nextButton` a `uploadButton` en `wizard-integration.test.tsx` (Step 1)
+  - Enhanced axios mock con `isAxiosError` function y `interceptors.request/response.use` en `datasets.api.test.ts`
+
 ### Added
 
 - **Documentacion API con Swagger/OpenAPI**
