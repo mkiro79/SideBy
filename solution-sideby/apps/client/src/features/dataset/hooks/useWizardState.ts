@@ -36,6 +36,7 @@ const initialMapping: ColumnMapping = {
 
 const initialState: WizardState = {
   currentStep: 1,
+  datasetId: null, // NEW: Store datasetId from Phase 1
   fileA: initialFileGroup,
   fileB: initialFileGroup,
   mapping: initialMapping,
@@ -60,6 +61,9 @@ interface WizardActions {
   nextStep: () => void;
   prevStep: () => void;
   goToStep: (step: WizardStep) => void;
+
+  // Dataset ID (NEW for 2-phase flow)
+  setDatasetId: (id: string) => void;
 
   // File Management
   setFileA: (fileGroup: Partial<FileGroup>) => void;
@@ -114,6 +118,14 @@ export const useWizardState = create<WizardState & WizardActions>()(
 
       goToStep: (step) => {
         set({ currentStep: step });
+      },
+
+      // ============================================================================
+      // DATASET ID ACTIONS (NEW)
+      // ============================================================================
+
+      setDatasetId: (id) => {
+        set({ datasetId: id });
       },
 
       // ============================================================================
@@ -236,6 +248,7 @@ export const useWizardState = create<WizardState & WizardActions>()(
       // No persistir archivos File (binarios), solo metadatos
       partialize: (state) => ({
         currentStep: state.currentStep,
+        datasetId: state.datasetId, // NEW: Persist datasetId
         fileA: {
           ...state.fileA,
           file: null, // No persistir el objeto File

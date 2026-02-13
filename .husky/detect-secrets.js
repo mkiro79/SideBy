@@ -29,6 +29,7 @@ const EXCLUDED_PATTERNS = [
   /secret\s*=\s*process\.env/gi,
   /=\s*["']?\$\{[^}]+\}["']?/g, // Allow ${VAR}
   /=\s*["']?<[^>]+>["']?/g, // Allow placeholders like <YOUR_KEY>
+  /mongodb(\+srv)?:\/\/\$\{[^}]+\}:\$\{[^}]+\}@/g, // Allow MongoDB URIs with ${VAR} credentials
 ];
 
 function getStagedFiles() {
