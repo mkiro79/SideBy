@@ -8,12 +8,20 @@ import type { Request } from "express";
  *
  * NOTA: Deshabilitamos la validación de IPv6 porque confiamos en el proxy
  * y la configuración de Express para manejar correctamente las IPs.
+ *
+ * @throws Error si no se puede determinar la IP del cliente
  */
 const getClientKey = (req: Request & { userId?: string }): string => {
   if (req.userId) {
     return `user:${req.userId}`;
   }
-  return req.ip || "unknown";
+  
+  const ip = req.ip;
+  if (!ip) {
+    throw new Error("Unable to determine client IP address for rate limiting");
+  }
+  
+  return `ip:${ip}`;
 };
 
 /**
