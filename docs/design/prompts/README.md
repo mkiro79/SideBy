@@ -45,6 +45,91 @@ This directory contains specialized prompts for AI agents to implement features 
 
 ---
 
+### 3. React Query Migration (NEW)
+
+**Quick Start Guide:** [`REACT-QUERY-START-HERE.md`](./REACT-QUERY-START-HERE.md) ⭐  
+**RFC Reference:** [`RFC-React-Query-Migration.md`](../RFC-React-Query-Migration.md)
+
+**Target:** @Frontend React Agent  
+**Purpose:** Migrate server state management to TanStack Query v5  
+**Estimated Time:** 2 days (12-15 hours)  
+**Prerequisites:** ✅ Frontend Datasets Integration must be complete
+
+**8-Phase Implementation:**
+
+| Phase | File | Focus | Time |
+|-------|------|-------|------|
+| 1️⃣ | [`PHASE-1-REACT-QUERY-SETUP.md`](./PHASE-1-REACT-QUERY-SETUP.md) | QueryClient + DevTools | 2-3h |
+| 2️⃣ | [`PHASE-2-REACT-QUERY-QUERIES.md`](./PHASE-2-REACT-QUERY-QUERIES.md) | useDatasets + useDataset | 3-4h |
+| 3️⃣ | [`PHASE-3-REACT-QUERY-MUTATIONS.md`](./PHASE-3-REACT-QUERY-MUTATIONS.md) | Update/Delete mutations | 4-5h |
+| 4️⃣ | [`PHASE-4-REACT-QUERY-COMPONENTS.md`](./PHASE-4-REACT-QUERY-COMPONENTS.md) | Update components | 2-3h |
+
+**Total Phase 1-4 Time:** 11-15 hours (2 days)
+
+**Delivers:**
+- ✅ QueryClient setup with DevTools
+- ✅ Migrated hooks (useDatasets, useDataset)
+- ✅ Mutations with optimistic updates
+- ✅ Cache invalidation strategy
+- ✅ Test utils for React Query
+- ✅ 37% less boilerplate code
+- ✅ 95% faster repeated navigation (cache)
+- ✅ Zero duplicate requests
+
+---
+
+### 4. Dashboard Template System (RFC-004)
+
+**RFC Reference:** [`RFC-004-DASHBOARD-TEMPLATE.md`](../RFC-004-DASHBOARD-TEMPLATE.md)
+
+**Target:** @Frontend React Agent  
+**Purpose:** Implement complete Dataset Management UI with templates  
+**Estimated Time:** 4-5 days (18-23 hours)  
+**Prerequisites:** ✅ React Query Migration MUST be complete (Phase 1-4)
+
+**4-Phase Implementation:**
+
+| Phase | File | Focus | Time |
+|-------|------|-------|------|
+| 5️⃣ | [`PHASE-5-DATASETS-LIST-UPDATE.md`](./PHASE-5-DATASETS-LIST-UPDATE.md) | Edit/Dashboard buttons + navigation | 3-4h |
+| 6️⃣ | [`PHASE-6-DATASET-DETAIL.md`](./PHASE-6-DATASET-DETAIL.md) | Edit page with React Hook Form | 5-6h |
+| 7️⃣ | [`PHASE-7-DASHBOARD-TEMPLATES.md`](./PHASE-7-DASHBOARD-TEMPLATES.md) | Template system + filters + KPIs | 8-10h |
+| 8️⃣ | [`PHASE-8-INTEGRATION-TESTS.md`](./PHASE-8-INTEGRATION-TESTS.md) | E2E tests + validation | 2-3h |
+
+**Total Phase 5-8 Time:** 18-23 hours (4-5 days)
+
+**Delivers:**
+- ✅ DatasetsList with real API + Edit/Dashboard buttons
+- ✅ DatasetDetail edit page with feature flag
+- ✅ 3 dashboard templates (Executive, Trends, Detailed)
+- ✅ Dynamic filters by categorical dimensions
+- ✅ KPI calculations and comparisons (A vs B)
+- ✅ Optimistic updates throughout
+- ✅ Complete E2E test suite
+- ✅ Coverage >= 80%
+
+**Grand Total (Phase 1-8):** 29-38 hours (6-7 days)
+
+---
+
+## � Quick Start for Implementation
+
+**📖 START HERE:** [`IMPLEMENTATION-GUIDE.md`](./IMPLEMENTATION-GUIDE.md) ⭐⭐⭐
+
+Esta guía te lleva paso a paso con validación automática entre fases.
+
+**🧪 Script de Validación:** `validate-phase.ps1` (en la raíz del proyecto)
+
+**Uso rápido:**
+```powershell
+# Después de implementar cada fase:
+.\validate-phase.ps1 -Phase 1  # Valida Phase-1
+.\validate-phase.ps1 -Phase 2  # Valida Phase-2
+# ... etc
+```
+
+---
+
 ## 🔄 Execution Flow
 
 ```mermaid
@@ -61,7 +146,7 @@ graph TD
     H --> I[Deploy to Production]
 ```
 
-### Step-by-Step Guide
+### Step-by-Step Guide (Legacy - Use IMPLEMENTATION-GUIDE.md instead)
 
 #### 1️⃣ **Start with Backend**
 
@@ -324,6 +409,32 @@ If you encounter issues not covered in the prompts:
 
 ---
 
-**Last Updated:** 2026-02-09  
-**Prompt Version:** 1.0  
-**Status:** Ready for implementation
+**Last Updated:** 2026-02-13  
+**Prompt Version:** 2.0  
+**Status:** All phases complete and ready for implementation
+
+---
+
+## 🆕 Complete Implementation Roadmap
+
+The project has been fully documented with an 8-phase implementation plan:
+
+### Phase 1-4: React Query Migration (Days 1-2)
+Foundation for modern state management with caching and optimistic updates.
+
+1. **PHASE-1-REACT-QUERY-SETUP.md** - QueryClient setup (2-3h)
+2. **PHASE-2-REACT-QUERY-QUERIES.md** - Migrate queries (3-4h)
+3. **PHASE-3-REACT-QUERY-MUTATIONS.md** - Implement mutations (4-5h)
+4. **PHASE-4-REACT-QUERY-COMPONENTS.md** - Update components (2-3h)
+
+### Phase 5-8: RFC-004 Dashboard Template System (Days 3-7)
+Complete dataset management UI with templates and filters.
+
+5. **PHASE-5-DATASETS-LIST-UPDATE.md** - Navigation buttons (3-4h)
+6. **PHASE-6-DATASET-DETAIL.md** - Edit page with forms (5-6h)
+7. **PHASE-7-DASHBOARD-TEMPLATES.md** - Template system (8-10h)
+8. **PHASE-8-INTEGRATION-TESTS.md** - E2E tests (2-3h)
+
+**Start here:** [`REACT-QUERY-START-HERE.md`](./REACT-QUERY-START-HERE.md) for quick start guide.
+
+**These phases MUST be completed sequentially** - each phase builds on the previous one.

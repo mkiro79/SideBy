@@ -255,10 +255,11 @@ Implementar un **sistema de toggle de tipo de columna** que permita al usuario:
 
 ### ⚡ Migración a React Query (TanStack Query) para Server State
 
-**Estado:** Propuesta  
-**Prioridad:** Media  
-**Esfuerzo Estimado:** 3-4 días  
-**Versión Target:** v0.4.0
+**Estado:** ✅ Diseño Completado (ver RFC-React-Query-Migration)  
+**Prioridad:** Alta - Requerido para RFC-004  
+**Esfuerzo Estimado:** 2 días  
+**Versión Target:** v0.3.1  
+**RFC:** `docs/design/RFC-React-Query-Migration.md`
 
 #### Contexto
 
@@ -505,7 +506,191 @@ export function useDatasetsList() {
 
 ---
 
-## RFC-004: TBD
+## RFC-004: DATASET MANAGEMENT UI
+
+### ✅ Dataset Dashboard Template System (Lista, Detalle, Edit & Dashboard)
+
+**Estado:** ✅ Diseño Completado (ver RFC-004-DASHBOARD-TEMPLATE)  
+**Prioridad:** Alta  
+**Esfuerzo Estimado:** 4-5 días (post React Query migration)  
+**Versión Target:** v0.4.0  
+**RFC:** `docs/design/RFC-004-DASHBOARD-TEMPLATE.md`  
+**Dependencias:** RFC-React-Query-Migration (DEBE completarse primero)
+
+#### Contexto
+
+Actualmente, el flujo de datasets termina en el paso 3 (configuración de mapping). No existe una UI completa para visualizar, editar y explorar datasets creados.
+
+**RFC-004 implementa:**
+
+1. **DatasetsList Update:** Conectar con API real + botones Edit/Dashboard con feature flag
+2. **DatasetDetail Page:** Edición de metadatos (labels, colors, KPI labels, AI config)
+3. **DatasetDashboard:** Sistema de templates para visualización comparativa
+4. **Dashboard Templates:** Templates predefinidos (Executive, Trends, Detailed)
+5. **Dynamic Filters:** Filtros por dimensiones categóricas que actualizan toda la vista
+
+#### Arquitectura de Solución
+
+**Routing:**
+```
+/datasets              → DatasetsList (lista con API real)
+/datasets/new          → DataUploadWizard (existente)
+/datasets/:id          → DatasetDetail (edición con feature flag)
+/datasets/:id/dashboard → DatasetDashboard (templates + filtros)
+```
+
+**Feature Flag:**
+```typescript
+FEATURES.DATASET_EDIT_ENABLED = import.meta.env.VITE_FEATURE_DATASET_EDIT_ENABLED === "true"
+```
+
+**Campos Editables:**
+- `meta.name`, `meta.description`
+- `sourceConfig.groupA/B.label`, `sourceConfig.groupA/B.color`
+- `schemaMapping.kpiFields[].label`, `schemaMapping.kpiFields[].format`
+- `aiConfig.enabled`, `aiConfig.userContext`
+
+**Sistema de Templates:**
+```typescript
+type DashboardTemplateId = 'sideby_executive' | 'sideby_trends' | 'sideby_detailed';
+
+// sideby_executive: 4 KPIs + gráfico principal + tabla
+// sideby_trends: Multiple charts con evolución temporal
+// sideby_detailed: Tabla completa de datos raw
+```
+
+#### Implementación con React Query
+
+**Hooks principales:**
+
+```typescript
+// Queries (READ)
+useDatasets()           // Lista con cache automático
+useDataset(id)          // Detalle individual
+
+// Mutations (WRITE) con optimistic updates
+useUpdateDataset()      // PATCH con invalidación automática
+useDeleteDataset()      // DELETE con optimistic removal
+
+// Dashboard Logic
+useDatasetDashboard(id) // Filtros + KPI calculations + Template management
+```
+
+**Invalidación de Cache:**
+```typescript
+// Después de updateDataset, React Query invalida automáticamente:
+queryClient.invalidateQueries({ queryKey: ['dataset', id] });  // ✅ Detalle se actualiza
+queryClient.invalidateQueries({ queryKey: ['datasets'] });     // ✅ Lista se actualiza
+// ✅ Dashboard también se actualiza (usa misma queryKey)
+```
+
+#### Dashboard Features
+
+1. **KPI Comparison:**
+   - Suma automática de métricas por grupo (groupA vs groupB)
+   - Cálculo de % de cambio
+   - Formato según KPIField.format (number/currency/percentage)
+
+2. **Dynamic Filters:**
+   - Dropdown por cada categoricalField
+   - Filtrado aplicado a KPIs, gráficos y tabla
+   - Active filters con chips removibles
+   - "Limpiar filtros" button
+
+3. **Template Switcher:**
+   - Select dropdown para cambiar entre templates
+   - Re-renderizado de componentes según template activo
+   - State persiste en URL (futuro)
+
+4. **Visualizations:**
+   - KPIGrid (4 cards máximo para Executive)
+   - ComparisonChart (Line/Area/Bar según template)
+   - ComparisonTable (datos tabulares)
+   - AIInsights (análisis con IA si habilitado)
+
+#### Tareas de Implementación
+
+**Fase 1: React Query Foundation (2 días)**
+- [x] Diseño completado en RFC-React-Query-Migration
+- [ ] Implementar migration checklist
+- [ ] Tests actualizados con QueryClientProvider wrapper
+
+**Fase 2: DatasetsList Update (0.5 días)**
+- [ ] Conectar `useDatasets` con API real
+- [ ] Actualizar `DatasetCard` con botones Edit/Dashboard
+- [ ] Feature flag `VITE_FEATURE_DATASET_EDIT_ENABLED`
+- [ ] Tests de navegación
+
+**Fase 3: DatasetDetail (1.5 días)**
+- [ ] Hook `useUpdateDataset` con optimistic updates
+- [ ] Página con React Hook Form + Zod validation
+- [ ] Secciones: General, Grupos, KPIs, IA
+- [ ] Color pickers para grupos
+- [ ] Tests de formulario y mutations
+
+**Fase 4: Dashboard Template System (2 días)**
+- [ ] Types: `DashboardTemplateId`, `TemplateConfig`
+- [ ] Hook `useDatasetDashboard` (filtros + KPIs + template)
+- [ ] Component `TemplateRenderer` (renderizado dinámico)
+- [ ] Component `DashboardFilters` (dropdowns + chips)
+- [ ] Components: `KPIGrid`, `ComparisonChart`, `ComparisonTable`
+- [ ] Template switcher UI
+- [ ] Tests de cálculos y filtros
+
+**Fase 5: Integration & Polish (1 día)**
+- [ ] Routing completo
+- [ ] Loading states (Skeletons)
+- [ ] Error boundaries
+- [ ] Empty states
+- [ ] Tests E2E del flujo completo
+- [ ] Performance testing
+
+#### Beneficios Esperados
+
+**UX:**
+- ✅ Ciclo CRUD completo de datasets
+- ⚡ Feedback inmediato con optimistic updates (sin esperar al servidor)
+- 🎨 Templates flexibles para diferentes necesidades (Executive, Trends, Detailed)
+- 🔍 Filtros dinámicos que sincronizan KPIs, gráficos y tabla
+- 📊 Comparación visual groupA vs groupB con colores personalizables
+
+**DX:**
+- 📦 React Query elimina ~300 líneas de boilerplate
+- 🧪 Tests comprehensivos con alta cobertura
+- 🏗️ Arquitectura escalable para nuevos templates
+- 📚 Documentación TDD completa en RFCs
+
+**Performance:**
+- 🚀 Cache inteligente reduce requests al backend
+- 📊 Cálculos de KPIs memoizados (solo recalcula si cambian filtros)
+- ⏱️ Prefetching potencial al hover sobre dataset cards
+
+#### Referencias
+
+- **RFC Completo:** `docs/design/RFC-004-DASHBOARD-TEMPLATE.md`
+- **RFC Dependency:** `docs/design/RFC-React-Query-Migration.md`
+- **Componentes de Referencia:** `SideBy-Design/src/pages/Dashboard.tsx`
+- **Backend Entity:** `apps/api/src/modules/datasets/domain/Dataset.entity.ts`
+
+#### Riesgos y Mitigaciones
+
+| Riesgo | Probabilidad | Impacto | Mitigación |
+|--------|--------------|---------|------------|
+| Performance con datasets grandes (>10K rows) | Media | Alta | Virtualización en tabla, memoización, paginación en gráficos |
+| Complejidad de filtros anidados | Baja | Media | Limitar a filtros simples en MVP, mejorar en v0.5 |
+| Feature flag no cubre todos los casos | Media | Baja | Tests de ambos estados (enabled/disabled) |
+
+#### Próximos Pasos (v0.5.0)
+
+- Export dashboard a PDF
+- Compartir datasets entre usuarios
+- Custom templates (drag & drop editor)
+- Anotaciones en gráficos
+- Alertas basadas en umbrales
+
+---
+
+## RFC-005: TBD
 
 ### Mejoras Planificadas
 
@@ -536,5 +721,5 @@ _Pendiente: Futuras features_
 
 ---
 
-**Última Actualización:** 2026-02-08  
+**Última Actualización:** 2026-02-13  
 **Mantenido por:** Engineering Team
