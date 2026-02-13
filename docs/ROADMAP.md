@@ -24,7 +24,112 @@ _Pendiente: Agregar mejoras identificadas para autenticación e identidad_
 
 ### Mejoras Planificadas
 
-_Pendiente: Agregar mejoras identificadas para ingesta de datos_
+### 🧹 Dataset Cleanup Job (Limpieza Automática de Datasets Abandonados)
+
+**Estado:** Propuesta  
+**Prioridad:** Baja  
+**Esfuerzo Estimado:** 1-2 días  
+**Versión Target:** v0.4.0
+
+#### Contexto
+
+Durante la implementación del módulo de Datasets (RFC-003), se identificó la necesidad de un mecanismo de limpieza automática para datasets que quedan en estado `processing` indefinidamente. Estos datasets "abandonados" ocupan espacio en la base de datos sin aportar valor.
+
+**Escenario problemático:**
+1. Usuario sube dos archivos CSV (Paso 1)
+2. Los archivos se procesan correctamente y el dataset queda en `status: processing`
+3. Usuario abandona el flujo sin completar el Paso 3 (configuración de mapping)
+4. El dataset queda huérfano, ocupando espacio innecesariamente
+
+#### Solución Propuesta
+
+Implementar un **Cron Job** que ejecute periódicamente una tarea de limpieza:
+
+1. **Buscar datasets abandonados:**
+   ```typescript
+   const cutoffDate = new Date();
+   cutoffDate.setHours(cutoffDate.getHours() - 24); // 24 horas
+   
+   const abandoned = await repository.findAbandoned(cutoffDate);
+   // Retorna datasets con status="processing" y createdAt < cutoffDate
+   ```
+
+2. **Eliminar datasets automáticamente:**
+   ```typescript
+   for (const dataset of abandoned) {
+     await repository.delete(dataset.id);
+     logger.info(`Deleted abandoned dataset: ${dataset.id}`);
+   }
+   ```
+
+3. **Configuración vía variables de entorno:**
+   ```env
+   CLEANUP_JOB_ENABLED=true
+   CLEANUP_JOB_SCHEDULE="0 2 * * *"  # Diario a las 2 AM
+   ABANDONED_DATASET_HOURS=24        # Considerar abandonado después de 24h
+   ```
+
+#### Implementación
+
+**Archivo:** `src/modules/datasets/jobs/cleanup-abandoned.job.ts`
+
+```typescript
+import { MongoDatasetRepository } from '../infrastructure/mongoose/MongoDatasetRepository.js';
+import { DatasetRules } from '../domain/validation.rules.js';
+import logger from '@/utils/logger.js';
+
+export async function cleanupAbandonedDatasets(): Promise<void> {
+  try {
+    const repository = new MongoDatasetRepository();
+    const cutoffDate = new Date();
+    cutoffDate.setHours(cutoffDate.getHours() - DatasetRules.ABANDONED_DATASET_HOURS);
+
+    const abandoned = await repository.findAbandoned(cutoffDate);
+    logger.info(`Found ${abandoned.length} abandoned datasets`);
+
+    for (const dataset of abandoned) {
+      await repository.delete(dataset.id);
+      logger.info(`Deleted abandoned dataset: ${dataset.id}`);
+    }
+
+    logger.info('Cleanup job completed successfully');
+  } catch (error) {
+    logger.error({ err: error }, 'Cleanup job failed');
+  }
+}
+```
+
+**Integración con node-cron:**
+
+```typescript
+// En src/index.ts o src/jobs/scheduler.ts
+import cron from 'node-cron';
+import { cleanupAbandonedDatasets } from '@/modules/datasets/jobs/cleanup-abandoned.job.js';
+
+// Ejecutar diariamente a las 2 AM
+if (process.env.CLEANUP_JOB_ENABLED === 'true') {
+  cron.schedule('0 2 * * *', async () => {
+    logger.info('Starting dataset cleanup job');
+    await cleanupAbandonedDatasets();
+  });
+}
+```
+
+#### Tareas de Implementación
+
+- [ ] Crear archivo `cleanup-abandoned.job.ts`
+- [ ] Instalar dependencia `node-cron`
+- [ ] Añadir configuración en `.env` y `.env.example`
+- [ ] Integrar scheduler en `index.ts`
+- [ ] Crear tests unitarios del job
+- [ ] Documentar en README de operaciones
+- [ ] Configurar monitoreo/alertas (opcional)
+
+#### Consideraciones
+
+- **Notificación al usuario:** En v0.5.0, considerar enviar email de aviso antes de eliminar
+- **Soft delete:** Implementar eliminación lógica en lugar de física (preservar para auditoría)
+- **Métricas:** Trackear número de datasets eliminados para análisis de abandono
 
 ---
 
@@ -145,6 +250,258 @@ Implementar un **sistema de toggle de tipo de columna** que permita al usuario:
 - **Backward Compatibility:** Los mappings sin `typeOverride` usarán el tipo auto-detectado (no breaking change)
 - **Validación:** No permitir override de `date` → `numeric` (pérdida de información)
 - **Performance:** Transformaciones de tipo se ejecutan una sola vez durante import, no en runtime
+
+---
+
+### ⚡ Migración a React Query (TanStack Query) para Server State
+
+**Estado:** Propuesta  
+**Prioridad:** Media  
+**Esfuerzo Estimado:** 3-4 días  
+**Versión Target:** v0.4.0
+
+#### Contexto
+
+Actualmente, el frontend maneja el **server state** (datos del backend) con hooks manuales basados en `useState` + `useEffect`. Esta implementación funciona pero tiene limitaciones:
+
+**Problemas Actuales:**
+1. **Sin cache:** Cada vez que se monta un componente, se hace fetch de nuevo
+2. **Sin sincronización:** Si actualizas un dataset en una página, otras páginas no se refrescan
+3. **Código boilerplate:** Cada hook repite la misma lógica de loading/error/data
+4. **Sin optimistic updates:** La UI se actualiza solo después de la respuesta del servidor
+5. **Sin deduplicación:** Si 2 componentes piden el mismo dato, hace 2 requests
+6. **Sin revalidación:** No hay estrategia de stale-while-revalidate
+
+**Ejemplo de código actual (manual):**
+```typescript
+// features/dataset/hooks/useDataset.ts (ACTUAL)
+export function useDataset(datasetId: string | null) {
+  const [dataset, setDataset] = useState<Dataset | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (datasetId) {
+      setIsLoading(true);
+      getDataset(datasetId)
+        .then(setDataset)
+        .catch(setError)
+        .finally(() => setIsLoading(false));
+    }
+  }, [datasetId]);
+
+  return { dataset, isLoading, error };
+}
+```
+
+#### Solución Propuesta
+
+Migrar a **React Query (TanStack Query v5)** para aprovechar:
+
+1. **Cache inteligente:** Los datasets se cachean automáticamente por `queryKey`
+2. **Invalidación automática:** Después de un `PATCH`, invalidar el cache del `GET`
+3. **Estados simplificados:** No más boilerplate de `useState` para loading/error/data
+4. **Optimistic updates:** Actualizar UI antes de que responda el servidor
+5. **Deduplicación:** Múltiples componentes pueden usar la misma query sin duplicar requests
+6. **Revalidación automática:** Datos frescos al volver a la pestaña (stale-while-revalidate)
+7. **DevTools:** Panel de debugging para ver queries y cache en tiempo real
+
+**Ejemplo con React Query (PROPUESTO):**
+```typescript
+// features/dataset/hooks/useDataset.ts (CON REACT QUERY)
+import { useQuery } from '@tanstack/react-query';
+
+export function useDataset(datasetId: string | null) {
+  return useQuery({
+    queryKey: ['dataset', datasetId],
+    queryFn: () => getDataset(datasetId!),
+    enabled: !!datasetId,
+    staleTime: 5 * 60 * 1000, // 5 minutos
+  });
+}
+```
+
+**Beneficio de invalidación automática:**
+```typescript
+// features/dataset/hooks/useDatasetMapping.ts
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+
+export function useDatasetMapping() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, payload }) => updateMapping(id, payload),
+    onSuccess: (_, { id }) => {
+      // ✅ Invalida automáticamente el GET del dataset
+      queryClient.invalidateQueries({ queryKey: ['dataset', id] });
+      // ✅ También invalida la lista de datasets
+      queryClient.invalidateQueries({ queryKey: ['datasets'] });
+    },
+  });
+}
+```
+
+#### Alcance de Migración
+
+**Módulos a migrar:**
+
+1. **Datasets Module:**
+   - `useDataset` → `useQuery`
+   - `useDatasetsList` → `useQuery`
+   - `useDatasetUpload` → `useMutation`
+   - `useDatasetMapping` → `useMutation`
+   - `useDeleteDataset` → `useMutation` (si existe)
+
+2. **Auth Module (opcional):**
+   - `useUser` → `useQuery` (perfil de usuario)
+   - `useLogin` / `useRegister` → `useMutation`
+
+3. **Future Modules:**
+   - Cualquier nuevo módulo que haga fetching de datos del backend
+
+#### Implementación
+
+**Paso 1: Instalación**
+```bash
+npm install @tanstack/react-query @tanstack/react-query-devtools
+```
+
+**Paso 2: Setup del QueryClient**
+```typescript
+// src/infrastructure/api/queryClient.ts
+import { QueryClient } from '@tanstack/react-query';
+
+export const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutos
+      retry: 1,
+      refetchOnWindowFocus: true,
+    },
+    mutations: {
+      retry: 0,
+    },
+  },
+});
+```
+
+**Paso 3: Wrapping en App.tsx**
+```typescript
+// src/App.tsx
+import { QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import { queryClient } from '@/infrastructure/api/queryClient';
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      {/* App content */}
+      <ReactQueryDevtools initialIsOpen={false} />
+    </QueryClientProvider>
+  );
+}
+```
+
+**Paso 4: Migrar hooks uno por uno**
+
+Ejemplo de migración completa:
+
+```typescript
+// ANTES (manual)
+export function useDatasetsList() {
+  const [datasets, setDatasets] = useState<Dataset[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setIsLoading(true);
+    listDatasets()
+      .then(setDatasets)
+      .catch((err) => setError(err.message))
+      .finally(() => setIsLoading(false));
+  }, []);
+
+  return { datasets, isLoading, error };
+}
+
+// DESPUÉS (React Query)
+export function useDatasetsList() {
+  return useQuery({
+    queryKey: ['datasets'],
+    queryFn: listDatasets,
+  });
+}
+```
+
+#### Tareas de Implementación
+
+- [ ] **Setup:**
+  - [ ] Instalar `@tanstack/react-query` y `@tanstack/react-query-devtools`
+  - [ ] Crear `queryClient.ts` con configuración por defecto
+  - [ ] Wrappear App con `QueryClientProvider`
+  - [ ] Habilitar DevTools en modo desarrollo
+
+- [ ] **Migración de Hooks (Datasets):**
+  - [ ] `useDataset` → `useQuery`
+  - [ ] `useDatasetsList` → `useQuery`
+  - [ ] `useDatasetUpload` → `useMutation` con invalidación
+  - [ ] `useDatasetMapping` → `useMutation` con invalidación
+  - [ ] `useDeleteDataset` → `useMutation` con invalidación
+
+- [ ] **Tests:**
+  - [ ] Actualizar tests de hooks para usar `QueryClientProvider` wrapper
+  - [ ] Crear utils para testing con React Query (`createTestQueryClient`)
+  - [ ] Tests de invalidación de cache
+
+- [ ] **Optimizaciones:**
+  - [ ] Implementar optimistic updates para mutations
+  - [ ] Configurar `staleTime` y `cacheTime` por query según necesidades
+  - [ ] Prefetching de datasets en lista (hover)
+
+- [ ] **Documentación:**
+  - [ ] Actualizar README del módulo frontend
+  - [ ] Documentar convenciones de queryKeys (`['entity', id]`)
+  - [ ] Guía de uso de DevTools
+
+#### Beneficios Esperados
+
+**UX:**
+- ⚡ Respuesta instantánea al volver a páginas visitadas (cache)
+- ✅ Sincronización automática entre páginas (invalidación)
+- 🎯 Feedback inmediato en acciones del usuario (optimistic updates)
+
+**DX (Developer Experience):**
+- 📉 Menos código boilerplate (de ~15 líneas a ~5 líneas por hook)
+- 🐛 Debugging más fácil con DevTools
+- 🔄 Sincronización de estado sin lógica manual
+
+**Performance:**
+- 🚀 Menos requests al servidor (deduplicación)
+- 📦 Cache inteligente (stale-while-revalidate)
+- ⏱️ Prefetching para navegación anticipada
+
+#### Referencias
+
+- **Docs Oficiales:** https://tanstack.com/query/latest
+- **Migration Guide:** https://tanstack.com/query/latest/docs/react/guides/migrating-to-v5
+- **Best Practices:** https://tkdodo.eu/blog/practical-react-query
+
+#### Riesgos y Mitigaciones
+
+**Riesgo 1:** Curva de aprendizaje del equipo
+- **Mitigación:** Workshop interno + documentación interna con ejemplos
+
+**Riesgo 2:** Breaking changes en hooks existentes
+- **Mitigación:** Migración gradual, mantener hooks legacy temporalmente con deprecation warnings
+
+**Riesgo 3:** Gestión de cache compleja
+- **Mitigación:** Definir convenciones claras de `queryKeys` desde el inicio
+
+#### Notas Técnicas
+
+- **Compatibilidad:** React Query v5 requiere React 18+ (ya lo usamos)
+- **Bundle Size:** ~15KB gzipped (aceptable para los beneficios)
+- **SSR compatible:** Para futuro Server-Side Rendering si se requiere
 
 ---
 

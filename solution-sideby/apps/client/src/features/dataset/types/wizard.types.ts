@@ -86,6 +86,9 @@ export interface KPIMappingField {
 export interface WizardState {
   currentStep: WizardStep;
 
+  // NEW: Dataset ID from Phase 1 (upload)
+  datasetId: string | null;
+
   // Step 1: File Upload (Legacy structure)
   fileA: FileGroup;
   fileB: FileGroup;

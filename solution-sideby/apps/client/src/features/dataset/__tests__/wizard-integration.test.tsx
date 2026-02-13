@@ -106,9 +106,9 @@ describe('[INTEGRATION] Dataset Creation Wizard', () => {
       expect(screen.getAllByText(/carga de archivos/i)[0]).toBeInTheDocument();
       expect(screen.getAllByText(/sube dos archivos csv/i)[0]).toBeInTheDocument();
 
-      // El botón "Siguiente" debería estar deshabilitado inicialmente
-      const nextButton = screen.getAllByRole('button', { name: /siguiente/i })[0];
-      expect(nextButton).toBeDisabled();
+      // El botón "Subir archivos" debería estar deshabilitado inicialmente
+      const uploadButton = screen.getByRole('button', { name: /subir archivos/i });
+      expect(uploadButton).toBeDisabled();
 
       // Cargar Archivo A
       const fileInputA = screen.getAllByLabelText(/seleccionar archivo a/i)[0] as HTMLInputElement;
@@ -130,13 +130,13 @@ describe('[INTEGRATION] Dataset Creation Wizard', () => {
         expect(screen.getAllByText('ventas_2023.csv')[0]).toBeInTheDocument();
       }, { timeout: 3000 });
 
-      // El botón "Siguiente" debería habilitarse
+      // El botón "Subir archivos" debería habilitarse cuando ambos archivos están cargados
       await waitFor(() => {
-        expect(nextButton).not.toBeDisabled();
+        expect(uploadButton).not.toBeDisabled();
       });
 
-      // Avanzar al Step 2
-      await user.click(nextButton);
+      // Hacer clic en "Subir archivos" para avanzar al Step 2
+      await user.click(uploadButton);
 
       // ======================================================================
       // STEP 2: COLUMN MAPPING
@@ -235,9 +235,9 @@ describe('[INTEGRATION] Dataset Creation Wizard', () => {
         </BrowserRouter>
       );
 
-      // Intentar avanzar sin archivos
-      const nextButton = screen.getByRole('button', { name: /siguiente/i });
-      expect(nextButton).toBeDisabled();
+      // Intentar avanzar sin archivos - En step 1, el botón es "Subir archivos"
+      const uploadButton = screen.getByRole('button', { name: /subir archivos/i });
+      expect(uploadButton).toBeDisabled();
     });
 
     it('[E2E] should not allow proceeding without mapping configuration', async () => {
