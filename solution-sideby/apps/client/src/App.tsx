@@ -1,7 +1,10 @@
 import { RouterProvider } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { appRouter } from './router/AppRouter.js';
 import { Toaster } from '@/shared/components/Toaster.js';
+import { queryClient } from '@/infrastructure/api/queryClient.js';
 
 // ============================================================================
 // APP COMPONENT
@@ -24,10 +27,17 @@ function App() {
   }
 
   return (
-    <GoogleOAuthProvider clientId={googleClientId}>
-      <RouterProvider router={appRouter} />
-      <Toaster />
-    </GoogleOAuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <GoogleOAuthProvider clientId={googleClientId}>
+        <RouterProvider router={appRouter} />
+        <Toaster />
+      </GoogleOAuthProvider>
+      
+      {/* React Query DevTools - Solo visible en modo desarrollo */}
+      {import.meta.env.DEV && (
+        <ReactQueryDevtools initialIsOpen={false} />
+      )}
+    </QueryClientProvider>
   );
 }
 

@@ -1,0 +1,80 @@
+/**
+ * Test utilities para React Query
+ * 
+ * Proporciona helpers para wrappear componentes y hooks con QueryClientProvider en tests.
+ * 
+ * Configuración de tests adaptada para:
+ * - Deshabilitar retry automático (tests deben fallar rápido)
+ * - Deshabilitar garbage collection (mantener datos durante todo el test)
+ * - Silenciar errores esperados en tests (evitar ruido en consola)
+ * 
+ * Uso:
+ * ```tsx
+ * // Para tests de hooks
+ * const { result } = renderHook(() => useDatasets(), {
+ *   wrapper: createQueryClientWrapper()
+ * });
+ * 
+ * // Para tests de componentes
+ * const queryClient = createTestQueryClient();
+ * render(
+ *   <QueryClientProvider client={queryClient}>
+ *     <MyComponent />
+ *   </QueryClientProvider>
+ * );
+ * ```
+ */
+
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import type { ReactNode } from 'react';
+
+/**
+ * Crea un QueryClient configurado específicamente para tests
+ * 
+ * Diferencias con el cliente de producción:
+ * - retry: false - Los tests deben fallar inmediatamente, no reintentar
+ * - gcTime: Infinity - Mantener datos en cache durante todo el test
+ * - logger.error: silenciado - Evitar ruido en consola con errores esperados
+ * 
+ * @returns QueryClient configurado para entorno de testing
+ */
+export function createTestQueryClient() {
+  return new QueryClient({
+    defaultOptions: {
+      queries: {
+        // No reintentar queries en tests (fallar rápido)
+        retry: false,
+        
+        // No hacer garbage collection durante los tests
+        // Mantener todos los datos en cache hasta que termine el test
+        gcTime: Infinity,
+      },
+      mutations: {
+        // No reintentar mutations en tests
+        retry: false,
+      },
+    },
+  });
+}
+
+/**
+ * Crea un wrapper de test que proporciona QueryClientProvider
+ * 
+ * Útil para tests de hooks con renderHook de @testing-library/react:
+ * ```tsx
+ * const { result } = renderHook(() => useMyHook(), {
+ *   wrapper: createQueryClientWrapper()
+ * });
+ * ```
+ * 
+ * @returns Componente wrapper con QueryClientProvider
+ */
+export function createQueryClientWrapper() {
+  const testQueryClient = createTestQueryClient();
+  
+  return ({ children }: { children: ReactNode }) => (
+    <QueryClientProvider client={testQueryClient}>
+      {children}
+    </QueryClientProvider>
+  );
+}
