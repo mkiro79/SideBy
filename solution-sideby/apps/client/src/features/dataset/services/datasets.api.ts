@@ -96,6 +96,11 @@ const extractErrorMessage = (error: unknown): string => {
       return apiError.error;
     }
 
+    // Fallback para respuestas sin estructura ApiError
+    if (axiosError.response?.statusText) {
+      return axiosError.response.statusText;
+    }
+
     return axiosError.message || "Error desconocido";
   }
 

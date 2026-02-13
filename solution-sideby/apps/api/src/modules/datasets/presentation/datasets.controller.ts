@@ -42,6 +42,17 @@ export class DatasetsController {
     next: NextFunction,
   ): Promise<void> {
     try {
+      if (!req.userId) {
+        res.status(401).json({
+          success: false,
+          error: {
+            message: "No autorizado",
+            code: "UNAUTHORIZED",
+          },
+        });
+        return;
+      }
+
       const files = req.files as { [fieldname: string]: Express.Multer.File[] };
 
       // Validar que ambos archivos estén presentes
@@ -97,6 +108,17 @@ export class DatasetsController {
     next: NextFunction,
   ): Promise<void> {
     try {
+      if (!req.userId) {
+        res.status(401).json({
+          success: false,
+          error: {
+            message: "No autorizado",
+            code: "UNAUTHORIZED",
+          },
+        });
+        return;
+      }
+
       const useCase = new GetDatasetByIdUseCase(this.repository);
 
       const dataset = await useCase.execute({
@@ -123,6 +145,17 @@ export class DatasetsController {
     next: NextFunction,
   ): Promise<void> {
     try {
+      if (!req.userId) {
+        res.status(401).json({
+          success: false,
+          error: {
+            message: "No autorizado",
+            code: "UNAUTHORIZED",
+          },
+        });
+        return;
+      }
+
       const useCase = new ListDatasetsUseCase(this.repository);
 
       const result = await useCase.execute({
@@ -149,6 +182,17 @@ export class DatasetsController {
     next: NextFunction,
   ): Promise<void> {
     try {
+      if (!req.userId) {
+        res.status(401).json({
+          success: false,
+          error: {
+            message: "No autorizado",
+            code: "UNAUTHORIZED",
+          },
+        });
+        return;
+      }
+
       // Validar request body con Zod
       const validatedData = UpdateMappingSchema.parse(req.body);
 
@@ -179,6 +223,17 @@ export class DatasetsController {
     next: NextFunction,
   ): Promise<void> {
     try {
+      if (!req.userId) {
+        res.status(401).json({
+          success: false,
+          error: {
+            message: "No autorizado",
+            code: "UNAUTHORIZED",
+          },
+        });
+        return;
+      }
+
       const useCase = new DeleteDatasetUseCase(this.repository);
 
       const result = await useCase.execute({
@@ -201,12 +256,18 @@ export class DatasetsController {
   private handleError(error: unknown, res: Response, next: NextFunction): void {
     // Errores de validación de Zod
     if (error instanceof ZodError) {
+      // Transformar issues a formato user-friendly
+      const validationErrors = error.issues.map((issue) => ({
+        field: issue.path.join("."),
+        message: issue.message,
+      }));
+
       res.status(400).json({
         success: false,
         error: {
           message: "Error de validación",
           code: "VALIDATION_ERROR",
-          details: error.issues, // ZodError usa 'issues', no 'errors'
+          details: validationErrors,
         },
       });
       return;

@@ -107,6 +107,9 @@ export class MongoDatasetRepository implements DatasetRepository {
       // Construir el payload evitando conflictos con campos nested
       const updatePayload: Record<string, any> = { ...updates };
 
+      // Excluir explícitamente createdAt para evitar modificaciones
+      delete updatePayload.createdAt;
+
       // Si viene meta como objeto, convertirlo a dot notation para evitar conflictos
       if (updatePayload.meta) {
         const meta = updatePayload.meta;
@@ -119,7 +122,6 @@ export class MongoDatasetRepository implements DatasetRepository {
         if (meta.description !== undefined) {
           updatePayload["meta.description"] = meta.description;
         }
-        // createdAt no debería cambiar nunca
       }
 
       // Siempre actualizar updatedAt
