@@ -253,6 +253,258 @@ Implementar un **sistema de toggle de tipo de columna** que permita al usuario:
 
 ---
 
+### ⚡ Migración a React Query (TanStack Query) para Server State
+
+**Estado:** Propuesta  
+**Prioridad:** Media  
+**Esfuerzo Estimado:** 3-4 días  
+**Versión Target:** v0.4.0
+
+#### Contexto
+
+Actualmente, el frontend maneja el **server state** (datos del backend) con hooks manuales basados en `useState` + `useEffect`. Esta implementación funciona pero tiene limitaciones:
+
+**Problemas Actuales:**
+1. **Sin cache:** Cada vez que se monta un componente, se hace fetch de nuevo
+2. **Sin sincronización:** Si actualizas un dataset en una página, otras páginas no se refrescan
+3. **Código boilerplate:** Cada hook repite la misma lógica de loading/error/data
+4. **Sin optimistic updates:** La UI se actualiza solo después de la respuesta del servidor
+5. **Sin deduplicación:** Si 2 componentes piden el mismo dato, hace 2 requests
+6. **Sin revalidación:** No hay estrategia de stale-while-revalidate
+
+**Ejemplo de código actual (manual):**
+```typescript
+// features/dataset/hooks/useDataset.ts (ACTUAL)
+export function useDataset(datasetId: string | null) {
+  const [dataset, setDataset] = useState<Dataset | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (datasetId) {
+      setIsLoading(true);
+      getDataset(datasetId)
+        .then(setDataset)
+        .catch(setError)
+        .finally(() => setIsLoading(false));
+    }
+  }, [datasetId]);
+
+  return { dataset, isLoading, error };
+}
+```
+
+#### Solución Propuesta
+
+Migrar a **React Query (TanStack Query v5)** para aprovechar:
+
+1. **Cache inteligente:** Los datasets se cachean automáticamente por `queryKey`
+2. **Invalidación automática:** Después de un `PATCH`, invalidar el cache del `GET`
+3. **Estados simplificados:** No más boilerplate de `useState` para loading/error/data
+4. **Optimistic updates:** Actualizar UI antes de que responda el servidor
+5. **Deduplicación:** Múltiples componentes pueden usar la misma query sin duplicar requests
+6. **Revalidación automática:** Datos frescos al volver a la pestaña (stale-while-revalidate)
+7. **DevTools:** Panel de debugging para ver queries y cache en tiempo real
+
+**Ejemplo con React Query (PROPUESTO):**
+```typescript
+// features/dataset/hooks/useDataset.ts (CON REACT QUERY)
+import { useQuery } from '@tanstack/react-query';
+
+export function useDataset(datasetId: string | null) {
+  return useQuery({
+    queryKey: ['dataset', datasetId],
+    queryFn: () => getDataset(datasetId!),
+    enabled: !!datasetId,
+    staleTime: 5 * 60 * 1000, // 5 minutos
+  });
+}
+```
+
+**Beneficio de invalidación automática:**
+```typescript
+// features/dataset/hooks/useDatasetMapping.ts
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+
+export function useDatasetMapping() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, payload }) => updateMapping(id, payload),
+    onSuccess: (_, { id }) => {
+      // ✅ Invalida automáticamente el GET del dataset
+      queryClient.invalidateQueries({ queryKey: ['dataset', id] });
+      // ✅ También invalida la lista de datasets
+      queryClient.invalidateQueries({ queryKey: ['datasets'] });
+    },
+  });
+}
+```
+
+#### Alcance de Migración
+
+**Módulos a migrar:**
+
+1. **Datasets Module:**
+   - `useDataset` → `useQuery`
+   - `useDatasetsList` → `useQuery`
+   - `useDatasetUpload` → `useMutation`
+   - `useDatasetMapping` → `useMutation`
+   - `useDeleteDataset` → `useMutation` (si existe)
+
+2. **Auth Module (opcional):**
+   - `useUser` → `useQuery` (perfil de usuario)
+   - `useLogin` / `useRegister` → `useMutation`
+
+3. **Future Modules:**
+   - Cualquier nuevo módulo que haga fetching de datos del backend
+
+#### Implementación
+
+**Paso 1: Instalación**
+```bash
+npm install @tanstack/react-query @tanstack/react-query-devtools
+```
+
+**Paso 2: Setup del QueryClient**
+```typescript
+// src/infrastructure/api/queryClient.ts
+import { QueryClient } from '@tanstack/react-query';
+
+export const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutos
+      retry: 1,
+      refetchOnWindowFocus: true,
+    },
+    mutations: {
+      retry: 0,
+    },
+  },
+});
+```
+
+**Paso 3: Wrapping en App.tsx**
+```typescript
+// src/App.tsx
+import { QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import { queryClient } from '@/infrastructure/api/queryClient';
+
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      {/* App content */}
+      <ReactQueryDevtools initialIsOpen={false} />
+    </QueryClientProvider>
+  );
+}
+```
+
+**Paso 4: Migrar hooks uno por uno**
+
+Ejemplo de migración completa:
+
+```typescript
+// ANTES (manual)
+export function useDatasetsList() {
+  const [datasets, setDatasets] = useState<Dataset[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setIsLoading(true);
+    listDatasets()
+      .then(setDatasets)
+      .catch((err) => setError(err.message))
+      .finally(() => setIsLoading(false));
+  }, []);
+
+  return { datasets, isLoading, error };
+}
+
+// DESPUÉS (React Query)
+export function useDatasetsList() {
+  return useQuery({
+    queryKey: ['datasets'],
+    queryFn: listDatasets,
+  });
+}
+```
+
+#### Tareas de Implementación
+
+- [ ] **Setup:**
+  - [ ] Instalar `@tanstack/react-query` y `@tanstack/react-query-devtools`
+  - [ ] Crear `queryClient.ts` con configuración por defecto
+  - [ ] Wrappear App con `QueryClientProvider`
+  - [ ] Habilitar DevTools en modo desarrollo
+
+- [ ] **Migración de Hooks (Datasets):**
+  - [ ] `useDataset` → `useQuery`
+  - [ ] `useDatasetsList` → `useQuery`
+  - [ ] `useDatasetUpload` → `useMutation` con invalidación
+  - [ ] `useDatasetMapping` → `useMutation` con invalidación
+  - [ ] `useDeleteDataset` → `useMutation` con invalidación
+
+- [ ] **Tests:**
+  - [ ] Actualizar tests de hooks para usar `QueryClientProvider` wrapper
+  - [ ] Crear utils para testing con React Query (`createTestQueryClient`)
+  - [ ] Tests de invalidación de cache
+
+- [ ] **Optimizaciones:**
+  - [ ] Implementar optimistic updates para mutations
+  - [ ] Configurar `staleTime` y `cacheTime` por query según necesidades
+  - [ ] Prefetching de datasets en lista (hover)
+
+- [ ] **Documentación:**
+  - [ ] Actualizar README del módulo frontend
+  - [ ] Documentar convenciones de queryKeys (`['entity', id]`)
+  - [ ] Guía de uso de DevTools
+
+#### Beneficios Esperados
+
+**UX:**
+- ⚡ Respuesta instantánea al volver a páginas visitadas (cache)
+- ✅ Sincronización automática entre páginas (invalidación)
+- 🎯 Feedback inmediato en acciones del usuario (optimistic updates)
+
+**DX (Developer Experience):**
+- 📉 Menos código boilerplate (de ~15 líneas a ~5 líneas por hook)
+- 🐛 Debugging más fácil con DevTools
+- 🔄 Sincronización de estado sin lógica manual
+
+**Performance:**
+- 🚀 Menos requests al servidor (deduplicación)
+- 📦 Cache inteligente (stale-while-revalidate)
+- ⏱️ Prefetching para navegación anticipada
+
+#### Referencias
+
+- **Docs Oficiales:** https://tanstack.com/query/latest
+- **Migration Guide:** https://tanstack.com/query/latest/docs/react/guides/migrating-to-v5
+- **Best Practices:** https://tkdodo.eu/blog/practical-react-query
+
+#### Riesgos y Mitigaciones
+
+**Riesgo 1:** Curva de aprendizaje del equipo
+- **Mitigación:** Workshop interno + documentación interna con ejemplos
+
+**Riesgo 2:** Breaking changes en hooks existentes
+- **Mitigación:** Migración gradual, mantener hooks legacy temporalmente con deprecation warnings
+
+**Riesgo 3:** Gestión de cache compleja
+- **Mitigación:** Definir convenciones claras de `queryKeys` desde el inicio
+
+#### Notas Técnicas
+
+- **Compatibilidad:** React Query v5 requiere React 18+ (ya lo usamos)
+- **Bundle Size:** ~15KB gzipped (aceptable para los beneficios)
+- **SSR compatible:** Para futuro Server-Side Rendering si se requiere
+
+---
+
 ## RFC-004: TBD
 
 ### Mejoras Planificadas

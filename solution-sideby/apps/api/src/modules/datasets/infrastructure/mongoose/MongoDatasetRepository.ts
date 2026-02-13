@@ -104,11 +104,26 @@ export class MongoDatasetRepository implements DatasetRepository {
     try {
       logger.debug({ datasetId: id }, "Updating dataset");
 
-      // Asegurar que updatedAt se actualiza
-      const updatePayload = {
-        ...updates,
-        "meta.updatedAt": new Date(),
-      };
+      // Construir el payload evitando conflictos con campos nested
+      const updatePayload: Record<string, any> = { ...updates };
+
+      // Si viene meta como objeto, convertirlo a dot notation para evitar conflictos
+      if (updatePayload.meta) {
+        const meta = updatePayload.meta;
+        delete updatePayload.meta;
+
+        // Setear solo los campos de meta que vengan definidos
+        if (meta.name !== undefined) {
+          updatePayload["meta.name"] = meta.name;
+        }
+        if (meta.description !== undefined) {
+          updatePayload["meta.description"] = meta.description;
+        }
+        // createdAt no debería cambiar nunca
+      }
+
+      // Siempre actualizar updatedAt
+      updatePayload["meta.updatedAt"] = new Date();
 
       const doc = await DatasetModel.findByIdAndUpdate(
         id,

@@ -15,6 +15,7 @@ const LoginPage = lazy(() => import('@/features/auth/pages/LoginPage.js').then(m
 const Home = lazy(() => import('@/features/dashboard/pages/Home.js'));
 const DatasetsList = lazy(() => import('@/features/dataset/pages/DatasetsList.js'));
 const DataUploadWizard = lazy(() => import('@/features/dataset/pages/DataUploadWizard.js'));
+const DatasetDashboard = lazy(() => import('@/features/dataset/pages/DatasetDashboard.js'));
 
 // ============================================================================
 // LOADING FALLBACK
@@ -73,6 +74,14 @@ export const appRouter = createBrowserRouter([
         element: (
           <Suspense fallback={<PageLoader />}>
             <DataUploadWizard />
+          </Suspense>
+        ),
+      },
+      {
+        path: ':id/dashboard',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <DatasetDashboard />
           </Suspense>
         ),
       },

@@ -23,6 +23,7 @@ import type { WizardState } from "../types/wizard.types.js";
 // Helper para crear mock states con valores por defecto
 const createMockState = (overrides: Partial<WizardState> = {}): WizardState => ({
   currentStep: 2,
+  datasetId: null,
   fileA: {
     file: null,
     parsedData: null,
