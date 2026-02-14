@@ -1,5 +1,5 @@
 /**
- * TanStack Query Client Configuration
+ * Configuración del Cliente TanStack Query
  *
  * Configuración centralizada para el manejo de server state.
  * Define políticas de cache, retry y revalidación para toda la app.

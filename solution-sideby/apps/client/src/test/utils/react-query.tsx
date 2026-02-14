@@ -6,7 +6,7 @@
  * Configuración de tests adaptada para:
  * - Deshabilitar retry automático (tests deben fallar rápido)
  * - Deshabilitar garbage collection (mantener datos durante todo el test)
- * - Silenciar errores esperados en tests (evitar ruido en consola)
+ * - Mantener logging por defecto (útil para debugging de tests)
  * 
  * Uso:
  * ```tsx
@@ -34,7 +34,6 @@ import type { ReactNode } from 'react';
  * Diferencias con el cliente de producción:
  * - retry: false - Los tests deben fallar inmediatamente, no reintentar
  * - gcTime: Infinity - Mantener datos en cache durante todo el test
- * - logger.error: silenciado - Evitar ruido en consola con errores esperados
  * 
  * @returns QueryClient configurado para entorno de testing
  */

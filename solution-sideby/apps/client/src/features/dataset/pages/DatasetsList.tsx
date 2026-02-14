@@ -55,15 +55,12 @@ export const DatasetsList = () => {
    * - Actualización optimista del cache (desaparece instantáneamente)
    * - Rollback automático si falla la operación
    * - Invalidación del cache después del éxito
+   * - Manejo de errores (error se expone vía deleteMutation.error)
    */
-  const handleDelete = async (id: string) => {
-    try {
-      await deleteMutation.mutateAsync(id);
-      // No necesitamos refetch manual, el cache se invalida automáticamente
-    } catch (err) {
-      // Error ya se maneja en el hook, aquí solo para no propagar
-      console.error('Delete failed:', err);
-    }
+  const handleDelete = (id: string) => {
+    // Usamos mutate (fire-and-forget) en lugar de mutateAsync
+    // Los errores se exponen automáticamente vía deleteMutation.error
+    deleteMutation.mutate(id);
   };
 
   return (
@@ -141,7 +138,11 @@ export const DatasetsList = () => {
                         dataset={dataset}
                         onOpen={handleOpenDashboard}
                         onDelete={handleDelete}
-                        isDeleting={deleteMutation.isPending}
+                        isDeleting={
+                          deleteMutation.isPending &&
+                          deleteMutation.variables === dataset.id
+                          // variables es string (id del dataset), según la firma del mutation
+                        }
                       />
                     ))}
                   </div>

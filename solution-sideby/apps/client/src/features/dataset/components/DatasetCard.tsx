@@ -147,7 +147,7 @@ export const DatasetCard = ({
                 size="icon"
                 className="shrink-0 text-muted-foreground hover:text-destructive"
                 disabled={isDeleting}
-                aria-label="Delete dataset"
+                aria-label="Eliminar dataset"
               >
                 {isDeleting ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
