@@ -45,7 +45,7 @@ export const DatasetsList = () => {
    * Navega al wizard de creación de dataset
    */
   const handleCreateNew = () => {
-    navigate('/datasets/new');
+    navigate('/datasets/upload');
   };
 
   /**
