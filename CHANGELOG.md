@@ -7,6 +7,31 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Frontend: Wizard Fix - highlightedKpis y categoricalFields (2026-02-14)
+
+- **Problema Identificado:**
+  - Wizard creaba datasets enviando `kpi.id` en `highlightedKpis`
+  - MongoDB schema espera array de `columnNames` (strings)
+  - Dashboard no mostraba KPIs porque buscaba por `columnName` en vez de `id`
+  - Vista Ejecutiva quedaba vacía aunque los datos existían
+
+- **DataUploadWizard Fix:**
+  - `highlightedKpis` ahora usa `kpi.columnName` en vez de `kpi.id`
+  - Removido límite `slice(0, 4)` - el usuario decide cuántos KPIs destacar con checkbox
+  - `categoricalFields` ya usaba `mapping.categoricalFields` correctamente (sin cambios)
+
+- **Flujo Completo (Wizard → Dashboard):**
+  1. **Step 2**: Usuario marca checkboxes "highlighted" en KPIs seleccionados
+  2. **Wizard State**: `highlighted=true` se guarda en `mapping.kpiFields`
+  3. **Step 3 - PATCH**: Filtra KPIs con `highlighted=true` y extrae `columnName`
+  4. **MongoDB**: Se guarda en `dashboardLayout.highlightedKpis` como array de strings
+  5. **Dashboard**: `useDatasetDashboard` lee `highlightedKpis` de MongoDB y busca KPIs por `columnName`
+
+- **Validación:**
+  - Build: ✓ Clean (TypeScript + Vite, 0 errores)
+  - Schema Match: ✓ DatasetSchema.ts línea 114 (`highlightedKpis: [{ type: String }]`)
+  - No breaking changes
+
 ### Frontend: Dashboard Refinement Phase 7.1 (2026-02-14)
 
 - **Alineación con Diseño de Referencia (SideBy-Design):**
