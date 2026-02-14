@@ -107,14 +107,17 @@ export const KPIFieldsSection = ({
             control={control}
             render={({ field }) => (
               <Select
-                onValueChange={field.onChange}
-                value={field.value || ""}
+                onValueChange={(value) => {
+                  // Convertir "none" a string vacío para el schema
+                  field.onChange(value === "none" ? "" : value);
+                }}
+                value={field.value || "none"}
               >
                 <SelectTrigger id="date-field">
                   <SelectValue placeholder="Selecciona una columna de fecha" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Ninguno</SelectItem>
+                  <SelectItem value="none">Ninguno</SelectItem>
                   {availableColumns.map((col) => (
                     <SelectItem key={col} value={col}>
                       {col}
