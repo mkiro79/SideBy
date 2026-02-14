@@ -10,10 +10,7 @@ import { renderHook } from "@testing-library/react";
 import { useDatasetMapping } from "../useDatasetMapping.js";
 import { createQueryClientWrapper } from "@/test/utils/react-query.js";
 import * as datasetsApi from "../../services/datasets.api.js";
-import type {
-  UpdateMappingRequest,
-  Dataset,
-} from "../../types/api.types.js";
+import type { UpdateMappingRequest, Dataset } from "../../types/api.types.js";
 
 // Mock del servicio de API
 vi.mock("../../services/datasets.api.js", () => ({
@@ -98,8 +95,8 @@ describe("useDatasetMapping", () => {
     });
 
     // Act & Assert
-    await expect(
-      result.current.update(datasetId, mockRequest),
-    ).rejects.toThrow(errorMessage);
+    await expect(result.current.update(datasetId, mockRequest)).rejects.toThrow(
+      errorMessage,
+    );
   });
 });
