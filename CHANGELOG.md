@@ -7,6 +7,40 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Frontend: Dashboard Template System - RFC-004 Phase 7 (2026-02-14)
+
+- **Sistema de Templates con 3 vistas predefinidas:**
+  - **Executive**: KPIs clave para decisiones rápidas (top 3 métricas)
+  - **Trends**: Análisis temporal de métricas (revenue, orders, conversion)
+  - **Detailed**: Vista completa con todos los KPIs disponibles
+
+- **Arquitectura de Componentes Dashboard:**
+  - `dashboard.types.ts`: Tipos TypeScript para templates, filtros, KPIs y resultados
+  - `useDatasetDashboard`: Hook principal con lógica de negocio
+    - Cálculo automático de KPIs (suma, diferencia, porcentaje, tendencia)
+    - Aplicación de filtros categóricos dinámicos
+    - Detección automática de campos categóricos (excluye `_source_group`)
+    - Tests completos: 4/4 pasando (cálculo KPIs, filtros, detección campos)
+  - `TemplateSelector`: Selector de vista con iconos Lucide y descripciones
+  - `DashboardFiltersBar`: Filtros categóricos dinámicos (max 4 campos visibles)
+  - `KPIGrid`: Grid responsive (1/2/3 cols) con cards de KPI, badges de grupo, indicadores de tendencia
+  - `ComparisonChart`: Gráfico de barras horizontales con CSS puro (sin librerías externas)
+  - `ComparisonTable`: Tabla expandible con paginación (10 filas por defecto)
+
+- **Refactorización Major de DatasetDashboard:**
+  - Integración completa del sistema de templates con state management
+  - Reemplazo de componentes legacy (KPICard, DatasetTable)
+  - Selector de template en header con manejo de estado local
+  - Filtros categóricos con actualización dinámica de KPIs
+  - Renderizado condicional de chart (no visible en template Detailed)
+  - Footer con estadísticas de filas totales/filtradas
+
+- **Validación:**
+  - Build: ✓ Clean (TypeScript + Vite, 0 errores)
+  - Tests: ✓ 4/4 pasando (useDatasetDashboard hook)
+  - Lint: ✓ No errors
+  - Archivos: 8 nuevos, 1 refactorizado (996 insertions, 124 deletions)
+
 ### Frontend: Dataset Edit Tests + Build Fixes (2026-02-14)
 
 - Tests de edicion de dataset alineados con el DOM real (GroupConfig, KPIFields, AIConfig)
