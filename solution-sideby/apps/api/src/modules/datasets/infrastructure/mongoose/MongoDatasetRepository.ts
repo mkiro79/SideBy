@@ -105,14 +105,14 @@ export class MongoDatasetRepository implements DatasetRepository {
       logger.debug({ datasetId: id }, "Updating dataset");
 
       // Construir el payload evitando conflictos con campos nested
-      const updatePayload: Record<string, any> = { ...updates };
+      const updatePayload: Record<string, unknown> = { ...updates };
 
       // Excluir explícitamente createdAt para evitar modificaciones
       delete updatePayload.createdAt;
 
       // Si viene meta como objeto, convertirlo a dot notation para evitar conflictos
       if (updatePayload.meta) {
-        const meta = updatePayload.meta;
+        const meta = updatePayload.meta as Record<string, unknown>;
         delete updatePayload.meta;
 
         // Setear solo los campos de meta que vengan definidos
