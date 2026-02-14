@@ -28,6 +28,7 @@ import { DashboardFiltersBar } from '../components/dashboard/DashboardFiltersBar
 import { KPIGrid } from '../components/dashboard/KPIGrid.js';
 import { ComparisonChart } from '../components/dashboard/ComparisonChart.js';
 import { ComparisonTable } from '../components/dashboard/ComparisonTable.js';
+import { TrendChart } from '../components/dashboard/TrendChart.js';
 import type { DashboardTemplateId, DashboardFilters } from '../types/dashboard.types.js';
 
 
@@ -131,8 +132,11 @@ export default function DatasetDashboard() {
   const groupAColor = sourceConfig.groupA.color || 'hsl(var(--primary))';
   const groupBColor = sourceConfig.groupB.color || 'hsl(var(--secondary))';
   
-  // KPI fields para la tabla
-  const kpiFields = schemaMapping?.kpiFields || [];
+  // Date field para gráficos temporales
+  const dateField = schemaMapping?.dateField;
+  
+  // Tomar primer KPI para el gráfico de tendencias
+  const firstKpi = kpis[0];
 
   return (
     <SidebarProvider defaultOpen={true}>
@@ -194,6 +198,21 @@ export default function DatasetDashboard() {
               groupBColor={groupBColor}
             />
 
+            {/* Trend Chart - Solo si hay dateField y datos*/}
+            {dateField && firstKpi && filteredData.length > 0 && selectedTemplate !== 'sideby_detailed' && (
+              <TrendChart
+                data={filteredData}
+                dateField={dateField}
+                kpiField={firstKpi.name}
+                kpiLabel={`Tendencia de ${firstKpi.label}`}
+                groupALabel={groupALabel}
+                groupBLabel={groupBLabel}
+                groupAColor={groupAColor}
+                groupBColor={groupBColor}
+                format={firstKpi.format as 'number' | 'currency' | 'percentage'}
+              />
+            )}
+
             {/* Comparison Chart - Solo en templates Executive y Trends */}
             {selectedTemplate !== 'sideby_detailed' && (
               <ComparisonChart
@@ -205,10 +224,9 @@ export default function DatasetDashboard() {
               />
             )}
 
-            {/* Comparison Table */}
+            {/* Comparison Table - Ahora recibe kpis en vez de data raw */}
             <ComparisonTable
-              data={filteredData}
-              kpiFields={kpiFields}
+              kpis={kpis}
               groupALabel={groupALabel}
               groupBLabel={groupBLabel}
             />

@@ -1,31 +1,86 @@
 /**
- * ComparisonTable - Tabla de comparación detallada
+ * ComparisonTable - Tabla de comparación detallada con Delta
  * 
- * Muestra datos crudos con expansión opcional
+ * Tabla comparativa con columnas: Métrica | Categoría | Actual | Comparativo | Cambio (%)
  */
 
-import React, { useState } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/shared/components/ui/card.js';
-import { Button } from '@/shared/components/ui/button.js';
-import { ChevronDown, ChevronRight } from 'lucide-react';
-import type { DataRow } from '../../types/api.types.js';
+import React from 'react';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/shared/components/ui/card.js';
+import { Badge } from '@/shared/components/ui/badge.js';
+import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import type { KPIResult } from '../../types/dashboard.types.js';
 
 interface ComparisonTableProps {
-  data: DataRow[];
-  kpiFields: Array<{ columnName: string; label?: string; format?: string }>;
+  kpis: KPIResult[];
   groupALabel: string;
   groupBLabel: string;
 }
 
 export const ComparisonTable: React.FC<ComparisonTableProps> = ({
-  data,
-  kpiFields,
+  kpis,
   groupALabel,
   groupBLabel,
 }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const formatValue = (value: number, format: string): string => {
+    switch (format) {
+      case 'currency':
+        return new Intl.NumberFormat('es-ES', {
+          style: 'currency',
+          currency: 'EUR',
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0,
+        }).format(value);
+      case 'percentage':
+        return `${value.toFixed(1)}%`;
+      case 'number':
+        return new Intl.NumberFormat('es-ES').format(value);
+      default:
+        return String(value);
+    }
+  };
 
-  if (data.length === 0) {
+  const getChangeIndicator = (change: number) => {
+    if (Math.abs(change) < 0.1) {
+      return (
+        <Badge variant="secondary" className="gap-1">
+          <Minus className="h-3 w-3" />
+          0%
+        </Badge>
+      );
+    }
+
+    const isPositive = change > 0;
+
+    return (
+      <Badge variant={isPositive ? 'success' : 'destructive'} className="gap-1">
+        {isPositive ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+        {isPositive ? '+' : ''}
+        {change.toFixed(1)}%
+      </Badge>
+    );
+  };
+
+  const getCategoryFromName = (name: string): string => {
+    const nameLower = name.toLowerCase();
+    if (nameLower.includes('revenue') || nameLower.includes('ventas') || nameLower.includes('ingreso')) {
+      return 'Ingresos';
+    }
+    if (nameLower.includes('ticket') || nameLower.includes('promedio')) {
+      return 'Ingresos';
+    }
+    if (nameLower.includes('lead') || nameLower.includes('conversion') || nameLower.includes('cac')) {
+      return 'Marketing';
+    }
+    if (nameLower.includes('user') || nameLower.includes('cliente') || nameLower.includes('ltv') || nameLower.includes('nps')) {
+      return 'Clientes';
+    }
+    if (nameLower.includes('tiempo') || nameLower.includes('respuesta') || nameLower.includes('soporte')) {
+      return 'Soporte';
+    }
+    return 'General';
+  };
+
+  if (kpis.length === 0) {
     return (
       <Card>
         <CardContent className="pt-6">
@@ -37,71 +92,67 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({
     );
   }
 
-  const displayData = isExpanded ? data : data.slice(0, 10);
-
   return (
     <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg">Tabla Detallada</CardTitle>
-          {data.length > 10 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsExpanded(!isExpanded)}
-              className="gap-1"
-            >
-              {isExpanded ? (
-                <>
-                  <ChevronDown className="h-4 w-4" />
-                  Mostrar menos
-                </>
-              ) : (
-                <>
-                  <ChevronRight className="h-4 w-4" />
-                  Ver {data.length - 10} más
-                </>
-              )}
-            </Button>
-          )}
-        </div>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base">Datos Comparativos Detallados</CardTitle>
+        <CardDescription>
+          Comparación métrica por métrica entre períodos
+        </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-0">
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
             <thead>
-              <tr className="border-b">
-                <th className="text-left py-2 px-3 text-sm font-medium">
-                  Grupo
+              <tr className="border-b hover:bg-transparent">
+                <th className="text-left py-3 px-4 text-sm font-medium w-[200px]">
+                  Métrica
                 </th>
-                {kpiFields.map((field) => (
-                  <th
-                    key={field.columnName}
-                    className="text-right py-2 px-3 text-sm font-medium"
-                  >
-                    {field.label || field.columnName}
-                  </th>
-                ))}
+                <th className="text-left py-3 px-4 text-sm font-medium">
+                  Categoría
+                </th>
+                <th className="text-right py-3 px-4 text-sm font-medium">
+                  <div className="inline-flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full bg-primary" />
+                    {groupALabel}
+                  </div>
+                </th>
+                <th className="text-right py-3 px-4 text-sm font-medium">
+                  <div className="inline-flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-full bg-secondary" />
+                    {groupBLabel}
+                  </div>
+                </th>
+                <th className="text-right py-3 px-4 text-sm font-medium">
+                  Cambio
+                </th>
               </tr>
             </thead>
             <tbody>
-              {displayData.map((row, idx) => (
-                <tr key={idx} className="border-b hover:bg-muted/50">
-                  <td className="py-2 px-3 text-sm">
-                    {row._source_group === 'groupA' ? groupALabel : groupBLabel}
-                  </td>
-                  {kpiFields.map((field) => (
-                    <td
-                      key={field.columnName}
-                      className="py-2 px-3 text-sm text-right font-mono"
-                    >
-                      {row[field.columnName] !== undefined
-                        ? Number(row[field.columnName]).toLocaleString()
-                        : '-'}
+              {kpis.map((kpi) => {
+                const category = getCategoryFromName(kpi.name);
+                return (
+                  <tr key={kpi.name} className="border-b hover:bg-muted/50">
+                    <td className="py-3 px-4 font-medium text-sm">
+                      {kpi.label}
                     </td>
-                  ))}
-                </tr>
-              ))}
+                    <td className="py-3 px-4">
+                      <Badge variant="outline" className="font-normal">
+                        {category}
+                      </Badge>
+                    </td>
+                    <td className="py-3 px-4 text-right font-medium text-sm">
+                      {formatValue(kpi.valueA, kpi.format)}
+                    </td>
+                    <td className="py-3 px-4 text-right text-muted-foreground text-sm">
+                      {formatValue(kpi.valueB, kpi.format)}
+                    </td>
+                    <td className="py-3 px-4 text-right">
+                      {getChangeIndicator(kpi.diffPercent)}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
