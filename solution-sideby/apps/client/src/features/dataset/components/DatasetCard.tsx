@@ -6,7 +6,8 @@
  * 
  * Props:
  * - dataset: Datos del dataset a mostrar
- * - onOpen: Callback al hacer click en la tarjeta
+ * - onOpen: Callback al hacer click en "Dashboard"
+ * - onEdit: Callback al hacer click en "Editar" (opcional, controlado por feature flag)
  * - onDelete: Callback al eliminar el dataset
  * - isDeleting: Estado de loading durante la eliminación (optimistic update)
  */
@@ -25,8 +26,9 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/shared/components/ui/alert-dialog.js";
-import { FileSpreadsheet, Calendar, BarChart3, Trash2, Loader2 } from "lucide-react";
+import { FileSpreadsheet, Calendar, BarChart3, Trash2, Loader2, Edit2 } from "lucide-react";
 import type { DatasetSummary } from "../types/api.types.js";
+import { FEATURES } from "@/config/features.js";
 
 // ============================================================================
 // PROPS INTERFACE
@@ -35,6 +37,7 @@ import type { DatasetSummary } from "../types/api.types.js";
 interface DatasetCardProps {
   dataset: DatasetSummary;
   onOpen: (id: string) => void;
+  onEdit?: (id: string) => void;
   onDelete: (id: string) => void;
   isDeleting?: boolean;
 }
@@ -45,7 +48,8 @@ interface DatasetCardProps {
 
 export const DatasetCard = ({ 
   dataset, 
-  onOpen, 
+  onOpen,
+  onEdit, 
   onDelete,
   isDeleting = false,
 }: DatasetCardProps) => {
@@ -68,8 +72,8 @@ export const DatasetCard = ({
   /**
    * Maneja la confirmación de eliminación
    */
-  const handleConfirmDelete = async () => {
-    await onDelete(dataset.id);
+  const handleConfirmDelete = () => {
+    onDelete(dataset.id);
     setIsDialogOpen(false);
   };
 
@@ -139,8 +143,27 @@ export const DatasetCard = ({
             </div>
           </button>
 
-          {/* Botón de eliminar con confirmación */}
-          <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          {/* Acciones - Botones de acción */}
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Botón Edit - Solo visible si feature flag activo */}
+            {FEATURES.DATASET_EDIT_ENABLED && onEdit && (
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit(dataset.id);
+                }}
+                disabled={isDeleting}
+                className="text-muted-foreground hover:text-primary"
+                aria-label="Editar dataset"
+              >
+                <Edit2 className="h-4 w-4" />
+              </Button>
+            )}
+
+            {/* Botón de eliminar con confirmación */}
+            <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <AlertDialogTrigger asChild>
               <Button
                 variant="ghost"
@@ -186,6 +209,7 @@ export const DatasetCard = ({
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
+          </div>
         </div>
       </CardContent>
     </Card>
