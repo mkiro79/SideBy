@@ -1,11 +1,11 @@
-﻿/**
+/**
  * Tests para useDataset Hook (con React Query)
  *
- * Verifica la migraciÃ³n correcta a React Query:
+ * Verifica la migración correcta a React Query:
  * - Carga de dataset individual por ID
  * - Query deshabilitada cuando datasetId es null
  * - Manejo de errores
- * - Cache automÃ¡tico por ID
+ * - Cache automático por ID
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -76,7 +76,7 @@ describe("useDataset (con React Query)", () => {
       wrapper: createQueryClientWrapper(),
     });
 
-    // Query estÃ¡ deshabilitada
+    // Query está deshabilitada
     expect(result.current.isLoading).toBe(false);
     expect(result.current.dataset).toBeNull();
 
