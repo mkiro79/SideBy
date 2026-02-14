@@ -48,6 +48,26 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 - **Documentation: React Query Migration Proposal**
   - Nueva propuesta en ROADMAP.md para migrar server state a TanStack Query
+
+- **Frontend: React Query Phase-3 - Mutations with Optimistic Updates (2026-02-14)**
+  - Hook `useUpdateDataset` para actualizaciones con optimistic UI feedback
+    - Deep merge de objetos anidados (meta, sourceConfig, schemaMapping, dashboardLayout)
+    - Rollback automático en errores con restoration de estado previo
+    - Invalidación de cache post-éxito para sincronización con servidor
+    - 4 tests comprehensivos: update, optimistic, rollback, nested merge
+  - Hook `useDeleteDataset` para eliminaciones con removal optimista
+    - Actualización inmediata de lista con filter + decrement total
+    - Limpieza de cache de detalle (removeQueries)
+    - Rollback automático restaurando lista completa
+    - 5 tests comprehensivos: delete, optimistic, rollback, specific, detail cache
+  - Migración de `useDatasets` para usar `useDeleteDataset` en lugar de API manual
+  - Migración completa de `useDataset` a React Query con enabled flag
+  - Mejora de `createQueryClientWrapper` para pre-población de cache en tests
+  - Actualización de tipos: DatasetSummary con campos completos del backend
+  - Componente `DatasetCard` actualizado para usar DatasetSummary con status badges
+  - Tests: 9 tests de mutations + 5 tests de queries = 14 tests nuevos, todos pasando
+  - Lint clean (0 errores), Build exitoso (3.40s, 246KB)
+  - Total: 198/204 tests pasando
   - Justificación técnica: cache inteligente, invalidación automática, deduplicación
   - Alcance de migración: todos los hooks de datasets + auth (opcional)
   - Tareas de implementación detalladas con ejemplos de código
