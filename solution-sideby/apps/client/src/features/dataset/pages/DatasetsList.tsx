@@ -58,8 +58,9 @@ export const DatasetsList = () => {
    * - Manejo de errores (error se expone vía deleteMutation.error)
    */
   const handleDelete = (id: string) => {
-    // Delegamos completamente el manejo de éxito/error al hook de React Query
-    void deleteMutation.mutateAsync(id);
+    // Usamos mutate (fire-and-forget) en lugar de mutateAsync
+    // Los errores se exponen automáticamente vía deleteMutation.error
+    deleteMutation.mutate(id);
   };
 
   return (
