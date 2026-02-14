@@ -6,14 +6,14 @@
  * - aiConfig.userContext (Textarea, opcional, max 1000 chars)
  * 
  * El campo userContext solo se muestra si enabled = true.
- * 
- * Se implementará completamente en Commit 2 de Phase 6.
  */
 
-/* eslint-disable @typescript-eslint/no-unused-vars */
-
+import { Controller, useWatch } from "react-hook-form";
 import type { Control, FieldErrors } from "react-hook-form";
 import type { DatasetEditFormData } from "../../schemas/datasetEdit.schema.js";
+import { Textarea } from "@/shared/components/ui/textarea.js";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card.js";
+import { Checkbox } from "@/shared/components/ui/checkbox.js";
 
 // ============================================================================
 // PROPS
@@ -22,31 +22,92 @@ import type { DatasetEditFormData } from "../../schemas/datasetEdit.schema.js";
 interface AIConfigFieldsProps {
   control: Control<DatasetEditFormData>;
   errors: FieldErrors<DatasetEditFormData>;
-  /** Si true, muestra el campo userContext */
-  aiEnabled: boolean;
 }
 
 // ============================================================================
 // COMPONENT
 // ============================================================================
 
-// Variables prefixed with _ to indicate unused (placeholder component)
 export const AIConfigFields = ({
-  control: _control,
-  errors: _errors,
-  aiEnabled: _aiEnabled,
+  control,
+  errors,
 }: AIConfigFieldsProps) => {
+  // Watch aiEnabled para mostrar/ocultar userContext
+  const aiEnabled = useWatch({
+    control,
+    name: "aiConfig.enabled",
+    defaultValue: false,
+  });
+
   return (
-    <div className="space-y-4">
-      <h3 className="text-lg font-medium">Configuración de IA</h3>
-      <p className="text-sm text-muted-foreground">
-        🚧 Componente en construcción - Commit 2
-      </p>
-      {/* TODO: Implementar campos de formulario */}
-      {/* - Checkbox/Switch para aiConfig.enabled */}
-      {/* - Textarea para aiConfig.userContext (solo si enabled = true) */}
-      {/*   - Placeholder: "Contexto adicional para el análisis de IA..." */}
-      {/*   - Character counter: 0 / 1000 */}
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>Configuración de IA</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Checkbox para habilitar IA */}
+        <div className="flex items-start space-x-3">
+          <Controller
+            name="aiConfig.enabled"
+            control={control}
+            render={({ field }) => (
+              <Checkbox
+                id="ai-enabled"
+                checked={field.value}
+                onCheckedChange={field.onChange}
+              />
+            )}
+          />
+          <div className="space-y-1 flex-1">
+            <label
+              htmlFor="ai-enabled"
+              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+            >
+              Habilitar análisis con IA
+            </label>
+            <p className="text-sm text-muted-foreground">
+              Activa el análisis inteligente de datos y generación de insights automáticos
+            </p>
+          </div>
+        </div>
+
+        {/* Textarea para contexto (solo si AI enabled) */}
+        {aiEnabled && (
+          <div className="space-y-2">
+            <label htmlFor="ai-context" className="text-sm font-medium">
+              Contexto adicional <span className="text-muted-foreground">(opcional)</span>
+            </label>
+            <Controller
+              name="aiConfig.userContext"
+              control={control}
+              render={({ field }) => (
+                <Textarea
+                  id="ai-context"
+                  placeholder="Ej: Este dataset compara el rendimiento de ventas por región. Enfócate en identificar las regiones con mayor variación..."
+                  rows={4}
+                  {...field}
+                  value={field.value || ""}
+                  aria-invalid={!!errors.aiConfig?.userContext}
+                />
+              )}
+            />
+            {errors.aiConfig?.userContext && (
+              <p className="text-sm text-destructive">
+                {errors.aiConfig.userContext.message}
+              </p>
+            )}
+            <Controller
+              name="aiConfig.userContext"
+              control={control}
+              render={({ field: contextField }) => (
+                <p className="text-xs text-muted-foreground">
+                  {(contextField.value?.length || 0)} / 1000 caracteres
+                </p>
+              )}
+            />
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };

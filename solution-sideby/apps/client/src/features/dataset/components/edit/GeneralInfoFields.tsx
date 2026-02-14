@@ -6,13 +6,14 @@
  * - meta.description (Textarea, opcional)
  * 
  * Este componente usa React Hook Form con Controller para integración.
- * Se implementará completamente en Commit 2 de Phase 6.
  */
 
-/* eslint-disable @typescript-eslint/no-unused-vars */
-
+import { Controller } from "react-hook-form";
 import type { Control, FieldErrors } from "react-hook-form";
 import type { DatasetEditFormData } from "../../schemas/datasetEdit.schema.js";
+import { Input } from "@/shared/components/ui/Input.js";
+import { Textarea } from "@/shared/components/ui/textarea.js";
+import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card.js";
 
 // ============================================================================
 // PROPS
@@ -27,17 +28,63 @@ interface GeneralInfoFieldsProps {
 // COMPONENT
 // ============================================================================
 
-// Variables prefixed with _ to indicate unused (placeholder component)
-export const GeneralInfoFields = ({ control: _control, errors: _errors }: GeneralInfoFieldsProps) => {
+export const GeneralInfoFields = ({ control, errors }: GeneralInfoFieldsProps) => {
   return (
-    <div className="space-y-4">
-      <h3 className="text-lg font-medium">Información General</h3>
-      <p className="text-sm text-muted-foreground">
-        🚧 Componente en construcción - Commit 2
-      </p>
-      {/* TODO: Implementar campos de formulario */}
-      {/* - Input para meta.name */}
-      {/* - Textarea para meta.description */}
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>Información General</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Nombre del dataset */}
+        <div className="space-y-2">
+          <label htmlFor="meta-name" className="text-sm font-medium">
+            Nombre <span className="text-destructive">*</span>
+          </label>
+          <Controller
+            name="meta.name"
+            control={control}
+            render={({ field }) => (
+              <Input
+                id="meta-name"
+                placeholder="Ej: Comparación Performance 2023 vs 2024"
+                {...field}
+                aria-invalid={!!errors.meta?.name}
+              />
+            )}
+          />
+          {errors.meta?.name && (
+            <p className="text-sm text-destructive">
+              {errors.meta.name.message}
+            </p>
+          )}
+        </div>
+
+        {/* Descripción */}
+        <div className="space-y-2">
+          <label htmlFor="meta-description" className="text-sm font-medium">
+            Descripción <span className="text-muted-foreground">(opcional)</span>
+          </label>
+          <Controller
+            name="meta.description"
+            control={control}
+            render={({ field }) => (
+              <Textarea
+                id="meta-description"
+                placeholder="Describe brevemente el propósito de este dataset..."
+                rows={3}
+                {...field}
+                value={field.value || ""}
+                aria-invalid={!!errors.meta?.description}
+              />
+            )}
+          />
+          {errors.meta?.description && (
+            <p className="text-sm text-destructive">
+              {errors.meta.description.message}
+            </p>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 };
