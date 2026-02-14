@@ -31,7 +31,8 @@ export const DatasetsList = () => {
   const navigate = useNavigate();
   
   // ✅ React Query hooks
-  const { data: datasets = [], isLoading, error, refetch } = useDatasets();
+  const { data: datasetsResponse, isLoading, error, refetch } = useDatasets();
+  const datasets = datasetsResponse?.data || [];
   const deleteMutation = useDeleteDataset();
 
   /**

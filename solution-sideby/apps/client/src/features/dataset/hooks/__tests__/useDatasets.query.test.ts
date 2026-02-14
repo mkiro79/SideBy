@@ -99,9 +99,10 @@ describe("useDatasets (con React Query)", () => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    // Datos cargados (data es el array directo)
-    expect(result.current.data).toHaveLength(2);
-    expect(result.current.data![0].id).toBe("698f3809e7a4974e30e129c6");
+    // Datos cargados (data es la respuesta completa con estructura { data: [], total: number })
+    expect(result.current.data?.data).toHaveLength(2);
+    expect(result.current.data?.data[0].id).toBe("698f3809e7a4974e30e129c6");
+    expect(result.current.data?.total).toBe(2);
     expect(result.current.error).toBeNull();
   });
 
@@ -219,7 +220,7 @@ describe("useDatasets (con React Query)", () => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    expect(result.current.data).toHaveLength(1);
+    expect(result.current.data?.data).toHaveLength(1);
     expect(spy).toHaveBeenCalledTimes(1);
 
     // Refetch manual

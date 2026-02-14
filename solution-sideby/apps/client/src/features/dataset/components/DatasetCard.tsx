@@ -11,12 +11,12 @@
  * - isDeleting: Estado de loading durante la eliminación (optimistic update)
  */
 
+import { useState } from "react";
 import { Card, CardContent } from "@/shared/components/ui/card.js";
 import { Button } from "@/shared/components/ui/button.js";
 import { Badge } from "@/shared/components/ui/badge.js";
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -49,6 +49,8 @@ export const DatasetCard = ({
   onDelete,
   isDeleting = false,
 }: DatasetCardProps) => {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  
   const formattedDate = new Date(dataset.meta.createdAt).toLocaleDateString("es-ES", {
     day: "numeric",
     month: "short",
@@ -62,6 +64,14 @@ export const DatasetCard = ({
     error: { variant: "destructive" as const, label: "Error" },
   };
   const statusInfo = statusMap[dataset.status] || statusMap.ready;
+
+  /**
+   * Maneja la confirmación de eliminación
+   */
+  const handleConfirmDelete = async () => {
+    await onDelete(dataset.id);
+    setIsDialogOpen(false);
+  };
 
   return (
     <Card className="transition-all hover:shadow-[var(--shadow-soft)]">
@@ -130,7 +140,7 @@ export const DatasetCard = ({
           </button>
 
           {/* Botón de eliminar con confirmación */}
-          <AlertDialog>
+          <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <AlertDialogTrigger asChild>
               <Button
                 variant="ghost"
@@ -158,9 +168,9 @@ export const DatasetCard = ({
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={() => onDelete(dataset.id)}
+                <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+                <Button
+                  onClick={handleConfirmDelete}
                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                   disabled={isDeleting}
                 >
@@ -172,7 +182,7 @@ export const DatasetCard = ({
                   ) : (
                     'Eliminar'
                   )}
-                </AlertDialogAction>
+                </Button>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>

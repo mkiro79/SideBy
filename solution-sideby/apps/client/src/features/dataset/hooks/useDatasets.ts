@@ -25,11 +25,12 @@ import { listDatasets } from "../services/datasets.api.js";
  *
  * Utiliza React Query para cache automático, revalidación y sincronización.
  *
- * @returns React Query result con lista de datasets
+ * @returns React Query result con respuesta completa { data: DatasetSummary[], total: number }
  *
  * @example
  * ```tsx
- * const { data: datasets = [], isLoading, error, refetch } = useDatasets();
+ * const { data: datasetsResponse, isLoading, error, refetch } = useDatasets();
+ * const datasets = datasetsResponse?.data || [];
  *
  * if (isLoading) return <Spinner />;
  * if (error) return <ErrorMessage message={error.message} />;
@@ -39,10 +40,7 @@ import { listDatasets } from "../services/datasets.api.js";
 export const useDatasets = () => {
   return useQuery({
     queryKey: ["datasets"],
-    queryFn: async () => {
-      const response = await listDatasets();
-      return response.data; // Extraer array de datasets del response
-    },
+    queryFn: listDatasets, // Retorna ListDatasetsResponse completo
     staleTime: 2 * 60 * 1000, // 2 minutos (lista cambia frecuentemente)
   });
 };
