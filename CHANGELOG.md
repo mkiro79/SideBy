@@ -98,7 +98,13 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
     - Feedback visual con spinners durante operaciones
     - Cache automático para navegación instantánea
     - Error recovery con botón "Reintentar"
-  - Validación: Lint clean (0 errores), Build exitoso (3.48s, 246.58KB)
+  - Bug Fixes (post-implementación):
+    - Navegación "Crear Nuevo": Corregido route /datasets/new → /datasets/upload
+    - Delete functionality: Fixed cache structure mismatch
+      - Problema: useDatasets retornaba array, pero useDeleteDataset esperaba {data, total}
+      - Solución: useDatasets retorna response completo, DatasetsList extrae array
+      - Resultado: Optimistic updates funcionando correctamente con rollback
+  - Validación: Lint clean (0 errores), Build exitoso (3.43s, 246.58KB)
   - Tests: 197/203 pasando (1 fallo pre-existente no relacionado - wizard-integration)
   - BREAKING CHANGE: useDatasets ya no retorna funciones de navegación (openDataset, createNewDataset, refreshDatasets)
 
