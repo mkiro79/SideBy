@@ -64,7 +64,7 @@ describe("GroupConfigFields", () => {
       render(<FormWrapper disabled={true} />);
 
       expect(
-        screen.getByText(/Esta funcionalidad estará disponible próximamente/i),
+        screen.getByText(/disponible próximamente/i),
       ).toBeInTheDocument();
     });
 
@@ -72,7 +72,7 @@ describe("GroupConfigFields", () => {
       render(<FormWrapper disabled={false} />);
 
       expect(
-        screen.queryByText(/Esta funcionalidad estará disponible próximamente/i),
+        screen.queryByText(/disponible próximamente/i),
       ).not.toBeInTheDocument();
     });
 
@@ -81,11 +81,11 @@ describe("GroupConfigFields", () => {
 
       expect(screen.getByText("Grupo A")).toBeInTheDocument();
       
-      // Label field
-      const groupALabelInput = screen.getByLabelText(/Label Grupo A/i);
+      // Label field - usar querySelector porque el label solo dice "Label"
+      const groupALabelInput = document.querySelector('#groupA-label') as HTMLInputElement;
       expect(groupALabelInput).toBeInTheDocument();
       expect(groupALabelInput.tagName).toBe("INPUT");
-      expect((groupALabelInput as HTMLInputElement).value).toBe("Grupo A");
+      expect(groupALabelInput.value).toBe("Grupo A");
 
       // Color field (hay 2 inputs: color picker + text input)
       // Buscamos por el id del color picker
@@ -99,10 +99,10 @@ describe("GroupConfigFields", () => {
 
       expect(screen.getByText("Grupo B")).toBeInTheDocument();
       
-      // Label field
-      const groupBLabelInput = screen.getByLabelText(/Label Grupo B/i);
+      // Label field - usar querySelector porque el label solo dice "Label"
+      const groupBLabelInput = document.querySelector('#groupB-label') as HTMLInputElement;
       expect(groupBLabelInput).toBeInTheDocument();
-      expect((groupBLabelInput as HTMLInputElement).value).toBe("Grupo B");
+      expect(groupBLabelInput.value).toBe("Grupo B");
 
       // Color field
       const groupBColorPicker = document.querySelector('#groupB-color') as HTMLInputElement;

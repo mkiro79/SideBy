@@ -7,6 +7,13 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Frontend: Dataset Edit Tests + Build Fixes (2026-02-14)
+
+- Tests de edicion de dataset alineados con el DOM real (GroupConfig, KPIFields, AIConfig)
+- AIConfigFields usa control directo para estado inicial de checkbox y render condicional
+- KPIFieldsSection: label asociado a tabla para accesibilidad
+- Lint/TS: globalThis.confirm, ternario de status simplificado, casts innecesarios removidos
+
 ### Added - RFC-003 Part 1: Dataset Creation API & Frontend Integration (2026-02-13)
 
 - **Backend: Datasets Module (2-Phase Flow)**

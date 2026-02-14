@@ -157,11 +157,11 @@ describe("GeneralInfoFields", () => {
 
       render(<FormWrapper />);
 
-      const nameInput = screen.getByLabelText(/Nombre/) as HTMLInputElement;
+      const nameInput = screen.getByLabelText(/Nombre/);
 
       await user.type(nameInput, "Mi Dataset");
 
-      expect(nameInput.value).toBe("Mi Dataset");
+      expect(nameInput).toHaveValue("Mi Dataset");
     });
 
     it("Permite escribir en el campo description", async () => {
@@ -169,13 +169,11 @@ describe("GeneralInfoFields", () => {
 
       render(<FormWrapper />);
 
-      const descriptionTextarea = screen.getByLabelText(
-        /Descripción/,
-      ) as HTMLTextAreaElement;
+      const descriptionTextarea = screen.getByLabelText(/Descripción/);
 
       await user.type(descriptionTextarea, "Esta es una descripción de prueba");
 
-      expect(descriptionTextarea.value).toBe(
+      expect(descriptionTextarea).toHaveValue(
         "Esta es una descripción de prueba",
       );
     });

@@ -107,7 +107,7 @@ export const KPIFieldsSection = ({
             control={control}
             render={({ field }) => (
               <Select
-                onValueChange={(value) => {
+                onValueChange={(value: string) => {
                   // Convertir "none" a string vacío para el schema
                   field.onChange(value === "none" ? "" : value);
                 }}
@@ -139,11 +139,11 @@ export const KPIFieldsSection = ({
 
         {/* KPI Fields Table */}
         <div className="space-y-2">
-          <label className="text-sm font-medium">
+          <label htmlFor="kpi-fields-table" className="text-sm font-medium">
             Campos KPI <span className="text-destructive">*</span>
           </label>
           <div className="rounded-md border">
-            <Table>
+            <Table id="kpi-fields-table">
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[30%]">Columna Original</TableHead>

@@ -47,7 +47,7 @@ export const datasetEditSchema = z.object({
   // ============================================================================
   // GROUP CONFIGURATION (Preparación futura - actualmente NO editable)
   // ============================================================================
-  // TODO: Descomentar cuando el backend soporte PATCH de sourceConfig
+  // Nota: Se activará cuando el backend soporte PATCH de sourceConfig
   // Ver: docs/ROADMAP.md → RFC-004 → Backend: Soportar edición de sourceConfig
   sourceConfig: z
     .object({

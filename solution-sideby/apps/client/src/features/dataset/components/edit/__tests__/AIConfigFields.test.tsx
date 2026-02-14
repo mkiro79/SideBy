@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { userEvent } from "@testing-library/user-event";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -69,7 +69,7 @@ describe("AIConfigFields", () => {
 
       expect(
         screen.getByText(
-          /Permite al sistema generar insights automáticos usando IA/i,
+          /Activa el análisis inteligente de datos/i,
         ),
       ).toBeInTheDocument();
     });
@@ -78,16 +78,16 @@ describe("AIConfigFields", () => {
       render(<FormWrapper initialEnabled={false} />);
 
       const textarea = screen.queryByRole("textbox", {
-        name: /Contexto adicional para la IA/i,
+        name: /Contexto adicional/i,
       });
       expect(textarea).not.toBeInTheDocument();
     });
 
-    it("Muestra el textarea cuando enabled=true", () => {
+    it("Muestra el textarea cuando enabled=true", async () => {
       render(<FormWrapper initialEnabled={true} />);
 
-      const textarea = screen.getByRole("textbox", {
-        name: /Contexto adicional para la IA/i,
+      const textarea = await screen.findByRole("textbox", {
+        name: /Contexto adicional/i,
       });
       expect(textarea).toBeInTheDocument();
     });
@@ -99,9 +99,9 @@ describe("AIConfigFields", () => {
 
       const checkbox = screen.getByRole("checkbox", {
         name: /Habilitar análisis con IA/i,
-      }) as HTMLInputElement;
+      });
 
-      expect(checkbox.checked).toBe(false);
+      expect(checkbox).toHaveAttribute("aria-checked", "false");
     });
 
     it("El checkbox inicia marcado si initialEnabled=true", () => {
@@ -109,9 +109,9 @@ describe("AIConfigFields", () => {
 
       const checkbox = screen.getByRole("checkbox", {
         name: /Habilitar análisis con IA/i,
-      }) as HTMLInputElement;
+      });
 
-      expect(checkbox.checked).toBe(true);
+      expect(checkbox).toHaveAttribute("aria-checked", "true");
     });
 
     it("Marcar el checkbox muestra el textarea", async () => {
@@ -125,7 +125,7 @@ describe("AIConfigFields", () => {
       // Inicialmente no hay textarea
       expect(
         screen.queryByRole("textbox", {
-          name: /Contexto adicional para la IA/i,
+          name: /Contexto adicional/i,
         }),
       ).not.toBeInTheDocument();
 
@@ -136,7 +136,7 @@ describe("AIConfigFields", () => {
       await waitFor(() => {
         expect(
           screen.getByRole("textbox", {
-            name: /Contexto adicional para la IA/i,
+            name: /Contexto adicional/i,
           }),
         ).toBeInTheDocument();
       });
@@ -151,11 +151,10 @@ describe("AIConfigFields", () => {
       });
 
       // Inicialmente hay textarea
-      expect(
-        screen.getByRole("textbox", {
-          name: /Contexto adicional para la IA/i,
-        }),
-      ).toBeInTheDocument();
+      const initialTextarea = await screen.findByRole("textbox", {
+        name: /Contexto adicional/i,
+      });
+      expect(initialTextarea).toBeInTheDocument();
 
       // Click para desmarcar
       await user.click(checkbox);
@@ -164,7 +163,7 @@ describe("AIConfigFields", () => {
       await waitFor(() => {
         expect(
           screen.queryByRole("textbox", {
-            name: /Contexto adicional para la IA/i,
+            name: /Contexto adicional/i,
           }),
         ).not.toBeInTheDocument();
       });
@@ -176,16 +175,16 @@ describe("AIConfigFields", () => {
       const user = userEvent.setup();
       render(<FormWrapper initialEnabled={true} />);
 
-      const textarea = screen.getByRole("textbox", {
-        name: /Contexto adicional para la IA/i,
-      }) as HTMLTextAreaElement;
+      const textarea = await screen.findByRole("textbox", {
+        name: /Contexto adicional/i,
+      });
 
       await user.type(
         textarea,
         "Este dataset contiene ventas mensuales por región",
       );
 
-      expect(textarea.value).toBe(
+      expect(textarea).toHaveValue(
         "Este dataset contiene ventas mensuales por región",
       );
     });
@@ -193,58 +192,52 @@ describe("AIConfigFields", () => {
     it("Muestra el contador de caracteres (0/1000) inicialmente", async () => {
       render(<FormWrapper initialEnabled={true} />);
 
-      // Esperar a que aparezca el contador
-      await waitFor(() => {
-        const counter = screen.getByText(/0 \/ 1000/);
-        expect(counter).toBeInTheDocument();
-      });
+      const counter = await screen.findByText(/0 \/ 1000 caracteres/);
+      expect(counter).toBeInTheDocument();
     });
 
     it("Actualiza el contador al escribir", async () => {
       const user = userEvent.setup();
       render(<FormWrapper initialEnabled={true} />);
 
-      const textarea = screen.getByRole("textbox", {
-        name: /Contexto adicional para la IA/i,
+      const textarea = await screen.findByRole("textbox", {
+        name: /Contexto adicional/i,
       });
 
       // Escribir texto de 50 caracteres "A" * 50
       await user.type(textarea, "A".repeat(50));
 
       // El contador debería mostrar 50 / 1000
-      await waitFor(() => {
-        const counter = screen.getByText(/50 \/ 1000/);
-        expect(counter).toBeInTheDocument();
-      });
+      const counter = await screen.findByText(/50 \/ 1000 caracteres/);
+      expect(counter).toBeInTheDocument();
     });
 
-    it("Muestra placeholder apropiado", () => {
+    it("Muestra placeholder apropiado", async () => {
       render(<FormWrapper initialEnabled={true} />);
 
-      const textarea = screen.getByRole("textbox", {
-        name: /Contexto adicional para la IA/i,
+      const textarea = await screen.findByRole("textbox", {
+        name: /Contexto adicional/i,
       });
 
       expect(textarea).toHaveAttribute(
         "placeholder",
-        expect.stringContaining("información adicional"),
+        expect.stringContaining("Enfócate en identificar"),
       );
     });
   });
 
   describe("Validación", () => {
     it("Muestra error si userContext excede 1000 caracteres", async () => {
-      const user = userEvent.setup();
       render(<FormWrapper initialEnabled={true} />);
 
-      const textarea = screen.getByRole("textbox", {
-        name: /Contexto adicional para la IA/i,
+      const textarea = await screen.findByRole("textbox", {
+        name: /Contexto adicional/i,
       });
 
       // Escribir más de 1000 caracteres
       const longText = "A".repeat(1001);
-      await user.type(textarea, longText);
-      await user.tab(); // Blur para trigger validación
+      fireEvent.change(textarea, { target: { value: longText } });
+      fireEvent.blur(textarea);
 
       // Esperar mensaje de error
       await waitFor(() => {
@@ -267,20 +260,21 @@ describe("AIConfigFields", () => {
       expect(checkbox).toHaveAccessibleName();
     });
 
-    it("El textarea tiene un label accesible cuando está visible", () => {
+    it("El textarea tiene un label accesible cuando está visible", async () => {
       render(<FormWrapper initialEnabled={true} />);
 
-      const textarea = screen.getByRole("textbox", {
-        name: /Contexto adicional para la IA/i,
+      const textarea = await screen.findByRole("textbox", {
+        name: /Contexto adicional/i,
       });
 
       expect(textarea).toHaveAccessibleName();
     });
 
-    it("El textarea tiene el indicador de opcional", () => {
+    it("El textarea tiene el indicador de opcional", async () => {
       render(<FormWrapper initialEnabled={true} />);
 
-      expect(screen.getByText("(opcional)")).toBeInTheDocument();
+      const optionalIndicator = await screen.findByText("(opcional)");
+      expect(optionalIndicator).toBeInTheDocument();
     });
   });
 

@@ -183,7 +183,7 @@ const DatasetDetail = () => {
    */
   const handleBack = () => {
     if (isDirty) {
-      const confirmed = window.confirm(
+      const confirmed = globalThis.confirm(
         "Tienes cambios sin guardar. ¿Estás seguro de salir?",
       );
       if (!confirmed) return;

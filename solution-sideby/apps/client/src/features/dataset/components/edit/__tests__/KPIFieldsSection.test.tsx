@@ -72,7 +72,7 @@ describe("KPIFieldsSection", () => {
     it("Renderiza el card con título correcto", () => {
       render(<FormWrapper />);
 
-      expect(screen.getByText("Campos KPI y Dimensión")).toBeInTheDocument();
+      expect(screen.getByText("Campos KPI y Dimensiones")).toBeInTheDocument();
     });
 
     it("Renderiza el campo Dimension Field con select", () => {
@@ -101,8 +101,8 @@ describe("KPIFieldsSection", () => {
       expect(screen.getByText("Campos KPI")).toBeInTheDocument();
       
       // Headers de la tabla
-      expect(screen.getByText("Nombre Original")).toBeInTheDocument();
-      expect(screen.getByText("Label")).toBeInTheDocument();
+      expect(screen.getByText("Columna Original")).toBeInTheDocument();
+      expect(screen.getByText("Label Personalizado")).toBeInTheDocument();
       expect(screen.getByText("Formato")).toBeInTheDocument();
     });
 

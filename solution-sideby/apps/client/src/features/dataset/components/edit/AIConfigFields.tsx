@@ -8,7 +8,7 @@
  * El campo userContext solo se muestra si enabled = true.
  */
 
-import { Controller, useWatch } from "react-hook-form";
+import { Controller, useController } from "react-hook-form";
 import type { Control, FieldErrors } from "react-hook-form";
 import type { DatasetEditFormData } from "../../schemas/datasetEdit.schema.js";
 import { Textarea } from "@/shared/components/ui/textarea.js";
@@ -32,12 +32,11 @@ export const AIConfigFields = ({
   control,
   errors,
 }: AIConfigFieldsProps) => {
-  // Watch aiEnabled para mostrar/ocultar userContext
-  const aiEnabled = useWatch({
-    control,
+  const { field: enabledField } = useController({
     name: "aiConfig.enabled",
-    defaultValue: false,
+    control,
   });
+  const aiEnabled = !!enabledField.value;
 
   return (
     <Card>
@@ -47,16 +46,10 @@ export const AIConfigFields = ({
       <CardContent className="space-y-4">
         {/* Checkbox para habilitar IA */}
         <div className="flex items-start space-x-3">
-          <Controller
-            name="aiConfig.enabled"
-            control={control}
-            render={({ field }) => (
-              <Checkbox
-                id="ai-enabled"
-                checked={field.value}
-                onCheckedChange={field.onChange}
-              />
-            )}
+          <Checkbox
+            id="ai-enabled"
+            checked={!!enabledField.value}
+            onCheckedChange={enabledField.onChange}
           />
           <div className="space-y-1 flex-1">
             <label

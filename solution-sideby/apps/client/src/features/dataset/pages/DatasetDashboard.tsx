@@ -169,12 +169,12 @@ export default function DatasetDashboard() {
   const { dashboardLayout, schemaMapping, data, sourceConfig, meta } = dataset;
   
   // Status badge
-  const statusVariant =
-    dataset.status === 'ready'
-      ? 'success'
-      : dataset.status === 'error'
-        ? 'destructive'
-        : 'secondary';
+  let statusVariant: "success" | "destructive" | "secondary" = "secondary";
+  if (dataset.status === "ready") {
+    statusVariant = "success";
+  } else if (dataset.status === "error") {
+    statusVariant = "destructive";
+  }
 
   return (
     <SidebarProvider defaultOpen={true}>
