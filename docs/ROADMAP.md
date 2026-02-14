@@ -645,6 +645,118 @@ queryClient.invalidateQueries({ queryKey: ['datasets'] });     // ✅ Lista se a
 - [ ] Tests E2E del flujo completo
 - [ ] Performance testing
 
+#### Limitaciones Conocidas & Tareas Pendientes Backend
+
+### 🔧 Backend: Soportar edición de `sourceConfig` en endpoint PATCH
+
+**Estado:** Pendiente (Bloqueador para edición completa de grupos)  
+**Prioridad:** Media  
+**Esfuerzo Estimado:** 1 día  
+**Versión Target:** v0.4.1  
+**Bloqueado por:** Phase 6 de RFC-004
+
+#### Contexto
+
+Durante la implementación de **Phase 6: DatasetDetail Edit Page** (RFC-004), se identificó que el backend endpoint `PATCH /api/v1/datasets/:id` **NO soporta actualizar `sourceConfig`**.
+
+**Schema actual (UpdateMappingSchema):**
+```typescript
+{
+  meta: { name, description },           // ✅ Soportado
+  schemaMapping: { ... },                // ✅ Soportado
+  dashboardLayout: { ... },              // ✅ Soportado
+  aiConfig: { enabled, userContext }     // ✅ Soportado
+  // ❌ sourceConfig NO está en el schema
+}
+```
+
+**Problema:**
+- Frontend permite mostrar y eventualmente editar `sourceConfig.groupA/B.label` y `sourceConfig.groupA/B.color`
+- Backend rechaza el payload si se envía `sourceConfig` (Zod validation error)
+- Los labels y colores de grupos son **inmutables** después del upload inicial
+
+#### Solución Propuesta
+
+**Opción A: Extender UpdateMappingSchema (Recomendada)**
+
+Actualizar el schema Zod para aceptar cambios en labels y colores:
+
+```typescript
+// apps/api/src/modules/datasets/presentation/validators/datasets.schemas.ts
+
+export const UpdateMappingSchema = z.object({
+  meta: z.object({ ... }),
+  schemaMapping: z.object({ ... }),
+  dashboardLayout: z.object({ ... }),
+  aiConfig: z.object({ ... }).optional(),
+  
+  // ✨ NUEVO: Permitir editar configuración de grupos
+  sourceConfig: z.object({
+    groupA: z.object({
+      label: z.string().min(1).max(50),
+      color: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
+      // originalFileName y rowCount NO editables
+    }).partial(),
+    groupB: z.object({
+      label: z.string().min(1).max(50),
+      color: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
+    }).partial(),
+  }).optional(),
+});
+```
+
+**Opción B: Endpoint separado (Menos prioritario)**
+
+Crear `PATCH /api/v1/datasets/:id/groups` específico para editar grupos:
+- Ventaja: Separación de responsabilidades
+- Desventaja: Más complejidad (2 mutations en frontend)
+
+#### Tareas de Implementación
+
+- [ ] **Backend:**
+  - [ ] Actualizar `UpdateMappingSchema` con `sourceConfig` opcional
+  - [ ] Validar que solo se editen `label` y `color` (no `originalFileName`, `rowCount`)
+  - [ ] Actualizar `UpdateMappingUseCase` para aplicar cambios a `sourceConfig`
+  - [ ] Tests unitarios para validación y actualización
+  - [ ] Tests de integración para endpoint PATCH
+
+- [ ] **Frontend (después de backend):**
+  - [ ] Habilitar edición de labels y colores en `GroupConfigFields` component
+  - [ ] Actualizar `useUpdateDataset` hook para enviar `sourceConfig` en payload
+  - [ ] Tests de formulario con edición de grupos
+
+#### Workaround Temporal (Phase 6)
+
+Mientras el backend no soporte edición de `sourceConfig`:
+
+1. **Mostrar campos como disabled** (read-only) en `GroupConfigFields.tsx`
+2. **Agregar tooltip explicativo:** "Los labels y colores de grupos se configuran en el upload inicial. Próximamente podrás editarlos aquí."
+3. **NO enviar `sourceConfig` en el payload** de `updateDataset` mutation
+4. **Color picker visible pero disabled** (para preparar UI)
+
+**Nota en código:**
+```typescript
+// GroupConfigFields.tsx
+// TODO: Habilitar edición cuando backend soporte PATCH de sourceConfig
+// Ver: docs/ROADMAP.md → RFC-004 → Backend: Soportar edición de sourceConfig
+<Input disabled value={groupALabel} ... />
+```
+
+#### Mejora Adicional: Wizard Upload con Nombres de Archivo
+
+**Relacionado:** En vez de usar "Grupo A" y "Grupo B" por defecto en el wizard de upload, usar los nombres de archivo originales.
+
+**Cambio en `DataUploadWizard`:**
+```typescript
+// Antes:
+const defaultGroupALabel = "Grupo A"; // ❌ Genérico
+
+// Después:
+const defaultGroupALabel = fileA.name.replace(/\.csv$/i, ''); // ✅ "performance_2023"
+```
+
+Esto hace que los datasets tengan labels más descriptivos desde el inicio y reduce la necesidad de editarlos posteriormente.
+
 #### Beneficios Esperados
 
 **UX:**
