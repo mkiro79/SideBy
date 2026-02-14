@@ -141,6 +141,7 @@ export const DatasetsList = () => {
                         isDeleting={
                           deleteMutation.isPending &&
                           deleteMutation.variables === dataset.id
+                          // variables es string (id del dataset), según la firma del mutation
                         }
                       />
                     ))}
