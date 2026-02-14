@@ -7,6 +7,54 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Frontend: Dashboard Refinement Phase 7.1 (2026-02-14)
+
+- **Alineación con Diseño de Referencia (SideBy-Design):**
+  - Análisis de gaps entre implementación actual y diseño de referencia
+  - Refactorización completa de componentes para coincidir con UX/UI target
+
+- **TrendChart - Nuevo Componente con Recharts:**
+  - Gráfico temporal LineChart con 2 líneas (Grupo A vs Grupo B)
+  - Agrupación automática por `dateField` con suma de valores KPI
+  - Formateo responsive: €Xk para miles, % para porcentajes, números para contadores
+  - Tooltip personalizado con estilos del theme system
+  - Renderizado condicional en templates Executive y Trends (no en Detailed)
+  - Props: data, dateField, kpiField, kpiLabel, groupLabels, colors, format
+
+- **KPIGrid - Refactorización Total:**
+  - **Diseño Compacto:** Icon top-right en bg-muted (10x10), valor grande centrado
+  - **Display Format:** "vs. $XXX" debajo del valor principal para comparación rápida
+  - **Auto-Detection:** Iconos automáticos según nombre KPI (revenue→DollarSign, user→Users, roi→TrendingUp)
+  - **Badge Variants:** success (verde), destructive (rojo), secondary (gris) según % cambio
+  - **Formatting:** Sufijo K para miles (e.g., "245K" en vez de "245,000")
+  - **Layout:** Grid responsive de 4 columnas (antes 3)
+
+- **ComparisonTable - Rediseño con Delta:**
+  - **Estructura:** KPIs como filas (no datos crudos), 5 columnas: Métrica | Categoría | Actual | Comparativo | Cambio
+  - **Nueva Columna Delta:** Badge con % cambio y trend icons (TrendingUp/Down/Minus)
+  - **Auto-Categorization:** Función `getCategoryFromName()` detecta: Ingresos, Marketing, Clientes, Soporte, General
+  - **Visual Indicators:** Colored dots en header para grupos, hover effects en filas
+  - **Props Refactored:** Ahora recibe `kpis: KPIResult[]` en vez de `data: DataRow[], kpiFields`
+  - **Simplified:** Sin paginación/expansión (muestra todos KPIs siempre)
+
+- **DatasetDashboard - Integración de Componentes:**
+  - TrendChart insertado entre KPIGrid y ComparisonChart (only si `dateField` existe)
+  - ComparisonTable actualizado con nueva firma de props (kpis directamente)
+  - Variables preparadas: `dateField`, `firstKpi` para TrendChart
+  - Condicionales ajustados para cada template (Executive: KPIs + Trend + Table, Trends: KPIs + Trend + Chart, Detailed: KPIs + Table)
+
+- **Dependencies Update:**
+  - `recharts: ^2.15.0` instalado para gráficos temporales
+  - Declaraciones de tipos personalizadas (`src/types/recharts.d.ts`) para compatibilidad React 19
+  - Fix: @swc/core-linux-x64-gnu removido (incompatibilidad Windows, EBADPLATFORM)
+  - ESLint: `no-explicit-any` deshabilitado en recharts.d.ts (tipos externos)
+
+- **Validación:**
+  - Build: ✓ Clean (TypeScript + Vite después de recharts.d.ts)
+  - Lint: ✓ No errors (eslint-disable en tipos externos)
+  - Files: 2 nuevos (TrendChart, recharts.d.ts), 5 refactorizados (+862 insertions, -159 deletions)
+  - Visual: Pendiente testing manual con templates/filtros
+
 ### Frontend: Dashboard Template System - RFC-004 Phase 7 (2026-02-14)
 
 - **Sistema de Templates con 3 vistas predefinidas:**
