@@ -34,6 +34,7 @@ export interface UpdateMappingRequest {
       columnName: string;
       label: string;
       format: "number" | "currency" | "percentage";
+      highlighted?: boolean; // ✅ Campo para marcar KPIs destacados
     }>;
     categoricalFields?: string[];
   };
@@ -125,6 +126,7 @@ export interface Dataset {
       columnName: string;
       label: string;
       format: "number" | "currency" | "percentage";
+      highlighted?: boolean; // ✅ Campo para marcar KPIs destacados
     }>;
     categoricalFields?: string[];
   };

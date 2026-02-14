@@ -161,6 +161,7 @@ export default function DataUploadWizard() {
             columnName: kpi.columnName,
             label: kpi.label,
             format: kpi.format as 'number' | 'currency' | 'percentage',
+            highlighted: kpi.highlighted, // ✅ FIX: Incluir highlighted en el map
           })),
           categoricalFields: mapping.categoricalFields as string[] | undefined,
         },
@@ -177,6 +178,17 @@ export default function DataUploadWizard() {
             }
           : undefined,
       };
+
+      console.log('[DataUploadWizard] State Before PATCH:', {
+        rawKpiFields: mapping.kpiFields,
+        highlightedInState: (mapping.kpiFields || []).filter((kpi) => kpi.highlighted),
+      });
+
+      console.log('[DataUploadWizard] PATCH Payload:', {
+        categoricalFields: payload.schemaMapping.categoricalFields,
+        highlightedKpis: payload.dashboardLayout.highlightedKpis,
+        kpiFieldsCount: payload.schemaMapping.kpiFields.length,
+      });
       
       await update(datasetId, payload);
       

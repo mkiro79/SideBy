@@ -40,6 +40,7 @@ const KPIFieldSchema = new Schema(
       enum: ["number", "currency", "percentage"],
       required: true,
     },
+    highlighted: { type: Boolean, default: false }, // ✅ Campo opcional para KPIs destacados
   },
   { _id: false },
 );

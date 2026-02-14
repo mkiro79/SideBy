@@ -28,14 +28,28 @@ export function ColumnMappingStep() {
   
   const availableColumns = fileA.parsedData?.headers || [];
   const dimensionField = mapping.dimensionField;
-  const kpiFields = mapping.kpiFields;
+  const kpiFields = mapping.kpiFields || [];
+  const categoricalFields = mapping.categoricalFields || [];
   
   // Columnas no usadas (disponibles para KPIs)
   const availableKPIColumns = availableColumns.filter(
     (col) =>
       col !== dimensionField &&
+      col !== mapping.dateField &&
       !(kpiFields || []).some((kpi) => kpi.columnName === col)
   );
+  
+  // Columnas disponibles para categorical (strings, excluye dimensión, KPIs, fecha)
+  const availableCategoricalColumns = availableColumns.filter((col) => {
+    if (col === dimensionField || col === mapping.dateField) return false;
+    if ((kpiFields || []).some((kpi) => kpi.columnName === col)) return false;
+    
+    // Detectar si es string
+    const sampleRow = fileA.parsedData?.rows[0];
+    if (!sampleRow) return false;
+    const value = sampleRow[col];
+    return typeof value === 'string';
+  });
   
   // Detectar posibles columnas de fecha
   const dateColumns = availableColumns.filter((col) =>
@@ -76,6 +90,20 @@ export function ColumnMappingStep() {
     });
     
     setMapping({ kpiFields: updatedKPIs });
+  };
+  
+  /**
+   * Handler para toggle de campo categórico
+   */
+  const handleToggleCategorical = (columnName: string) => {
+    const currentCategorical = categoricalFields || [];
+    const isSelected = currentCategorical.includes(columnName);
+    
+    const updatedCategorical = isSelected
+      ? currentCategorical.filter((col) => col !== columnName)
+      : [...currentCategorical, columnName];
+    
+    setMapping({ categoricalFields: updatedCategorical });
   };
   
   // Contar KPIs destacados
@@ -326,6 +354,58 @@ export function ColumnMappingStep() {
               {dimensionField
                 ? 'No hay más columnas disponibles para KPIs. Cambia el campo de dimensión si necesitas usar otra columna.'
                 : 'Primero selecciona un campo de dimensión.'}
+            </AlertDescription>
+          </Alert>
+        )}
+      </Card>
+      
+      {/* Categorical Fields Selection */}
+      <Card className="p-6 space-y-4">
+        <div className="space-y-2">
+          <Label>Campos categóricos (opcional)</Label>
+          <p className="text-sm text-muted-foreground">
+            Selecciona columnas de texto para crear filtros en el dashboard (ej: "Canal", "Región", "Tipo de Cliente")
+          </p>
+        </div>
+        
+        {availableCategoricalColumns.length > 0 ? (
+          <div className="space-y-2">
+            {availableCategoricalColumns.map((col) => (
+              <div
+                key={col}
+                className="flex items-center gap-3 p-3 bg-accent/30 rounded-lg hover:bg-accent/50 transition-colors"
+              >
+                <Checkbox
+                  id={`categorical-${col}`}
+                  checked={categoricalFields.includes(col)}
+                  onCheckedChange={() => handleToggleCategorical(col)}
+                />
+                <Label
+                  htmlFor={`categorical-${col}`}
+                  className="flex-1 cursor-pointer font-normal"
+                >
+                  {col}
+                </Label>
+                {categoricalFields.includes(col) && (
+                  <Badge variant="secondary" className="text-xs">
+                    Filtrable
+                  </Badge>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <Alert>
+            <AlertDescription>
+              No hay columnas de texto disponibles para usar como filtros categóricos.
+            </AlertDescription>
+          </Alert>
+        )}
+        
+        {categoricalFields.length > 0 && (
+          <Alert>
+            <AlertDescription className="text-sm">
+              ✅ {categoricalFields.length} campo(s) seleccionado(s): {categoricalFields.join(', ')}
             </AlertDescription>
           </Alert>
         )}

@@ -7,6 +7,105 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### CRITICAL FIX: Backend Schema & Validator Not Accepting highlighted Field (2026-02-15)
+
+- **Root Cause Identified:**
+  - ✅ Frontend enviaba `highlighted: true` en kpiFields
+  - ❌ Backend Zod validator lo rechazaba (línea 38 datasets.schemas.ts)
+  - ❌ Backend entity type no lo definía (Dataset.entity.ts)
+  - ❌ MongoDB schema no lo tenía (DatasetSchema.ts)
+  - **Resultado:** Validación fallaba silenciosamente o el campo se perdía
+
+- **Fixes Aplicados (Backend):**
+  1. `Dataset.entity.ts` → KPIField: `highlighted?: boolean`
+  2. `datasets.schemas.ts` → UpdateMappingSchema: `highlighted: z.boolean().optional()`
+  3. `DatasetSchema.ts` → KPIFieldSchema: `highlighted: { type: Boolean, default: false }`
+
+- **Fixes Aplicados (Frontend):**
+  1. `FilePreview.tsx` → Fixed React keys warning (cell-{rowIndex}-{colIndex})
+  2. Ya incluye `highlighted` en DataUploadWizard payload ✅
+
+- **Validación:**
+  - Backend acepta el campo en todos los niveles del stack
+  - MongoDB puede almacenarlo correctamente
+  - Frontend lo envía correctamente en el PATCH
+
+### Frontend: Feature Add - Categorical Fields Selector (2026-02-15)
+
+- **Nueva Funcionalidad en Step 2:**
+  - ✅ Agregada UI para seleccionar campos categóricos (checkboxes)
+  - ✅ Auto-detección de columnas string disponibles (excluye dimensión, KPIs, fecha)
+  - ✅ Handler `handleToggleCategorical()` para gestionar selección
+  - ✅ Badge "Filtrable" en columnas seleccionadas
+  - ✅ Alert mostrando resumen: "✅ X campo(s) seleccionado(s): [nombres]"
+
+- **Tipos Actualizados:**
+  - `ColumnMapping` ahora incluye: `categoricalFields?: string[]`
+  - Consistencia entre API types y wizard types
+
+- **Validación:**
+  - Los campos categóricos se guardan en `mapping.categoricalFields`
+  - Se envían correctamente en el PATCH a backend
+  - Aparecen en MongoDB como `schemaMapping.categoricalFields`
+
+### Frontend: CRITICAL FIX - highlightedKpis no se guardaban (2026-02-15)
+
+- **Problema Root Cause:**
+  - `DataUploadWizard` mapeaba `kpiFields` SIN incluir el campo `highlighted`
+  - Línea 158-164: `.map((kpi) => ({ id, columnName, label, format }))` omitía `highlighted`
+  - Resultado: Filtro `.filter((kpi) => kpi.highlighted)` siempre retornaba array vacío
+  - MongoDB recibía `highlightedKpis: []` sin importar qué checkboxes marcó el usuario
+
+- **Fix Implementado:**
+  1. **DataUploadWizard.tsx**: Agregado `highlighted: kpi.highlighted` en el map de kpiFields
+  2. **api.types.ts**: Actualizado `UpdateMappingRequest.schemaMapping.kpiFields` para incluir `highlighted?: boolean`
+  3. **api.types.ts**: Actualizado `Dataset.schemaMapping.kpiFields` para consistencia de tipos
+  4. **Logs agregados**: Console.log muestra `rawKpiFields` y `highlightedInState` para debugging
+
+- **Flujo Correcto:**
+  1. User marca checkbox "Destacar" en Step 2 → `handleToggleHighlighted()` actualiza `mapping.kpiFields[].highlighted = true`
+  2. Wizard construye payload → **Ahora incluye `highlighted` en cada KPI**
+  3. Filtro `.filter((kpi) => kpi.highlighted)` → Encuentra KPIs marcados ✅
+  4. MongoDB guarda `highlightedKpis: ['MarketingSpend', 'NewCustomers']` ✅
+  5. Dashboard lee y muestra los KPIs destacados ✅
+
+### Backend: Repository Update Fix (2026-02-14)
+
+- **MongoDatasetRepository - Fix Nested Object Updates:**
+  - **Problema Identificado:**
+    - Método `update()` no guardaba correctamente `schemaMapping` y `dashboardLayout`
+    - Causa: `{ ...updates }` spread directo omitía propiedades anidadas
+    - Impacto: `categoricalFields` y `highlightedKpis` no se persistían en MongoDB
+    - Dashboard quedaba vacío porque no existían los datos en DB
+
+  - **Solución Implementada:**
+    - Refactorizado payload builder para ser explícito en cada propiedad
+    - Asegura que `schemaMapping` y `dashboardLayout` se incluyen en `$set`
+    - Mantiene dot notation solo para `meta` (preserva `createdAt`)
+    - Maneja `status`, `aiConfig` explícitamente
+
+  - **Flujo Correcto:**
+    ```typescript
+    updatePayload = {
+      status: 'ready',
+      'meta.name': ...,
+      'meta.updatedAt': new Date(),
+      schemaMapping: { ..., categoricalFields: [...] },  // ✅ Ahora se guarda
+      dashboardLayout: { ..., highlightedKpis: [...] },  // ✅ Ahora se guarda
+      aiConfig: { ... }
+    }
+    ```
+
+  - **Validación:** Cambio alineado con UpdateMappingUseCase (líneas 86-100)
+
+### Frontend: Test Fix - useDatasetDashboard (2026-02-14)
+
+- **Test Mock Data Alignment:**
+  - **Problema:** Test "debe calcular KPIs" fallaba con `expect(revenueKpi).toBeDefined()` → undefined
+  - **Causa:** Mock usaba `highlightedKpis: ['kpi_revenue']` (ID) pero código espera `columnName`
+  - **Fix:** Cambiado a `highlightedKpis: ['revenue']` (columnName)
+  - **Resultado:** ✅ 26 test files passed, 277 tests passed (2 tests previamente fallidos ahora pasan)
+
 ### Frontend: Wizard Fix - highlightedKpis y categoricalFields (2026-02-14)
 
 - **Problema Identificado:**

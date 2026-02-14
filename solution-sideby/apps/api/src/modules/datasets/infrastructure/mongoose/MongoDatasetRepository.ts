@@ -105,27 +105,53 @@ export class MongoDatasetRepository implements DatasetRepository {
       logger.debug({ datasetId: id }, "Updating dataset");
 
       // Construir el payload evitando conflictos con campos nested
-      const updatePayload: Record<string, unknown> = { ...updates };
+      const updatePayload: Record<string, unknown> = {};
 
-      // Excluir explícitamente createdAt para evitar modificaciones
-      delete updatePayload.createdAt;
-
-      // Si viene meta como objeto, convertirlo a dot notation para evitar conflictos
-      if (updatePayload.meta) {
-        const meta = updatePayload.meta as Record<string, unknown>;
-        delete updatePayload.meta;
-
-        // Setear solo los campos de meta que vengan definidos
-        if (meta.name !== undefined) {
-          updatePayload["meta.name"] = meta.name;
-        }
-        if (meta.description !== undefined) {
-          updatePayload["meta.description"] = meta.description;
-        }
+      // Manejar status si viene definido
+      if (updates.status !== undefined) {
+        updatePayload.status = updates.status;
       }
 
-      // Siempre actualizar updatedAt
-      updatePayload["meta.updatedAt"] = new Date();
+      // Manejar meta con dot notation para evitar reemplazar el objeto completo
+      if (updates.meta) {
+        if (updates.meta.name !== undefined) {
+          updatePayload["meta.name"] = updates.meta.name;
+        }
+        if (updates.meta.description !== undefined) {
+          updatePayload["meta.description"] = updates.meta.description;
+        }
+        // Siempre actualizar updatedAt
+        updatePayload["meta.updatedAt"] = new Date();
+      }
+
+      // Manejar schemaMapping - usar $set directo porque viene el objeto completo
+      if (updates.schemaMapping) {
+        updatePayload.schemaMapping = updates.schemaMapping;
+        logger.debug(
+          {
+            categoricalFields: updates.schemaMapping.categoricalFields,
+            kpiFieldsCount: updates.schemaMapping.kpiFields?.length,
+          },
+          "Setting schemaMapping in update",
+        );
+      }
+
+      // Manejar dashboardLayout - usar $set directo porque viene el objeto completo
+      if (updates.dashboardLayout) {
+        updatePayload.dashboardLayout = updates.dashboardLayout;
+        logger.debug(
+          {
+            highlightedKpis: updates.dashboardLayout.highlightedKpis,
+            templateId: updates.dashboardLayout.templateId,
+          },
+          "Setting dashboardLayout in update",
+        );
+      }
+
+      // Manejar aiConfig
+      if (updates.aiConfig !== undefined) {
+        updatePayload.aiConfig = updates.aiConfig;
+      }
 
       const doc = await DatasetModel.findByIdAndUpdate(
         id,

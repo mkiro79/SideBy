@@ -68,6 +68,7 @@ export interface ColumnMapping {
   dimensionField?: string | null;
   dateField?: string | null; // Opcional: columna de fecha para análisis temporal
   kpiFields?: KPIMappingField[];
+  categoricalFields?: string[]; // ✅ Campos categóricos para filtros en dashboard
   [key: string]: unknown; // Permitir propiedades dinámicas para RFC-003-A
 }
 
