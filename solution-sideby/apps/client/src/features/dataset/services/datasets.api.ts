@@ -199,9 +199,11 @@ export async function getDataset(datasetId: string): Promise<Dataset> {
  * Endpoint para configurar el mapping de columnas, KPIs y layout del dashboard.
  * Usado para completar la configuración después del upload de archivos.
  *
+ * Después del PATCH exitoso, realiza un GET para obtener el dataset completo.
+ *
  * @param datasetId - ID del dataset a actualizar
  * @param payload - Configuración de mapping completa
- * @returns Dataset actualizado
+ * @returns Dataset actualizado completo
  * @throws Error si la actualización falla
  */
 export async function updateDataset(
@@ -209,18 +211,14 @@ export async function updateDataset(
   payload: UpdateMappingRequest,
 ): Promise<Dataset> {
   try {
-    const response = await apiClient.patch<UpdateMappingResponse>(
+    // Paso 1: Enviar la actualización de mapping
+    await apiClient.patch<UpdateMappingResponse>(
       `/api/v1/datasets/${datasetId}`,
       payload,
     );
 
-    // Retornar el dataset actualizado (el backend solo devuelve id y status)
-    // Para obtener el dataset completo, necesitaríamos hacer un GET adicional
-    // Por ahora, retornamos una estructura mínima
-    return {
-      id: response.data.data.datasetId,
-      status: response.data.data.status,
-    } as Dataset;
+    // Paso 2: Obtener el dataset completo con un GET
+    return await getDataset(datasetId);
   } catch (error) {
     throw new Error(extractErrorMessage(error));
   }
