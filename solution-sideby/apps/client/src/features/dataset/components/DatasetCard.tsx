@@ -8,6 +8,7 @@
  * - dataset: Datos del dataset a mostrar
  * - onOpen: Callback al hacer click en la tarjeta
  * - onDelete: Callback al eliminar el dataset
+ * - isDeleting: Estado de loading durante la eliminación (optimistic update)
  */
 
 import { Card, CardContent } from "@/shared/components/ui/card.js";
@@ -24,7 +25,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/shared/components/ui/alert-dialog.js";
-import { FileSpreadsheet, Calendar, BarChart3, Trash2 } from "lucide-react";
+import { FileSpreadsheet, Calendar, BarChart3, Trash2, Loader2 } from "lucide-react";
 import type { DatasetSummary } from "../types/api.types.js";
 
 // ============================================================================
@@ -35,13 +36,19 @@ interface DatasetCardProps {
   dataset: DatasetSummary;
   onOpen: (id: string) => void;
   onDelete: (id: string) => void;
+  isDeleting?: boolean;
 }
 
 // ============================================================================
 // COMPONENT
 // ============================================================================
 
-export const DatasetCard = ({ dataset, onOpen, onDelete }: DatasetCardProps) => {
+export const DatasetCard = ({ 
+  dataset, 
+  onOpen, 
+  onDelete,
+  isDeleting = false,
+}: DatasetCardProps) => {
   const formattedDate = new Date(dataset.meta.createdAt).toLocaleDateString("es-ES", {
     day: "numeric",
     month: "short",
@@ -129,8 +136,14 @@ export const DatasetCard = ({ dataset, onOpen, onDelete }: DatasetCardProps) => 
                 variant="ghost"
                 size="icon"
                 className="shrink-0 text-muted-foreground hover:text-destructive"
+                disabled={isDeleting}
+                aria-label="Delete dataset"
               >
-                <Trash2 className="h-4 w-4" />
+                {isDeleting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Trash2 className="h-4 w-4" />
+                )}
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
@@ -149,8 +162,16 @@ export const DatasetCard = ({ dataset, onOpen, onDelete }: DatasetCardProps) => 
                 <AlertDialogAction
                   onClick={() => onDelete(dataset.id)}
                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  disabled={isDeleting}
                 >
-                  Eliminar
+                  {isDeleting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Eliminando...
+                    </>
+                  ) : (
+                    'Eliminar'
+                  )}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>

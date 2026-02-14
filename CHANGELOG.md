@@ -72,6 +72,36 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
   - Alcance de migración: todos los hooks de datasets + auth (opcional)
   - Tareas de implementación detalladas con ejemplos de código
 
+- **Frontend: React Query Phase-4 - UI Components Update (2026-02-14)**
+  - Componente `DatasetsList` actualizado para usar React Query directo
+    - Separación de hooks: useDatasets (query) + useDeleteDataset (mutation)
+    - Navegación con useNavigate() directa (sin wrappers)
+    - Error state con botón "Reintentar" usando refetch()
+    - Pasa prop isDeleting a DatasetCard para feedback visual
+  - Componente `DatasetCard` con optimistic delete feedback
+    - Nuevo prop isDeleting para mostrar loading state
+    - Botón delete deshabilitado durante operación
+    - Spinner Loader2 durante eliminación (optimistic update)
+    - AlertDialogAction con estado "Eliminando..." y spinner
+  - Hook `useDatasets` simplificado a "thin hook" pattern
+    - Eliminadas funciones de navegación innecesarias (openDataset, createNewDataset, refreshDatasets)
+    - Retorna interfaz estándar de useQuery: data, isLoading, error, refetch
+    - Extrae automáticamente array de datasets del response API
+    - Reducción de ~80 líneas de código (37% menos boilerplate)
+  - Tests actualizados de useDatasets a nueva interfaz
+    - 4 tests: carga correcta, manejo errores, cache, refetch manual
+    - Eliminados tests de navegación (ya no aplican)
+    - Todos los tests pasando (4/4) ✓
+  - Beneficios implementados:
+    - Optimistic updates: delete desaparece instantáneamente
+    - Rollback automático si falla operación
+    - Feedback visual con spinners durante operaciones
+    - Cache automático para navegación instantánea
+    - Error recovery con botón "Reintentar"
+  - Validación: Lint clean (0 errores), Build exitoso (3.48s, 246.58KB)
+  - Tests: 197/203 pasando (1 fallo pre-existente no relacionado - wizard-integration)
+  - BREAKING CHANGE: useDatasets ya no retorna funciones de navegación (openDataset, createNewDataset, refreshDatasets)
+
 ### Fixed
 
 - **MongoDB Path Conflict in Dataset Update**

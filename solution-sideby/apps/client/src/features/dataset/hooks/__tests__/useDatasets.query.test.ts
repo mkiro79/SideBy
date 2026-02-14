@@ -5,7 +5,9 @@
  * - Carga de datos desde el backend
  * - Manejo de errores
  * - Cache automático (no hacer fetch duplicado)
- * - Invalidación de cache tras delete
+ * - Extracción correcta de datos del response
+ *
+ * Nota: Tests de navegación y eliminación se manejan en componentes/hooks específicos
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -17,11 +19,6 @@ import type {
   DatasetSummary,
   ListDatasetsResponse,
 } from "../../types/api.types.js";
-
-// Mock de react-router-dom
-vi.mock("react-router-dom", () => ({
-  useNavigate: () => vi.fn(),
-}));
 
 describe("useDatasets (con React Query)", () => {
   beforeEach(() => {
@@ -95,16 +92,16 @@ describe("useDatasets (con React Query)", () => {
 
     // Estado inicial: loading
     expect(result.current.isLoading).toBe(true);
-    expect(result.current.datasets).toEqual([]);
+    expect(result.current.data).toBeUndefined();
 
     // Esperar a que cargue
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    // Datos cargados
-    expect(result.current.datasets).toHaveLength(2);
-    expect(result.current.datasets[0].id).toBe("698f3809e7a4974e30e129c6");
+    // Datos cargados (data es el array directo)
+    expect(result.current.data).toHaveLength(2);
+    expect(result.current.data![0].id).toBe("698f3809e7a4974e30e129c6");
     expect(result.current.error).toBeNull();
   });
 
@@ -120,8 +117,8 @@ describe("useDatasets (con React Query)", () => {
       expect(result.current.error).toBeTruthy();
     });
 
-    expect(result.current.error).toBe(errorMessage);
-    expect(result.current.datasets).toEqual([]);
+    expect(result.current.error?.message).toBe(errorMessage);
+    expect(result.current.data).toBeUndefined();
   });
 
   it("debe cachear resultados (no hacer fetch duplicado)", async () => {
@@ -179,7 +176,7 @@ describe("useDatasets (con React Query)", () => {
     expect(spy).toHaveBeenCalledTimes(1);
   });
 
-  it("debe invalidar cache después de deleteDataset", async () => {
+  it("debe exponer función refetch para recarga manual", async () => {
     const mockDatasets: DatasetSummary[] = [
       {
         id: "1",
@@ -208,12 +205,11 @@ describe("useDatasets (con React Query)", () => {
       },
     ];
 
-    vi.spyOn(api, "listDatasets").mockResolvedValue({
+    const spy = vi.spyOn(api, "listDatasets").mockResolvedValue({
       success: true,
       data: mockDatasets,
       total: mockDatasets.length,
     } satisfies ListDatasetsResponse);
-    vi.spyOn(api, "deleteDataset").mockResolvedValue(undefined);
 
     const { result } = renderHook(() => useDatasets(), {
       wrapper: createQueryClientWrapper(),
@@ -223,29 +219,13 @@ describe("useDatasets (con React Query)", () => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    expect(result.current.datasets).toHaveLength(1);
+    expect(result.current.data).toHaveLength(1);
+    expect(spy).toHaveBeenCalledTimes(1);
 
-    // Eliminar dataset
-    await result.current.deleteDataset("1");
+    // Refetch manual
+    await result.current.refetch();
 
-    // Verificar que llamó a la API de delete
-    expect(api.deleteDataset).toHaveBeenCalledWith("1");
-  });
-
-  it("debe tener funciones de navegación disponibles", () => {
-    vi.spyOn(api, "listDatasets").mockResolvedValue({
-      success: true,
-      data: [],
-      total: 0,
-    } satisfies ListDatasetsResponse);
-
-    const { result } = renderHook(() => useDatasets(), {
-      wrapper: createQueryClientWrapper(),
-    });
-
-    // Verificar que existen las funciones
-    expect(typeof result.current.openDataset).toBe("function");
-    expect(typeof result.current.createNewDataset).toBe("function");
-    expect(typeof result.current.refreshDatasets).toBe("function");
+    // Debe haber llamado a la API de nuevo
+    expect(spy).toHaveBeenCalledTimes(2);
   });
 });
