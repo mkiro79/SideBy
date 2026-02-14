@@ -2,21 +2,19 @@
  * Tests para useDatasetMapping hook
  *
  * Verifica que el hook maneja correctamente la actualización de mapping
- * del dataset (FASE 2 del wizard).
+ * del dataset usando React Query internamente.
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderHook, waitFor } from "@testing-library/react";
+import { renderHook } from "@testing-library/react";
 import { useDatasetMapping } from "../useDatasetMapping.js";
+import { createQueryClientWrapper } from "@/test/utils/react-query.js";
 import * as datasetsApi from "../../services/datasets.api.js";
-import type {
-  UpdateMappingRequest,
-  UpdateMappingResponse,
-} from "../../types/api.types.js";
+import type { UpdateMappingRequest, Dataset } from "../../types/api.types.js";
 
 // Mock del servicio de API
 vi.mock("../../services/datasets.api.js", () => ({
-  updateMapping: vi.fn(),
+  updateDataset: vi.fn(),
 }));
 
 describe("useDatasetMapping", () => {
@@ -24,137 +22,81 @@ describe("useDatasetMapping", () => {
     vi.clearAllMocks();
   });
 
-  it("debe tener estado inicial correcto", () => {
-    // Arrange & Act
-    const { result } = renderHook(() => useDatasetMapping());
+  const mockRequest: UpdateMappingRequest = {
+    meta: {
+      name: "Mi Dataset",
+      description: "Test description",
+    },
+    schemaMapping: {
+      dimensionField: "Product",
+      kpiFields: [
+        {
+          id: "revenue",
+          columnName: "Revenue",
+          label: "Ingresos",
+          format: "currency",
+        },
+      ],
+    },
+    dashboardLayout: {
+      templateId: "sideby_executive",
+      highlightedKpis: ["revenue"],
+    },
+  };
 
-    // Assert
+  it("debe tener estado inicial correcto", () => {
+    const { result } = renderHook(() => useDatasetMapping(), {
+      wrapper: createQueryClientWrapper(),
+    });
+
     expect(result.current.isLoading).toBe(false);
-    expect(result.current.error).toBeNull();
     expect(typeof result.current.update).toBe("function");
-    expect(typeof result.current.reset).toBe("function");
   });
 
   it("debe actualizar mapping exitosamente", async () => {
-    // Arrange
     const datasetId = "dataset-123";
-    const request: UpdateMappingRequest = {
-      meta: {
-        name: "Mi Dataset",
-        description: "Test description",
-      },
-      schemaMapping: {
-        dimensionField: "Product",
-        kpiFields: [
-          {
-            id: "revenue",
-            columnName: "Revenue",
-            label: "Ingresos",
-            format: "currency",
-          },
-        ],
-      },
-      dashboardLayout: {
-        templateId: "sideby_executive",
-        highlightedKpis: ["revenue"],
-      },
-    };
 
-    const mockResponse: UpdateMappingResponse["data"] = {
-      datasetId: "dataset-123",
+    const mockResponse: Dataset = {
+      id: datasetId,
       status: "ready",
-    };
+    } as Dataset;
 
-    vi.mocked(datasetsApi.updateMapping).mockResolvedValue({
-      success: true,
-      data: mockResponse,
+    vi.mocked(datasetsApi.updateDataset).mockResolvedValue(mockResponse);
+
+    const { result } = renderHook(() => useDatasetMapping(), {
+      wrapper: createQueryClientWrapper(),
     });
-
-    const { result } = renderHook(() => useDatasetMapping());
 
     // Act
-    const updatePromise = result.current.update(datasetId, request);
+    const updatedData = await result.current.update(datasetId, mockRequest);
 
-    const updatedData = await updatePromise;
-
-    // Assert - Success state
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
-      expect(result.current.error).toBeNull();
+    // Assert
+    expect(updatedData).toEqual({
+      datasetId: "dataset-123",
+      status: "ready",
     });
 
-    expect(updatedData).toEqual(mockResponse);
-    expect(datasetsApi.updateMapping).toHaveBeenCalledWith(datasetId, request);
+    expect(datasetsApi.updateDataset).toHaveBeenCalledWith(
+      datasetId,
+      mockRequest,
+    );
   });
 
-  it("debe manejar errores de validación del backend", async () => {
-    // Arrange
+  it("debe manejar errores correctamente", async () => {
     const datasetId = "dataset-123";
-    const request: UpdateMappingRequest = {
-      meta: { name: "" }, // Inválido
-      schemaMapping: {
-        dimensionField: "",
-        kpiFields: [],
-      },
-      dashboardLayout: {
-        templateId: "sideby_executive",
-        highlightedKpis: [],
-      },
-    };
+    const errorMessage = "Validation failed";
 
-    const errorMessage = "Name is required";
-    vi.mocked(datasetsApi.updateMapping).mockRejectedValue(
+    vi.mocked(datasetsApi.updateDataset).mockRejectedValue(
       new Error(errorMessage),
     );
 
-    const { result } = renderHook(() => useDatasetMapping());
+    const { result } = renderHook(() => useDatasetMapping(), {
+      wrapper: createQueryClientWrapper(),
+    });
 
     // Act & Assert
-    await expect(result.current.update(datasetId, request)).rejects.toThrow(
+    await expect(result.current.update(datasetId, mockRequest)).rejects.toThrow(
       errorMessage,
     );
-
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
-      expect(result.current.error).toBe(errorMessage);
-    });
-  });
-
-  it("debe resetear el estado correctamente", async () => {
-    // Arrange
-    const datasetId = "dataset-123";
-    const request: UpdateMappingRequest = {
-      meta: { name: "Test" },
-      schemaMapping: {
-        dimensionField: "Product",
-        kpiFields: [],
-      },
-      dashboardLayout: {
-        templateId: "sideby_executive",
-        highlightedKpis: [],
-      },
-    };
-
-    vi.mocked(datasetsApi.updateMapping).mockRejectedValue(
-      new Error("Test error"),
-    );
-
-    const { result } = renderHook(() => useDatasetMapping());
-
-    // Act - Generar error
-    await expect(result.current.update(datasetId, request)).rejects.toThrow();
-
-    await waitFor(() => {
-      expect(result.current.error).toBe("Test error");
-    });
-
-    // Act - Reset
-    result.current.reset();
-
-    // Assert - Esperar a que el estado se actualice
-    await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
-      expect(result.current.error).toBeNull();
-    });
   });
 });

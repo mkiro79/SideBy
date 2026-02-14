@@ -194,27 +194,31 @@ export async function getDataset(datasetId: string): Promise<Dataset> {
 }
 
 /**
- * PATCH /api/v1/datasets/:id - Actualizar dataset
+ * PATCH /api/v1/datasets/:id - Actualizar configuración de mapping
  *
- * Actualiza los metadatos de un dataset existente (nombre, descripción, configuración).
- * Usado para edición de datasets sin afectar los datos cargados.
+ * Endpoint para configurar el mapping de columnas, KPIs y layout del dashboard.
+ * Usado para completar la configuración después del upload de archivos.
+ *
+ * Después del PATCH exitoso, realiza un GET para obtener el dataset completo.
  *
  * @param datasetId - ID del dataset a actualizar
- * @param payload - Campos a actualizar (partial)
+ * @param payload - Configuración de mapping completa
  * @returns Dataset actualizado completo
  * @throws Error si la actualización falla
  */
 export async function updateDataset(
   datasetId: string,
-  payload: Partial<Dataset>,
+  payload: UpdateMappingRequest,
 ): Promise<Dataset> {
   try {
-    const response = await apiClient.patch<{ success: boolean; data: Dataset }>(
+    // Paso 1: Enviar la actualización de mapping
+    await apiClient.patch<UpdateMappingResponse>(
       `/api/v1/datasets/${datasetId}`,
       payload,
     );
 
-    return response.data.data;
+    // Paso 2: Obtener el dataset completo con un GET
+    return await getDataset(datasetId);
   } catch (error) {
     throw new Error(extractErrorMessage(error));
   }

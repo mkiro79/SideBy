@@ -108,6 +108,40 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
   - Tests: 197/203 pasando (1 fallo pre-existente no relacionado - wizard-integration)
   - BREAKING CHANGE: useDatasets ya no retorna funciones de navegación (openDataset, createNewDataset, refreshDatasets)
 
+- **Datasets: Fix 400 Bad Request y Cache Invalidation (2026-02-14)**
+  - **Backend Lint Fix**:
+    - Corregido error de lint en `MongoDatasetRepository.ts` línea 108
+    - Cambio de `Record<string, any>` a `Record<string, unknown>` con type casting apropiado
+    - Fix en conversión de meta a dot notation: `const meta = updatePayload.meta as Record<string, unknown>`
+  - **Frontend: Fix 400 Bad Request**:
+    - Problema: PATCH /datasets/:id retornaba 400 Bad Request al guardar configuración
+    - Causa: Mismatch de tipos entre frontend y backend
+      - Backend esperaba: `UpdateMappingRequest` (meta, schemaMapping, dashboardLayout, aiConfig)
+      - Frontend enviaba: `Partial<Dataset>` (id, ownerId, status, data, etc.)
+      - Validación Zod rechazaba el payload
+    - Solución:
+      - Actualizado `datasets.api.ts`: función `updateDataset()` ahora usa tipo `UpdateMappingRequest`
+      - Simplificado `useUpdateDataset` hook: eliminado optimistic update complejo, delegado a invalidación
+      - Response type correcto: `UpdateMappingResponse` en lugar de `{ success, data: Dataset }`
+    - Tests: 2/2 pasando en `useUpdateDataset.test.ts`
+  - **Frontend: Fix Cache Invalidation**:
+    - Problema: Al crear un dataset y volver al listado, no se refrescaban los datos automáticamente
+    - Causa: `useDatasetMapping` hacía llamadas directas a API sin usar React Query
+    - Solución:
+      - Refactorizado `useDatasetMapping.ts` para usar `useUpdateDataset` (React Query) internamente
+      - Invalidación automática del cache `['datasets']` en `onSuccess` cuando se completa configuración
+      - Mantiene interfaz compatible con wizard existente para retro-compatibilidad
+      - Eliminado estado local (useState), delegado completamente a React Query
+    - Tests: 3/3 pasando en `useDatasetMapping.test.ts`
+    - Reducción de código: 77 líneas de código eliminadas (simplificación de lógica)
+  - **Validación Final**:
+    - API Lint: ✓ 0 errores
+    - Client Lint: ✓ 0 errores
+    - Client Build: ✓ 3.33s, 246.59 KB
+    - API Tests: ✓ 49/49 pasando
+    - Frontend Tests: ✓ 5/5 pasando (useUpdateDataset + useDatasetMapping)
+  - **Impacto**: Usuarios ahora pueden guardar configuración de datasets sin error 400, y la lista se refresca automáticamente
+
 ### Fixed
 
 - **MongoDB Path Conflict in Dataset Update**
