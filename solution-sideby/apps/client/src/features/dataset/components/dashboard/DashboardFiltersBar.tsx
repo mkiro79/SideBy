@@ -63,7 +63,7 @@ export const DashboardFiltersBar: React.FC<DashboardFiltersBarProps> = ({
                   value={filters[field] || 'all'}
                   onValueChange={(value: string) => onFilterChange(field, value)}
                 >
-                  <SelectTrigger id={`filter-${field}`}>
+                  <SelectTrigger id={`filter-${field}`} className="w-full min-w-[200px]">
                     <SelectValue placeholder="Todos" />
                   </SelectTrigger>
                   <SelectContent>

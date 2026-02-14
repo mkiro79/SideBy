@@ -29,6 +29,7 @@ import { KPIGrid } from '../components/dashboard/KPIGrid.js';
 import { ComparisonChart } from '../components/dashboard/ComparisonChart.js';
 import { ComparisonTable } from '../components/dashboard/ComparisonTable.js';
 import { TrendChart } from '../components/dashboard/TrendChart.js';
+import { AIInsights } from '../components/dashboard/AIInsights.js';
 import type { DashboardTemplateId, DashboardFilters } from '../types/dashboard.types.js';
 
 
@@ -230,6 +231,15 @@ export default function DatasetDashboard() {
               groupALabel={groupALabel}
               groupBLabel={groupBLabel}
             />
+
+            {/* AI Insights - Solo si está habilitado */}
+            {dataset.aiConfig?.enabled && (
+              <AIInsights
+                enabled={dataset.aiConfig.enabled}
+                userContext={dataset.aiConfig.userContext}
+                lastAnalysis={dataset.aiConfig.lastAnalysis}
+              />
+            )}
 
             {/* Footer Info */}
             <div className="flex items-center gap-4 text-xs text-muted-foreground">

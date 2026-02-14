@@ -15,9 +15,9 @@ import type {
   DashboardTemplateId,
   DashboardFilters,
   KPIResult,
-} from '../types/dashboard.types.js';
-import { DASHBOARD_TEMPLATES } from '../types/dashboard.types.js';
-import type { Dataset, DataRow } from '../types/api.types.js';
+} from "../types/dashboard.types.js";
+import { DASHBOARD_TEMPLATES } from "../types/dashboard.types.js";
+import type { Dataset, DataRow } from "../types/api.types.js";
 
 interface UseDatasetDashboardParams {
   /** ID del dataset */
@@ -78,8 +78,18 @@ export const useDatasetDashboard = ({
 
   /**
    * Detectar campos categóricos (para filtros)
+   * Prioridad: 1) MongoDB schemaMapping.categoricalFields, 2) Detección automática
    */
   const categoricalFields = useMemo(() => {
+    // Usar campos guardados en MongoDB si existen
+    if (
+      dataset?.schemaMapping?.categoricalFields &&
+      dataset.schemaMapping.categoricalFields.length > 0
+    ) {
+      return dataset.schemaMapping.categoricalFields;
+    }
+
+    // Fallback: detección automática
     if (!dataset || !dataset.data || dataset.data.length === 0) return [];
 
     const firstRow = dataset.data[0];
@@ -92,6 +102,7 @@ export const useDatasetDashboard = ({
 
   /**
    * Calcular KPIs según template
+   * Prioridad: 1) MongoDB dashboardLayout.highlightedKpis, 2) Template predefinido
    */
   const kpis = useMemo((): KPIResult[] => {
     if (!dataset || !dataset.schemaMapping) return [];
@@ -101,20 +112,35 @@ export const useDatasetDashboard = ({
 
     // Determinar qué KPIs mostrar
     let fieldsToShow = kpiFields;
-    if (template.kpis.length > 0) {
-      // Template específico (ej: Executive = top 3)
+
+    // PRIORIDAD 1: Usar highlightedKpis de MongoDB si existen
+    if (
+      dataset.dashboardLayout?.highlightedKpis &&
+      dataset.dashboardLayout.highlightedKpis.length > 0
+    ) {
+      fieldsToShow = kpiFields.filter((field) =>
+        dataset.dashboardLayout!.highlightedKpis.includes(field.columnName),
+      );
+    }
+    // PRIORIDAD 2: Usar template.kpis si está definido
+    else if (template.kpis.length > 0) {
       fieldsToShow = kpiFields.filter((field) =>
         template.kpis.includes(field.columnName),
       );
     }
+    // FALLBACK: Mostrar todos los KPIs disponibles
 
     // Calcular cada KPI
     return fieldsToShow.map((field) => {
       const { columnName, label, format } = field;
 
       // Separar datos por grupo
-      const dataA = filteredData.filter((row) => row._source_group === "groupA");
-      const dataB = filteredData.filter((row) => row._source_group === "groupB");
+      const dataA = filteredData.filter(
+        (row) => row._source_group === "groupA",
+      );
+      const dataB = filteredData.filter(
+        (row) => row._source_group === "groupB",
+      );
 
       // Calcular suma/promedio (depende del KPI)
       const valueA = calculateAggregate(dataA, columnName);
@@ -157,9 +183,7 @@ export const useDatasetDashboard = ({
 function calculateAggregate(data: DataRow[], field: string): number {
   if (data.length === 0) return 0;
 
-  const values = data
-    .map((row) => Number(row[field]))
-    .filter((v) => !isNaN(v));
+  const values = data.map((row) => Number(row[field])).filter((v) => !isNaN(v));
 
   if (values.length === 0) return 0;
 

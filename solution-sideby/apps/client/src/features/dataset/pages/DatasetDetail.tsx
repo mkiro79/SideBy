@@ -40,8 +40,29 @@ import { AIConfigFields } from "../components/edit/AIConfigFields.js";
 
 /**
  * Convierte un Dataset a formato de formulario
+ * Auto-detecta highlightedKpis y categoricalFields si están vacíos
  */
 const datasetToFormData = (dataset: Dataset): Partial<DatasetEditFormData> => {
+  // Auto-detectar highlightedKpis si está vacío
+  let highlightedKpis = dataset.dashboardLayout?.highlightedKpis || [];
+  if (highlightedKpis.length === 0 && dataset.schemaMapping?.kpiFields) {
+    // Tomar los primeros 3-5 KPIs como destacados
+    highlightedKpis = dataset.schemaMapping.kpiFields
+      .slice(0, 5)
+      .map((kpi) => kpi.columnName);
+  }
+
+  // Auto-detectar categoricalFields si está vacío
+  let categoricalFields = dataset.schemaMapping?.categoricalFields || [];
+  if (categoricalFields.length === 0 && dataset.data && dataset.data.length > 0) {
+    const firstRow = dataset.data[0];
+    categoricalFields = Object.keys(firstRow).filter((key) => {
+      const value = firstRow[key];
+      // Incluir solo strings, excluir campos especiales
+      return typeof value === "string" && key !== "_source_group";
+    });
+  }
+
   return {
     meta: {
       name: dataset.meta.name,
@@ -59,16 +80,23 @@ const datasetToFormData = (dataset: Dataset): Partial<DatasetEditFormData> => {
           },
         }
       : undefined,
-    schemaMapping: dataset.schemaMapping || {
-      dimensionField: "",
-      dateField: "",
-      kpiFields: [],
-      categoricalFields: [],
-    },
+    schemaMapping: dataset.schemaMapping
+      ? {
+          dimensionField: dataset.schemaMapping.dimensionField || "",
+          dateField: dataset.schemaMapping.dateField || "",
+          kpiFields: dataset.schemaMapping.kpiFields || [],
+          categoricalFields, // Auto-detectado
+        }
+      : {
+          dimensionField: "",
+          dateField: "",
+          kpiFields: [],
+          categoricalFields, // Auto-detectado
+        },
     dashboardLayout: {
       templateId: (dataset.dashboardLayout?.templateId ||
         "sideby_executive") as "sideby_executive",
-      highlightedKpis: dataset.dashboardLayout?.highlightedKpis || [],
+      highlightedKpis, // Auto-detectado
     },
     aiConfig: {
       enabled: dataset.aiConfig?.enabled || false,
