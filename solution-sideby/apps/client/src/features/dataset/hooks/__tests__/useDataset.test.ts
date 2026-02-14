@@ -8,6 +8,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
 import { useDataset } from "../useDataset.js";
+import { createQueryClientWrapper } from "@/test/utils/react-query.js";
 import * as datasetsApi from "../../services/datasets.api.js";
 import type { Dataset } from "../../types/api.types.js";
 
@@ -64,7 +65,9 @@ describe("useDataset", () => {
 
   it("debe tener estado inicial correcto con datasetId null", () => {
     // Arrange & Act
-    const { result } = renderHook(() => useDataset(null));
+    const { result } = renderHook(() => useDataset(null), {
+      wrapper: createQueryClientWrapper(),
+    });
 
     // Assert
     expect(result.current.dataset).toBeNull();
@@ -78,7 +81,9 @@ describe("useDataset", () => {
     vi.mocked(datasetsApi.getDataset).mockResolvedValue(mockDataset);
 
     // Act
-    const { result } = renderHook(() => useDataset("dataset-123"));
+    const { result } = renderHook(() => useDataset("dataset-123"), {
+      wrapper: createQueryClientWrapper(),
+    });
 
     // Assert - Loading state
     expect(result.current.isLoading).toBe(true);
@@ -101,7 +106,9 @@ describe("useDataset", () => {
     );
 
     // Act
-    const { result } = renderHook(() => useDataset("non-existent"));
+    const { result } = renderHook(() => useDataset("non-existent"), {
+      wrapper: createQueryClientWrapper(),
+    });
 
     // Assert
     await waitFor(() => {
@@ -113,38 +120,36 @@ describe("useDataset", () => {
 
   it("debe recargar dataset cuando se llama a reload()", async () => {
     // Arrange
-    vi.mocked(datasetsApi.getDataset).mockResolvedValue(mockDataset);
+    const updatedDataset = {
+      ...mockDataset,
+      meta: { ...mockDataset.meta, name: "Updated Dataset" },
+    };
 
-    const { result } = renderHook(() => useDataset("dataset-123"));
+    vi.mocked(datasetsApi.getDataset)
+      .mockResolvedValueOnce(mockDataset)
+      .mockResolvedValueOnce(updatedDataset);
+
+    const { result } = renderHook(() => useDataset("dataset-123"), {
+      wrapper: createQueryClientWrapper(),
+    });
 
     // Esperar primera carga
     await waitFor(() => {
       expect(result.current.dataset).toEqual(mockDataset);
     });
 
-    vi.clearAllMocks();
-
-    // Mock con delay para poder capturar loading state
-    vi.mocked(datasetsApi.getDataset).mockImplementation(
-      () =>
-        new Promise((resolve) => setTimeout(() => resolve(mockDataset), 50)),
-    );
+    expect(datasetsApi.getDataset).toHaveBeenCalledTimes(1);
 
     // Act - Reload
-    result.current.reload();
+    await result.current.reload();
 
-    // Assert - Should be loading
-    await waitFor(
-      () => {
-        expect(result.current.isLoading).toBe(true);
-      },
-      { timeout: 100 },
-    );
-
+    // Assert - Dataset se actualizó
     await waitFor(() => {
-      expect(result.current.isLoading).toBe(false);
-      expect(datasetsApi.getDataset).toHaveBeenCalledWith("dataset-123");
+      expect(result.current.dataset).toEqual(updatedDataset);
     });
+
+    expect(datasetsApi.getDataset).toHaveBeenCalledTimes(2);
+    expect(datasetsApi.getDataset).toHaveBeenCalledWith("dataset-123");
   });
 
   it("debe actualizar dataset cuando cambia el datasetId", async () => {
@@ -159,6 +164,7 @@ describe("useDataset", () => {
     // Act - Render inicial con dataset-1
     const { result, rerender } = renderHook(({ id }) => useDataset(id), {
       initialProps: { id: "dataset-1" },
+      wrapper: createQueryClientWrapper(),
     });
 
     await waitFor(() => {
@@ -180,7 +186,9 @@ describe("useDataset", () => {
 
   it("no debe hacer fetch cuando datasetId es null", () => {
     // Arrange & Act
-    renderHook(() => useDataset(null));
+    renderHook(() => useDataset(null), {
+      wrapper: createQueryClientWrapper(),
+    });
 
     // Assert
     expect(datasetsApi.getDataset).not.toHaveBeenCalled();
@@ -188,7 +196,9 @@ describe("useDataset", () => {
 
   it("no debe recargar si datasetId es null", () => {
     // Arrange
-    const { result } = renderHook(() => useDataset(null));
+    const { result } = renderHook(() => useDataset(null), {
+      wrapper: createQueryClientWrapper(),
+    });
 
     // Act
     result.current.reload();

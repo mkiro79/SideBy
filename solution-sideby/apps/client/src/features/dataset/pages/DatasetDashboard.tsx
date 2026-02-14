@@ -200,7 +200,7 @@ export default function DatasetDashboard() {
                 </div>
               </div>
               
-              <Button variant="outline" size="sm" onClick={reload}>
+              <Button variant="outline" size="sm" onClick={() => reload()}>
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Recargar
               </Button>

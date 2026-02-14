@@ -1,8 +1,11 @@
 /**
  * useDatasets Hook - Lógica de negocio para gestión de datasets
  *
+ * Migrado a React Query para cache automático y sincronización.
+ * Reemplaza implementación manual con useState/useEffect.
+ *
  * Custom hook que maneja:
- * - Fetching de la lista de datasets
+ * - Fetching de la lista de datasets con cache automático
  * - Estado de carga y errores
  * - Eliminación de datasets
  * - Navegación a creación/dashboard
@@ -10,17 +13,19 @@
  * Sigue el patrón Smart Component (este hook) + Dumb Component (DatasetsList UI)
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useCallback } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import type { Dataset } from "../types/dataset.types.js";
-import * as datasetService from "../services/datasetService.mock.js";
+import { listDatasets } from "../services/datasets.api.js";
+import { useDeleteDataset } from "./useDeleteDataset.js";
+import type { DatasetSummary } from "../types/api.types.js";
 
 // ============================================================================
 // HOOK INTERFACE
 // ============================================================================
 
 interface UseDatasetsReturn {
-  datasets: Dataset[];
+  datasets: DatasetSummary[];
   isLoading: boolean;
   error: string | null;
   deleteDataset: (id: string) => Promise<void>;
@@ -33,63 +38,53 @@ interface UseDatasetsReturn {
 // HOOK IMPLEMENTATION
 // ============================================================================
 
+/**
+ * Hook para gestionar la lista de datasets del usuario autenticado.
+ *
+ * Utiliza React Query para cache automático, revalidación y sincronización.
+ *
+ * @returns Hook state y funciones de navegación/mutación
+ *
+ * @example
+ * ```tsx
+ * const { datasets, isLoading, error, deleteDataset } = useDatasets();
+ *
+ * if (isLoading) return <Spinner />;
+ * if (error) return <ErrorMessage message={error.message} />;
+ * return <DatasetGrid datasets={datasets} onDelete={deleteDataset} />;
+ * ```
+ */
 export const useDatasets = (): UseDatasetsReturn => {
   const navigate = useNavigate();
+  const deleteMutation = useDeleteDataset();
 
-  // Estado local
-  const [datasets, setDatasets] = useState<Dataset[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  // Query para lista de datasets (React Query)
+  const {
+    data: datasetsResponse,
+    isLoading,
+    error: queryError,
+    refetch,
+  } = useQuery({
+    queryKey: ["datasets"],
+    queryFn: listDatasets,
+    staleTime: 2 * 60 * 1000, // 2 minutos (lista cambia frecuentemente)
+  });
 
-  /**
-   * Carga la lista de datasets desde el servicio
-   */
-  const loadDatasets = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      const data = await datasetService.getDatasets();
-      setDatasets(data);
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Error al cargar datasets";
-      setError(errorMessage);
-      console.error("❌ Error loading datasets:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  /**
-   * Efecto inicial: cargar datasets al montar el componente
-   */
-  useEffect(() => {
-    loadDatasets();
-  }, [loadDatasets]);
+  // Extraer datasets del response (API devuelve { data: DatasetSummary[] })
+  const datasets: DatasetSummary[] = datasetsResponse?.data || [];
+  const error = queryError ? queryError.message : null;
 
   /**
    * Elimina un dataset por ID
+   * Delegado a useDeleteDataset que maneja cache y optimistic updates
    * @param id - ID del dataset a eliminar
    */
-  const deleteDataset = useCallback(async (id: string): Promise<void> => {
-    try {
-      const success = await datasetService.deleteDataset(id);
-
-      if (success) {
-        // Actualizar estado local eliminando el dataset
-        setDatasets((prev) => prev.filter((dataset) => dataset.id !== id));
-      } else {
-        throw new Error("No se pudo eliminar el dataset");
-      }
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Error al eliminar dataset";
-      console.error("❌ Error deleting dataset:", err);
-      // Opcional: Mostrar toast/notification al usuario
-      throw new Error(errorMessage);
-    }
-  }, []);
+  const deleteDataset = useCallback(
+    async (id: string): Promise<void> => {
+      await deleteMutation.mutateAsync(id);
+    },
+    [deleteMutation],
+  );
 
   /**
    * Abre un dataset en el dashboard
@@ -98,7 +93,6 @@ export const useDatasets = (): UseDatasetsReturn => {
   const openDataset = useCallback(
     (id: string): void => {
       console.log(`🚀 Navegando a dashboard con dataset: ${id}`);
-      // Navegar al dashboard pasando el ID del dataset en el state
       navigate("/dashboard", { state: { datasetId: id } });
     },
     [navigate],
@@ -116,8 +110,8 @@ export const useDatasets = (): UseDatasetsReturn => {
    * Recarga manualmente la lista de datasets
    */
   const refreshDatasets = useCallback(async (): Promise<void> => {
-    await loadDatasets();
-  }, [loadDatasets]);
+    await refetch();
+  }, [refetch]);
 
   // ============================================================================
   // RETURN INTERFACE
@@ -126,7 +120,7 @@ export const useDatasets = (): UseDatasetsReturn => {
   return {
     datasets,
     isLoading,
-    error,
+    error: error || null,
     deleteDataset,
     openDataset,
     createNewDataset,

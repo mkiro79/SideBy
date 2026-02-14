@@ -31,11 +31,23 @@ describe("useDatasetsList", () => {
       meta: {
         name: "Dataset 1",
         createdAt: "2026-02-13T10:00:00Z",
+        updatedAt: "2026-02-13T10:00:00Z",
       },
       sourceConfig: {
-        groupA: { fileName: "fileA1.csv" },
-        groupB: { fileName: "fileB1.csv" },
+        groupA: {
+          label: "2024",
+          color: "#3b82f6",
+          originalFileName: "fileA1.csv",
+          rowCount: 100,
+        },
+        groupB: {
+          label: "2023",
+          color: "#ef4444",
+          originalFileName: "fileB1.csv",
+          rowCount: 100,
+        },
       },
+      totalRows: 200,
     },
     {
       id: "dataset-2",
@@ -43,11 +55,23 @@ describe("useDatasetsList", () => {
       meta: {
         name: "Dataset 2",
         createdAt: "2026-02-13T11:00:00Z",
+        updatedAt: "2026-02-13T11:00:00Z",
       },
       sourceConfig: {
-        groupA: { fileName: "fileA2.csv" },
-        groupB: { fileName: "fileB2.csv" },
+        groupA: {
+          label: "2024",
+          color: "#3b82f6",
+          originalFileName: "fileA2.csv",
+          rowCount: 150,
+        },
+        groupB: {
+          label: "2023",
+          color: "#ef4444",
+          originalFileName: "fileB2.csv",
+          rowCount: 150,
+        },
       },
+      totalRows: 300,
     },
   ];
 

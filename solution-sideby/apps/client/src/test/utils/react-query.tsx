@@ -62,19 +62,29 @@ export function createTestQueryClient() {
  * 
  * Útil para tests de hooks con renderHook de @testing-library/react:
  * ```tsx
+ * // Uso básico
  * const { result } = renderHook(() => useMyHook(), {
  *   wrapper: createQueryClientWrapper()
  * });
+ * 
+ * // Con pre-población de cache para optimistic updates
+ * const { queryClient, Wrapper } = createQueryClientWrapper();
+ * queryClient.setQueryData(['key'], initialData);
+ * const { result } = renderHook(() => useMyHook(), { wrapper: Wrapper });
  * ```
  * 
- * @returns Componente wrapper con QueryClientProvider
+ * @param options - Opcional: { queryClient } para reutilizar un cliente existente
+ * @returns Componente wrapper con QueryClientProvider o objeto { queryClient, Wrapper }
  */
-export function createQueryClientWrapper() {
-  const testQueryClient = createTestQueryClient();
+export function createQueryClientWrapper(options?: { queryClient?: QueryClient }) {
+  const testQueryClient = options?.queryClient || createTestQueryClient();
   
-  return ({ children }: { children: ReactNode }) => (
+  const Wrapper = ({ children }: { children: ReactNode }) => (
     <QueryClientProvider client={testQueryClient}>
       {children}
     </QueryClientProvider>
   );
+
+  // Retornar tanto el wrapper como el queryClient para tests avanzados
+  return Object.assign(Wrapper, { queryClient: testQueryClient, Wrapper });
 }
