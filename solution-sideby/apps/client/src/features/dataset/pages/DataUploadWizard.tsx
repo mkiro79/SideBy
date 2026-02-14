@@ -168,8 +168,7 @@ export default function DataUploadWizard() {
           templateId: 'sideby_executive',
           highlightedKpis: (mapping.kpiFields || [])
             .filter((kpi) => kpi.highlighted)
-            .slice(0, 4)
-            .map((kpi) => kpi.id),
+            .map((kpi) => kpi.columnName),
         },
         aiConfig: aiConfig.enabled
           ? {
