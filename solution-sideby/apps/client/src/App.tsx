@@ -1,7 +1,19 @@
 import { RouterProvider } from 'react-router-dom';
 import { GoogleOAuthProvider } from '@react-oauth/google';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { lazy, Suspense } from 'react';
 import { appRouter } from './router/AppRouter.js';
 import { Toaster } from '@/shared/components/Toaster.js';
+import { queryClient } from '@/infrastructure/api/queryClient.js';
+
+// Lazy load DevTools solo en desarrollo
+const ReactQueryDevtools = import.meta.env.DEV
+  ? lazy(() =>
+      import('@tanstack/react-query-devtools').then((m) => ({
+        default: m.ReactQueryDevtools,
+      }))
+    )
+  : null;
 
 // ============================================================================
 // APP COMPONENT
@@ -24,10 +36,19 @@ function App() {
   }
 
   return (
-    <GoogleOAuthProvider clientId={googleClientId}>
-      <RouterProvider router={appRouter} />
-      <Toaster />
-    </GoogleOAuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <GoogleOAuthProvider clientId={googleClientId}>
+        <RouterProvider router={appRouter} />
+        <Toaster />
+      </GoogleOAuthProvider>
+      
+      {/* React Query DevTools - Lazy loaded solo en modo desarrollo */}
+      {ReactQueryDevtools && (
+        <Suspense fallback={null}>
+          <ReactQueryDevtools initialIsOpen={false} />
+        </Suspense>
+      )}
+    </QueryClientProvider>
   );
 }
 

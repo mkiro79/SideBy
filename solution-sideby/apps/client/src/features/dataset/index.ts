@@ -12,6 +12,9 @@ export { EmptyDatasets } from "./components/EmptyDatasets.js";
 
 // Hooks
 export { useDatasets } from "./hooks/useDatasets.js";
+export { useDataset } from "./hooks/useDataset.js";
+export { useUpdateDataset } from "./hooks/useUpdateDataset.js";
+export { useDeleteDataset } from "./hooks/useDeleteDataset.js";
 
 // Services
 export * as datasetService from "./services/datasetService.mock.js";

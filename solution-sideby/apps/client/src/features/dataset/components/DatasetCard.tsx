@@ -8,14 +8,15 @@
  * - dataset: Datos del dataset a mostrar
  * - onOpen: Callback al hacer click en la tarjeta
  * - onDelete: Callback al eliminar el dataset
+ * - isDeleting: Estado de loading durante la eliminación (optimistic update)
  */
 
+import { useState } from "react";
 import { Card, CardContent } from "@/shared/components/ui/card.js";
 import { Button } from "@/shared/components/ui/button.js";
 import { Badge } from "@/shared/components/ui/badge.js";
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -24,29 +25,53 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/shared/components/ui/alert-dialog.js";
-import { FileSpreadsheet, Calendar, BarChart3, Trash2 } from "lucide-react";
-import type { Dataset } from "../types/dataset.types.js";
+import { FileSpreadsheet, Calendar, BarChart3, Trash2, Loader2 } from "lucide-react";
+import type { DatasetSummary } from "../types/api.types.js";
 
 // ============================================================================
 // PROPS INTERFACE
 // ============================================================================
 
 interface DatasetCardProps {
-  dataset: Dataset;
+  dataset: DatasetSummary;
   onOpen: (id: string) => void;
   onDelete: (id: string) => void;
+  isDeleting?: boolean;
 }
 
 // ============================================================================
 // COMPONENT
 // ============================================================================
 
-export const DatasetCard = ({ dataset, onOpen, onDelete }: DatasetCardProps) => {
-  const formattedDate = new Date(dataset.createdAt).toLocaleDateString("es-ES", {
+export const DatasetCard = ({ 
+  dataset, 
+  onOpen, 
+  onDelete,
+  isDeleting = false,
+}: DatasetCardProps) => {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  
+  const formattedDate = new Date(dataset.meta.createdAt).toLocaleDateString("es-ES", {
     day: "numeric",
     month: "short",
     year: "numeric",
   });
+
+  // Determinar estado visual
+  const statusMap = {
+    processing: { variant: "secondary" as const, label: "Procesando" },
+    ready: { variant: "default" as const, label: "Listo" },
+    error: { variant: "destructive" as const, label: "Error" },
+  };
+  const statusInfo = statusMap[dataset.status] || statusMap.ready;
+
+  /**
+   * Maneja la confirmación de eliminación
+   */
+  const handleConfirmDelete = async () => {
+    await onDelete(dataset.id);
+    setIsDialogOpen(false);
+  };
 
   return (
     <Card className="transition-all hover:shadow-[var(--shadow-soft)]">
@@ -65,25 +90,33 @@ export const DatasetCard = ({ dataset, onOpen, onDelete }: DatasetCardProps) => 
 
             {/* Información del dataset */}
             <div className="flex-1 space-y-1">
-              {/* Título y descripción */}
-              <h3 className="font-medium leading-tight">
-                {dataset.name}
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                {dataset.description}
-              </p>
+              {/* Título y estado */}
+              <div className="flex items-center gap-2">
+                <h3 className="font-medium leading-tight">
+                  {dataset.meta.name}
+                </h3>
+                <Badge variant={statusInfo.variant} className="text-xs">
+                  {statusInfo.label}
+                </Badge>
+              </div>
+              
+              {dataset.meta.description && (
+                <p className="text-sm text-muted-foreground">
+                  {dataset.meta.description}
+                </p>
+              )}
 
               {/* Metadata: Archivos y fecha */}
               <div className="flex flex-wrap items-center gap-3 pt-2">
                 {/* Archivos comparados */}
                 <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                   <FileSpreadsheet className="h-3.5 w-3.5" />
-                  <span className="text-data-primary">
-                    {dataset.fileA}
+                  <span style={{ color: dataset.sourceConfig.groupA.color }}>
+                    {dataset.sourceConfig.groupA.label}
                   </span>
                   <span>vs</span>
-                  <span className="text-data-comparative">
-                    {dataset.fileB}
+                  <span style={{ color: dataset.sourceConfig.groupB.color }}>
+                    {dataset.sourceConfig.groupB.label}
                   </span>
                 </div>
 
@@ -94,33 +127,33 @@ export const DatasetCard = ({ dataset, onOpen, onDelete }: DatasetCardProps) => 
                 </div>
               </div>
 
-              {/* KPIs y row count */}
+              {/* Row count */}
               <div className="flex flex-wrap gap-1.5 pt-2">
-                {dataset.kpis.map((kpi) => (
-                  <Badge
-                    key={kpi}
-                    variant="secondary"
-                    className="text-xs"
-                  >
-                    {kpi}
-                  </Badge>
-                ))}
                 <Badge variant="outline" className="text-xs">
-                  {dataset.rowCount.toLocaleString()} filas
+                  {dataset.totalRows.toLocaleString()} filas
+                </Badge>
+                <Badge variant="outline" className="text-xs">
+                  {dataset.sourceConfig.groupA.rowCount.toLocaleString()} + {dataset.sourceConfig.groupB.rowCount.toLocaleString()}
                 </Badge>
               </div>
             </div>
           </button>
 
           {/* Botón de eliminar con confirmación */}
-          <AlertDialog>
+          <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <AlertDialogTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon"
                 className="shrink-0 text-muted-foreground hover:text-destructive"
+                disabled={isDeleting}
+                aria-label="Eliminar dataset"
               >
-                <Trash2 className="h-4 w-4" />
+                {isDeleting ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Trash2 className="h-4 w-4" />
+                )}
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
@@ -130,18 +163,26 @@ export const DatasetCard = ({ dataset, onOpen, onDelete }: DatasetCardProps) => 
                 </AlertDialogTitle>
                 <AlertDialogDescription>
                   Esta acción no se puede deshacer. Se eliminará
-                  permanentemente el dataset "{dataset.name}" y
+                  permanentemente el dataset "{dataset.meta.name}" y
                   todos sus datos asociados.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={() => onDelete(dataset.id)}
+                <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+                <Button
+                  onClick={handleConfirmDelete}
                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  disabled={isDeleting}
                 >
-                  Eliminar
-                </AlertDialogAction>
+                  {isDeleting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Eliminando...
+                    </>
+                  ) : (
+                    'Eliminar'
+                  )}
+                </Button>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>

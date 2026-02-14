@@ -1,4 +1,4 @@
-# 🧪 Script de Validación de Fases - React Query + RFC-004
+﻿# 🧪 Script de Validación de Fases - React Query + RFC-004
 # Uso: .\validate-phase.ps1 -Phase 1
 
 param(
@@ -35,8 +35,9 @@ if ($Phase -eq 1) {
     Write-Host "`n📁 Archivos Esperados:" -ForegroundColor Yellow
     
     $files = @(
-        "src\lib\queryClient.ts",
-        "src\test\utils\react-query.ts"
+        "src\infrastructure\api\queryClient.ts",
+        "src\infrastructure\api\__tests__\queryClient.test.ts",
+        "src\test\utils\react-query.tsx"
     )
     
     foreach ($file in $files) {
@@ -70,7 +71,7 @@ if ($Phase -eq 1) {
     # 3. Ejecutar tests
     Write-Host "`n🧪 Ejecutando Tests..." -ForegroundColor Yellow
     
-    npm test -- queryClient 2>&1 | Out-Null
+    npm run test:run -- queryClient 2>&1 | Out-Null
     if ($LASTEXITCODE -eq 0) {
         Write-Success "Tests de queryClient pasando"
     } else {
@@ -90,7 +91,9 @@ if ($Phase -eq 1) {
         $AllChecksPassed = $false
     }
     
-    if ($packageJson.devDependencies.'@tanstack/react-query-devtools') {
+    # Verificar devtools en dependencies o devDependencies
+    $hasDevtools = $packageJson.dependencies.'@tanstack/react-query-devtools' -or $packageJson.devDependencies.'@tanstack/react-query-devtools'
+    if ($hasDevtools) {
         Write-Success "@tanstack/react-query-devtools instalado"
     } else {
         Write-Warning-Custom "@tanstack/react-query-devtools NO instalado (opcional)"

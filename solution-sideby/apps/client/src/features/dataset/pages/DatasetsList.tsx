@@ -5,9 +5,10 @@
  * Permite crear nuevos, abrir existentes y eliminarlos.
  * 
  * Arquitectura:
- * - Uso del custom hook useDatasets() para lógica de negocio
+ * - Uso de React Query hooks para lógica de negocio
  * - Componentes presentacionales: DatasetCard, EmptyDatasets
  * - Layout con Sidebar de navegación
+ * - Optimistic updates en delete con rollback automático
  * 
  * Estilos adaptados a variables CSS de Tailwind 4
  */
@@ -16,7 +17,9 @@ import { SidebarProvider } from "@/shared/components/ui/sidebar.js";
 import { AppSidebar } from "@/shared/components/AppSidebar.js";
 import { Button } from "@/shared/components/ui/button.js";
 import { Plus } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useDatasets } from "../hooks/useDatasets.js";
+import { useDeleteDataset } from "../hooks/useDeleteDataset.js";
 import { DatasetCard } from "../components/DatasetCard.js";
 import { EmptyDatasets } from "../components/EmptyDatasets.js";
 
@@ -25,14 +28,40 @@ import { EmptyDatasets } from "../components/EmptyDatasets.js";
 // ============================================================================
 
 export const DatasetsList = () => {
-  const {
-    datasets,
-    isLoading,
-    error,
-    deleteDataset,
-    openDataset,
-    createNewDataset,
-  } = useDatasets();
+  const navigate = useNavigate();
+  
+  // ✅ React Query hooks
+  const { data: datasetsResponse, isLoading, error, refetch } = useDatasets();
+  const datasets = datasetsResponse?.data || [];
+  const deleteMutation = useDeleteDataset();
+
+  /**
+   * Navega al dashboard de un dataset específico
+   */
+  const handleOpenDashboard = (id: string) => {
+    navigate(`/datasets/${id}/dashboard`);
+  };
+
+  /**
+   * Navega al wizard de creación de dataset
+   */
+  const handleCreateNew = () => {
+    navigate('/datasets/upload');
+  };
+
+  /**
+   * Elimina un dataset con optimistic update
+   * El hook useDeleteDataset maneja:
+   * - Actualización optimista del cache (desaparece instantáneamente)
+   * - Rollback automático si falla la operación
+   * - Invalidación del cache después del éxito
+   * - Manejo de errores (error se expone vía deleteMutation.error)
+   */
+  const handleDelete = (id: string) => {
+    // Usamos mutate (fire-and-forget) en lugar de mutateAsync
+    // Los errores se exponen automáticamente vía deleteMutation.error
+    deleteMutation.mutate(id);
+  };
 
   return (
     <SidebarProvider defaultOpen={true}>
@@ -52,7 +81,7 @@ export const DatasetsList = () => {
                   Gestiona tus datasets comparativos
                 </p>
               </div>
-              <Button onClick={createNewDataset} className="gap-2">
+              <Button onClick={handleCreateNew} className="gap-2">
                 <Plus className="h-4 w-4" />
                 Crear Nuevo
               </Button>
@@ -66,7 +95,17 @@ export const DatasetsList = () => {
                 <p className="text-sm font-medium text-destructive">
                   Error al cargar datasets
                 </p>
-                <p className="text-sm text-destructive/80 mt-1">{error}</p>
+                <p className="text-sm text-destructive/80 mt-1">
+                  {error.message || String(error)}
+                </p>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => refetch()} 
+                  className="mt-3"
+                >
+                  Reintentar
+                </Button>
               </div>
             )}
 
@@ -90,15 +129,20 @@ export const DatasetsList = () => {
             {!isLoading && !error && (
               <>
                 {datasets.length === 0 ? (
-                  <EmptyDatasets onCreateNew={createNewDataset} />
+                  <EmptyDatasets onCreateNew={handleCreateNew} />
                 ) : (
                   <div className="space-y-3">
                     {datasets.map((dataset) => (
                       <DatasetCard
                         key={dataset.id}
                         dataset={dataset}
-                        onOpen={openDataset}
-                        onDelete={deleteDataset}
+                        onOpen={handleOpenDashboard}
+                        onDelete={handleDelete}
+                        isDeleting={
+                          deleteMutation.isPending &&
+                          deleteMutation.variables === dataset.id
+                          // variables es string (id del dataset), según la firma del mutation
+                        }
                       />
                     ))}
                   </div>

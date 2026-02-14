@@ -194,6 +194,33 @@ export async function getDataset(datasetId: string): Promise<Dataset> {
 }
 
 /**
+ * PATCH /api/v1/datasets/:id - Actualizar dataset
+ *
+ * Actualiza los metadatos de un dataset existente (nombre, descripción, configuración).
+ * Usado para edición de datasets sin afectar los datos cargados.
+ *
+ * @param datasetId - ID del dataset a actualizar
+ * @param payload - Campos a actualizar (partial)
+ * @returns Dataset actualizado completo
+ * @throws Error si la actualización falla
+ */
+export async function updateDataset(
+  datasetId: string,
+  payload: Partial<Dataset>,
+): Promise<Dataset> {
+  try {
+    const response = await apiClient.patch<{ success: boolean; data: Dataset }>(
+      `/api/v1/datasets/${datasetId}`,
+      payload,
+    );
+
+    return response.data.data;
+  } catch (error) {
+    throw new Error(extractErrorMessage(error));
+  }
+}
+
+/**
  * GET /api/v1/datasets - Listar todos los datasets del usuario
  *
  * Retorna una lista resumida de datasets (sin el campo 'data').

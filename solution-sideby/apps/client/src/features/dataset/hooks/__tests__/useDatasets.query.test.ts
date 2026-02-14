@@ -1,0 +1,232 @@
+/**
+ * Tests para useDatasets Hook (con React Query)
+ *
+ * Verifica la migración correcta a React Query:
+ * - Carga de datos desde el backend
+ * - Manejo de errores
+ * - Cache automático (no hacer fetch duplicado)
+ * - Extracción correcta de datos del response
+ *
+ * Nota: Tests de navegación y eliminación se manejan en componentes/hooks específicos
+ */
+
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { renderHook, waitFor } from "@testing-library/react";
+import { useDatasets } from "../useDatasets.js";
+import { createQueryClientWrapper } from "@/test/utils/react-query.js";
+import * as api from "../../services/datasets.api.js";
+import type {
+  DatasetSummary,
+  ListDatasetsResponse,
+} from "../../types/api.types.js";
+
+describe("useDatasets (con React Query)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("debe cargar datasets del backend correctamente", async () => {
+    const mockDatasets: DatasetSummary[] = [
+      {
+        id: "698f3809e7a4974e30e129c6",
+        meta: {
+          name: "Dataset A",
+          description: "Test dataset",
+          createdAt: "2024-01-01T00:00:00.000Z",
+          updatedAt: "2024-01-01T00:00:00.000Z",
+        },
+        status: "ready",
+        sourceConfig: {
+          groupA: {
+            label: "2024",
+            color: "#3b82f6",
+            originalFileName: "a.csv",
+            rowCount: 100,
+          },
+          groupB: {
+            label: "2023",
+            color: "#ef4444",
+            originalFileName: "b.csv",
+            rowCount: 100,
+          },
+        },
+        totalRows: 200,
+      },
+      {
+        id: "698f3809e7a4974e30e129c7",
+        meta: {
+          name: "Dataset B",
+          description: "Test dataset 2",
+          createdAt: "2024-01-02T00:00:00.000Z",
+          updatedAt: "2024-01-02T00:00:00.000Z",
+        },
+        status: "processing",
+        sourceConfig: {
+          groupA: {
+            label: "2024",
+            color: "#3b82f6",
+            originalFileName: "a.csv",
+            rowCount: 100,
+          },
+          groupB: {
+            label: "2023",
+            color: "#ef4444",
+            originalFileName: "b.csv",
+            rowCount: 100,
+          },
+        },
+        totalRows: 200,
+      },
+    ];
+
+    // Mock API response con wrapper { data: [...], total: number }
+    vi.spyOn(api, "listDatasets").mockResolvedValue({
+      success: true,
+      data: mockDatasets,
+      total: mockDatasets.length,
+    } satisfies ListDatasetsResponse);
+
+    const { result } = renderHook(() => useDatasets(), {
+      wrapper: createQueryClientWrapper(),
+    });
+
+    // Estado inicial: loading
+    expect(result.current.isLoading).toBe(true);
+    expect(result.current.data).toBeUndefined();
+
+    // Esperar a que cargue
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    // Datos cargados (data es la respuesta completa con estructura { data: [], total: number })
+    expect(result.current.data?.data).toHaveLength(2);
+    expect(result.current.data?.data[0].id).toBe("698f3809e7a4974e30e129c6");
+    expect(result.current.data?.total).toBe(2);
+    expect(result.current.error).toBeNull();
+  });
+
+  it("debe manejar errores correctamente", async () => {
+    const errorMessage = "Network error";
+    vi.spyOn(api, "listDatasets").mockRejectedValue(new Error(errorMessage));
+
+    const { result } = renderHook(() => useDatasets(), {
+      wrapper: createQueryClientWrapper(),
+    });
+
+    await waitFor(() => {
+      expect(result.current.error).toBeTruthy();
+    });
+
+    expect(result.current.error?.message).toBe(errorMessage);
+    expect(result.current.data).toBeUndefined();
+  });
+
+  it("debe cachear resultados (no hacer fetch duplicado)", async () => {
+    const mockDatasets: DatasetSummary[] = [
+      {
+        id: "1",
+        meta: {
+          name: "Test",
+          description: "",
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+        status: "ready",
+        sourceConfig: {
+          groupA: {
+            label: "A",
+            color: "#000",
+            originalFileName: "a.csv",
+            rowCount: 1,
+          },
+          groupB: {
+            label: "B",
+            color: "#fff",
+            originalFileName: "b.csv",
+            rowCount: 1,
+          },
+        },
+        totalRows: 2,
+      },
+    ];
+
+    const spy = vi.spyOn(api, "listDatasets").mockResolvedValue({
+      success: true,
+      data: mockDatasets,
+      total: mockDatasets.length,
+    } satisfies ListDatasetsResponse);
+
+    const wrapper = createQueryClientWrapper();
+
+    // Primer hook
+    const { result: result1 } = renderHook(() => useDatasets(), { wrapper });
+
+    await waitFor(() => {
+      expect(result1.current.isLoading).toBe(false);
+    });
+
+    // Segundo hook con la misma query
+    const { result: result2 } = renderHook(() => useDatasets(), { wrapper });
+
+    await waitFor(() => {
+      expect(result2.current.isLoading).toBe(false);
+    });
+
+    // Debe haber llamado solo UNA vez (cache)
+    expect(spy).toHaveBeenCalledTimes(1);
+  });
+
+  it("debe exponer función refetch para recarga manual", async () => {
+    const mockDatasets: DatasetSummary[] = [
+      {
+        id: "1",
+        meta: {
+          name: "Dataset 1",
+          description: "",
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+        status: "ready",
+        sourceConfig: {
+          groupA: {
+            label: "A",
+            color: "#000",
+            originalFileName: "a.csv",
+            rowCount: 1,
+          },
+          groupB: {
+            label: "B",
+            color: "#fff",
+            originalFileName: "b.csv",
+            rowCount: 1,
+          },
+        },
+        totalRows: 2,
+      },
+    ];
+
+    const spy = vi.spyOn(api, "listDatasets").mockResolvedValue({
+      success: true,
+      data: mockDatasets,
+      total: mockDatasets.length,
+    } satisfies ListDatasetsResponse);
+
+    const { result } = renderHook(() => useDatasets(), {
+      wrapper: createQueryClientWrapper(),
+    });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    expect(result.current.data?.data).toHaveLength(1);
+    expect(spy).toHaveBeenCalledTimes(1);
+
+    // Refetch manual
+    await result.current.refetch();
+
+    // Debe haber llamado a la API de nuevo
+    expect(spy).toHaveBeenCalledTimes(2);
+  });
+});

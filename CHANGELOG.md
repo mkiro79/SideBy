@@ -48,9 +48,65 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 - **Documentation: React Query Migration Proposal**
   - Nueva propuesta en ROADMAP.md para migrar server state a TanStack Query
+
+- **Frontend: React Query Phase-3 - Mutations with Optimistic Updates (2026-02-14)**
+  - Hook `useUpdateDataset` para actualizaciones con optimistic UI feedback
+    - Deep merge de objetos anidados (meta, sourceConfig, schemaMapping, dashboardLayout)
+    - Rollback automático en errores con restoration de estado previo
+    - Invalidación de cache post-éxito para sincronización con servidor
+    - 4 tests comprehensivos: update, optimistic, rollback, nested merge
+  - Hook `useDeleteDataset` para eliminaciones con removal optimista
+    - Actualización inmediata de lista con filter + decrement total
+    - Limpieza de cache de detalle (removeQueries)
+    - Rollback automático restaurando lista completa
+    - 5 tests comprehensivos: delete, optimistic, rollback, specific, detail cache
+  - Migración de `useDatasets` para usar `useDeleteDataset` en lugar de API manual
+  - Migración completa de `useDataset` a React Query con enabled flag
+  - Mejora de `createQueryClientWrapper` para pre-población de cache en tests
+  - Actualización de tipos: DatasetSummary con campos completos del backend
+  - Componente `DatasetCard` actualizado para usar DatasetSummary con status badges
+  - Tests: 9 tests de mutations + 5 tests de queries = 14 tests nuevos, todos pasando
+  - Lint clean (0 errores), Build exitoso (3.40s, 246KB)
+  - Total: 198/204 tests pasando
   - Justificación técnica: cache inteligente, invalidación automática, deduplicación
   - Alcance de migración: todos los hooks de datasets + auth (opcional)
   - Tareas de implementación detalladas con ejemplos de código
+
+- **Frontend: React Query Phase-4 - UI Components Update (2026-02-14)**
+  - Componente `DatasetsList` actualizado para usar React Query directo
+    - Separación de hooks: useDatasets (query) + useDeleteDataset (mutation)
+    - Navegación con useNavigate() directa (sin wrappers)
+    - Error state con botón "Reintentar" usando refetch()
+    - Pasa prop isDeleting a DatasetCard para feedback visual
+  - Componente `DatasetCard` con optimistic delete feedback
+    - Nuevo prop isDeleting para mostrar loading state
+    - Botón delete deshabilitado durante operación
+    - Spinner Loader2 durante eliminación (optimistic update)
+    - AlertDialogAction con estado "Eliminando..." y spinner
+  - Hook `useDatasets` simplificado a "thin hook" pattern
+    - Eliminadas funciones de navegación innecesarias (openDataset, createNewDataset, refreshDatasets)
+    - Retorna interfaz estándar de useQuery: data, isLoading, error, refetch
+    - Extrae automáticamente array de datasets del response API
+    - Reducción de ~80 líneas de código (37% menos boilerplate)
+  - Tests actualizados de useDatasets a nueva interfaz
+    - 4 tests: carga correcta, manejo errores, cache, refetch manual
+    - Eliminados tests de navegación (ya no aplican)
+    - Todos los tests pasando (4/4) ✓
+  - Beneficios implementados:
+    - Optimistic updates: delete desaparece instantáneamente
+    - Rollback automático si falla operación
+    - Feedback visual con spinners durante operaciones
+    - Cache automático para navegación instantánea
+    - Error recovery con botón "Reintentar"
+  - Bug Fixes (post-implementación):
+    - Navegación "Crear Nuevo": Corregido route /datasets/new → /datasets/upload
+    - Delete functionality: Fixed cache structure mismatch
+      - Problema: useDatasets retornaba array, pero useDeleteDataset esperaba {data, total}
+      - Solución: useDatasets retorna response completo, DatasetsList extrae array
+      - Resultado: Optimistic updates funcionando correctamente con rollback
+  - Validación: Lint clean (0 errores), Build exitoso (3.43s, 246.58KB)
+  - Tests: 197/203 pasando (1 fallo pre-existente no relacionado - wizard-integration)
+  - BREAKING CHANGE: useDatasets ya no retorna funciones de navegación (openDataset, createNewDataset, refreshDatasets)
 
 ### Fixed
 

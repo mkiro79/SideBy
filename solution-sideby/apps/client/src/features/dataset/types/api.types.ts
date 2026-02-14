@@ -149,12 +149,25 @@ export interface DatasetSummary {
   status: "processing" | "ready" | "error";
   meta: {
     name: string;
+    description?: string;
     createdAt: string;
+    updatedAt: string;
   };
   sourceConfig: {
-    groupA: { fileName: string };
-    groupB: { fileName: string };
+    groupA: {
+      label: string;
+      color: string;
+      originalFileName: string;
+      rowCount: number;
+    };
+    groupB: {
+      label: string;
+      color: string;
+      originalFileName: string;
+      rowCount: number;
+    };
   };
+  totalRows: number;
 }
 
 /**
