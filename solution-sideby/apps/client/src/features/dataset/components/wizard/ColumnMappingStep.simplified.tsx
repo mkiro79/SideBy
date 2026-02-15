@@ -182,11 +182,13 @@ export function ColumnMappingStep({
     }
 
     // Agregar métricas como kpiFields con formato inferido
-    newMapping.kpiFields = Array.from(metrics).map((metric) => ({
+    // En el wizard simplificado, solo las primeras 4 métricas se marcan como destacadas (límite del esquema)
+    newMapping.kpiFields = Array.from(metrics).map((metric, index) => ({
       id: metric,
       columnName: metric,
       label: metric,
       format: inferKPIFormat(metric),
+      highlighted: index < 4, // ✅ Máximo 4 KPIs destacados según el esquema
     }));
 
     // Agregar primera dimensión como dimensionField (requerido para canProceedToStep3)
@@ -194,6 +196,9 @@ export function ColumnMappingStep({
     if (dimensionsArray.length > 0) {
       newMapping.dimensionField = dimensionsArray[0];
     }
+    
+    // ✅ Agregar TODAS las dimensiones como categoricalFields para filtros en dashboard
+    newMapping.categoricalFields = dimensionsArray;
 
     setMappingFn(newMapping);
   };

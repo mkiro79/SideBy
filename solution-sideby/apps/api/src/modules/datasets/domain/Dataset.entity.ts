@@ -46,6 +46,8 @@ export interface KPIField {
   label: string;
   /** Formato de visualización (número, moneda, porcentaje) */
   format: KPIFormat;
+  /** Si el KPI debe destacarse en el dashboard (opcional, max 4) */
+  highlighted?: boolean;
 }
 
 /**

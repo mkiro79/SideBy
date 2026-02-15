@@ -196,6 +196,15 @@ export class DatasetsController {
       // Validar request body con Zod
       const validatedData = UpdateMappingSchema.parse(req.body);
 
+      logger.info(
+        {
+          datasetId: req.params.id,
+          categoricalFields: validatedData.schemaMapping.categoricalFields,
+          highlightedKpis: validatedData.dashboardLayout.highlightedKpis,
+        },
+        "PATCH /datasets/:id - Validated data received",
+      );
+
       const useCase = new UpdateMappingUseCase(this.repository);
 
       const result = await useCase.execute({

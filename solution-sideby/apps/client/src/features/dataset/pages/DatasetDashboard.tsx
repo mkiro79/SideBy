@@ -2,106 +2,36 @@
  * Dataset Dashboard Page
  * 
  * Página principal para visualizar un dataset creado.
- * Renderiza el dashboard según el template configurado (sideby_executive).
+ * Sistema de templates con 3 vistas: Executive, Trends, Detailed.
  * 
  * Features:
- * - KPI Cards destacados (max 4)
- * - Tabla de datos comparativos
- * - Navegación de vuelta a la lista
- * - Badge de estado del dataset
+ * - Selector de templates (Executive, Trends, Detailed)
+ * - Filtros categóricos dinámicos
+ * - KPI Grid con cálculos automáticos
+ * - Gráfico de comparación horizontal
+ * - Tabla de datos comparativos con expansión
  * 
- * @see {@link docs/design/prompts/FRONTEND-DATASETS-INTEGRATION.md} - RFC Implementation
+ * @see {@link docs/design/RFC-004-DASHBOARD-TEMPLATES.md} - Phase 7 Implementation
  */
 
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Loader2, RefreshCw, TrendingUp, DollarSign, Users, Activity } from 'lucide-react';
+import { ArrowLeft, Loader2, RefreshCw } from 'lucide-react';
 import { SidebarProvider } from '@/shared/components/ui/sidebar.js';
 import { AppSidebar } from '@/shared/components/AppSidebar.js';
 import { Button } from '@/shared/components/ui/button.js';
 import { Badge } from '@/shared/components/ui/badge.js';
 import { Separator } from '@/shared/components/ui/Separator.js';
-import { useDataset } from '../hooks/useDataset.js';
-import { KPICard } from '../components/KPICard.js';
-import { DatasetTable } from '../components/DatasetTable.js';
-import type { DataRow } from '../types/api.types.js';
+import { useDatasetDashboard } from '../hooks/useDatasetDashboard.js';
+import { TemplateSelector } from '../components/dashboard/TemplateSelector.js';
+import { DashboardFiltersBar } from '../components/dashboard/DashboardFiltersBar.js';
+import { KPIGrid } from '../components/dashboard/KPIGrid.js';
+import { ComparisonChart } from '../components/dashboard/ComparisonChart.js';
+import { ComparisonTable } from '../components/dashboard/ComparisonTable.js';
+import { TrendChart } from '../components/dashboard/TrendChart.js';
+import { AIInsights } from '../components/dashboard/AIInsights.js';
+import type { DashboardTemplateId, DashboardFilters } from '../types/dashboard.types.js';
 
-// ============================================================================
-// HELPER FUNCTIONS
-// ============================================================================
-
-/**
- * Calcula el valor total de un KPI para un grupo específico
- */
-function calculateKPIValue(
-  data: DataRow[],
-  kpiColumnName: string,
-  group: 'groupA' | 'groupB'
-): number {
-  const groupData = data.filter((row) => row._source_group === group);
-  
-  const total = groupData.reduce((sum, row) => {
-    const value = row[kpiColumnName];
-    const numValue = typeof value === 'number' ? value : Number.parseFloat(String(value));
-    return sum + (Number.isNaN(numValue) ? 0 : numValue);
-  }, 0);
-  
-  return total;
-}
-
-/**
- * Calcula el cambio porcentual entre dos valores
- */
-function calculatePercentageChange(current: number, previous: number): number {
-  if (previous === 0) return current > 0 ? 100 : 0;
-  return ((current - previous) / previous) * 100;
-}
-
-/**
- * Formatea un valor según el formato del KPI
- */
-function formatKPIValue(value: number, format: string): string {
-  switch (format) {
-    case 'currency':
-      return new Intl.NumberFormat('es-ES', {
-        style: 'currency',
-        currency: 'USD',
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-      }).format(value);
-    
-    case 'percentage':
-      return `${value.toFixed(1)}%`;
-    
-    case 'number':
-      return new Intl.NumberFormat('es-ES', {
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-      }).format(value);
-    
-    default:
-      return String(value);
-  }
-}
-
-/**
- * Mapea un KPI a un ícono Lucide (simple mapping)
- */
-function getKPIIcon(kpiId: string) {
-  // Mapeo simple basado en palabras clave
-  const lowerKpiId = kpiId.toLowerCase();
-  
-  if (lowerKpiId.includes('revenue') || lowerKpiId.includes('ingreso')) {
-    return DollarSign;
-  }
-  if (lowerKpiId.includes('user') || lowerKpiId.includes('usuario')) {
-    return Users;
-  }
-  if (lowerKpiId.includes('growth') || lowerKpiId.includes('crecimiento')) {
-    return TrendingUp;
-  }
-  
-  return Activity; // Default
-}
 
 // ============================================================================
 // COMPONENT
@@ -110,7 +40,28 @@ function getKPIIcon(kpiId: string) {
 export default function DatasetDashboard() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { dataset, isLoading, error, reload } = useDataset(id || null);
+  
+  // State para template y filtros
+  const [selectedTemplate, setSelectedTemplate] = useState<DashboardTemplateId>('sideby_executive');
+  const [filters, setFilters] = useState<DashboardFilters>({ categorical: {} });
+
+  // Hook principal del dashboard
+  const { dataset, kpis, filteredData, categoricalFields, isLoading, error } = useDatasetDashboard({
+    datasetId: id || null,
+    templateId: selectedTemplate,
+    filters,
+  });
+  
+  // Handler para cambio de filtros
+  const handleFilterChange = (field: string, value: string) => {
+    setFilters((prev) => ({
+      ...prev,
+      categorical: {
+        ...prev.categorical,
+        [field]: value,
+      },
+    }));
+  };
 
   // ============================================================================
   // LOADING STATE
@@ -165,16 +116,28 @@ export default function DatasetDashboard() {
   // ============================================================================
   // RENDER DASHBOARD
   // ============================================================================
-
-  const { dashboardLayout, schemaMapping, data, sourceConfig, meta } = dataset;
   
-  // Status badge
-  const statusVariant =
-    dataset.status === 'ready'
-      ? 'success'
-      : dataset.status === 'error'
-        ? 'destructive'
-        : 'secondary';
+  // Status badge variant
+  let statusVariant: "success" | "destructive" | "secondary" = "secondary";
+  if (dataset.status === "ready") {
+    statusVariant = "success";
+  } else if (dataset.status === "error") {
+    statusVariant = "destructive";
+  }
+
+  const { meta, sourceConfig, schemaMapping } = dataset;
+  
+  // Labels de grupo
+  const groupALabel = sourceConfig.groupA.label;
+  const groupBLabel = sourceConfig.groupB.label;
+  const groupAColor = sourceConfig.groupA.color || 'hsl(var(--primary))';
+  const groupBColor = sourceConfig.groupB.color || 'hsl(var(--secondary))';
+  
+  // Date field para gráficos temporales
+  const dateField = schemaMapping?.dateField;
+  
+  // Tomar primer KPI para el gráfico de tendencias
+  const firstKpi = kpis[0];
 
   return (
     <SidebarProvider defaultOpen={true}>
@@ -200,49 +163,92 @@ export default function DatasetDashboard() {
                 </div>
               </div>
               
-              <Button variant="outline" size="sm" onClick={() => reload()}>
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Recargar
-              </Button>
+              <div className="flex items-center gap-3">
+                {/* Template Selector */}
+                <TemplateSelector
+                  selectedTemplate={selectedTemplate}
+                  onSelectTemplate={setSelectedTemplate}
+                />
+                
+                {/* Reload Button */}
+                <Button variant="outline" size="sm" onClick={() => globalThis.location.reload()}>
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Recargar
+                </Button>
+              </div>
             </div>
 
             <Separator />
 
-            {/* KPI Cards Section */}
-            {dashboardLayout?.highlightedKpis && dashboardLayout.highlightedKpis.length > 0 && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {dashboardLayout.highlightedKpis.map((kpiId) => {
-                  const kpi = schemaMapping?.kpiFields?.find((k) => k.id === kpiId);
-                  if (!kpi) return null;
-
-                  // Calcular valores
-                  const currentValue = calculateKPIValue(data, kpi.columnName, 'groupA');
-                  const comparativeValue = calculateKPIValue(data, kpi.columnName, 'groupB');
-                  const percentageChange = calculatePercentageChange(currentValue, comparativeValue);
-
-                  return (
-                    <KPICard
-                      key={kpiId}
-                      title={kpi.label}
-                      currentValue={formatKPIValue(currentValue, kpi.format)}
-                      comparativeValue={formatKPIValue(comparativeValue, kpi.format)}
-                      percentageChange={percentageChange}
-                      icon={getKPIIcon(kpiId)}
-                      groupALabel={sourceConfig.groupA.label}
-                      groupBLabel={sourceConfig.groupB.label}
-                    />
-                  );
-                })}
-              </div>
+            {/* Filters Bar */}
+            {categoricalFields.length > 0 && (
+              <DashboardFiltersBar
+                categoricalFields={categoricalFields}
+                filters={filters.categorical}
+                onFilterChange={handleFilterChange}
+                dataset={dataset}
+              />
             )}
 
-            {/* Data Table */}
-            <DatasetTable dataset={dataset} maxRows={50} />
+            {/* KPI Grid */}
+            <KPIGrid
+              kpis={kpis}
+              groupALabel={groupALabel}
+              groupBLabel={groupBLabel}
+              groupAColor={groupAColor}
+              groupBColor={groupBColor}
+            />
+
+            {/* Trend Chart - Solo si hay dateField y datos*/}
+            {dateField && firstKpi && filteredData.length > 0 && selectedTemplate !== 'sideby_detailed' && (
+              <TrendChart
+                data={filteredData}
+                dateField={dateField}
+                kpiField={firstKpi.name}
+                kpiLabel={`Tendencia de ${firstKpi.label}`}
+                groupALabel={groupALabel}
+                groupBLabel={groupBLabel}
+                groupAColor={groupAColor}
+                groupBColor={groupBColor}
+                format={firstKpi.format as 'number' | 'currency' | 'percentage'}
+              />
+            )}
+
+            {/* Comparison Chart - Solo en templates Executive y Trends */}
+            {selectedTemplate !== 'sideby_detailed' && (
+              <ComparisonChart
+                kpis={kpis}
+                groupALabel={groupALabel}
+                groupBLabel={groupBLabel}
+                groupAColor={groupAColor}
+                groupBColor={groupBColor}
+              />
+            )}
+
+            {/* Comparison Table - Ahora recibe kpis en vez de data raw */}
+            <ComparisonTable
+              kpis={kpis}
+              groupALabel={groupALabel}
+              groupBLabel={groupBLabel}
+            />
+
+            {/* AI Insights - Solo si está habilitado */}
+            {dataset.aiConfig?.enabled && (
+              <AIInsights
+                enabled={dataset.aiConfig.enabled}
+                userContext={dataset.aiConfig.userContext}
+                lastAnalysis={dataset.aiConfig.lastAnalysis}
+              />
+            )}
 
             {/* Footer Info */}
             <div className="flex items-center gap-4 text-xs text-muted-foreground">
               <span>
-                <strong>Total de filas:</strong> {data.length}
+                <strong>Total de filas:</strong> {dataset.data.length}
+              </span>
+              <span>•</span>
+              <span>
+                <strong>Filas filtradas:</strong> {filteredData.length}
               </span>
               <span>•</span>
               <span>

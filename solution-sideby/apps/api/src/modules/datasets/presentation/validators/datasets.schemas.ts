@@ -36,6 +36,7 @@ export const UpdateMappingSchema = z.object({
           columnName: z.string().min(1),
           label: z.string().min(1),
           format: z.enum(["number", "currency", "percentage"]),
+          highlighted: z.boolean().optional(), // ✅ Campo para marcar KPIs destacados
         }),
       )
       .min(
@@ -52,7 +53,8 @@ export const UpdateMappingSchema = z.object({
       .max(
         DatasetRules.MAX_HIGHLIGHTED_KPIS,
         `Máximo ${DatasetRules.MAX_HIGHLIGHTED_KPIS} KPIs destacados`,
-      ),
+      )
+      .default([]),
   }),
 
   aiConfig: z

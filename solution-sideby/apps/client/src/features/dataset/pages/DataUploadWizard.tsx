@@ -161,6 +161,7 @@ export default function DataUploadWizard() {
             columnName: kpi.columnName,
             label: kpi.label,
             format: kpi.format as 'number' | 'currency' | 'percentage',
+            highlighted: kpi.highlighted, // ✅ FIX: Incluir highlighted en el map
           })),
           categoricalFields: mapping.categoricalFields as string[] | undefined,
         },
@@ -168,8 +169,7 @@ export default function DataUploadWizard() {
           templateId: 'sideby_executive',
           highlightedKpis: (mapping.kpiFields || [])
             .filter((kpi) => kpi.highlighted)
-            .slice(0, 4)
-            .map((kpi) => kpi.id),
+            .map((kpi) => kpi.columnName),
         },
         aiConfig: aiConfig.enabled
           ? {

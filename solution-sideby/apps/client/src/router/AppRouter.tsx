@@ -15,6 +15,7 @@ const LoginPage = lazy(() => import('@/features/auth/pages/LoginPage.js').then(m
 const Home = lazy(() => import('@/features/dashboard/pages/Home.js'));
 const DatasetsList = lazy(() => import('@/features/dataset/pages/DatasetsList.js'));
 const DataUploadWizard = lazy(() => import('@/features/dataset/pages/DataUploadWizard.js'));
+const DatasetDetail = lazy(() => import('@/features/dataset/pages/DatasetDetail.js'));
 const DatasetDashboard = lazy(() => import('@/features/dataset/pages/DatasetDashboard.js'));
 
 // ============================================================================
@@ -74,6 +75,14 @@ export const appRouter = createBrowserRouter([
         element: (
           <Suspense fallback={<PageLoader />}>
             <DataUploadWizard />
+          </Suspense>
+        ),
+      },
+      {
+        path: ':id',
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <DatasetDetail />
           </Suspense>
         ),
       },

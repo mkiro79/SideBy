@@ -7,6 +7,219 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### CRITICAL FIX: Backend Schema & Validator Not Accepting highlighted Field (2026-02-15)
+
+- **Root Cause Identified:**
+  - ✅ Frontend enviaba `highlighted: true` en kpiFields
+  - ❌ Backend Zod validator lo rechazaba (línea 38 datasets.schemas.ts)
+  - ❌ Backend entity type no lo definía (Dataset.entity.ts)
+  - ❌ MongoDB schema no lo tenía (DatasetSchema.ts)
+  - **Resultado:** Validación fallaba silenciosamente o el campo se perdía
+
+- **Fixes Aplicados (Backend):**
+  1. `Dataset.entity.ts` → KPIField: `highlighted?: boolean`
+  2. `datasets.schemas.ts` → UpdateMappingSchema: `highlighted: z.boolean().optional()`
+  3. `DatasetSchema.ts` → KPIFieldSchema: `highlighted: { type: Boolean, default: false }`
+
+- **Fixes Aplicados (Frontend):**
+  1. `FilePreview.tsx` → Fixed React keys warning (cell-{rowIndex}-{colIndex})
+  2. Ya incluye `highlighted` en DataUploadWizard payload ✅
+
+- **Validación:**
+  - Backend acepta el campo en todos los niveles del stack
+  - MongoDB puede almacenarlo correctamente
+  - Frontend lo envía correctamente en el PATCH
+
+### Frontend: Feature Add - Categorical Fields Selector (2026-02-15)
+
+- **Nueva Funcionalidad en Step 2:**
+  - ✅ Agregada UI para seleccionar campos categóricos (checkboxes)
+  - ✅ Auto-detección de columnas string disponibles (excluye dimensión, KPIs, fecha)
+  - ✅ Handler `handleToggleCategorical()` para gestionar selección
+  - ✅ Badge "Filtrable" en columnas seleccionadas
+  - ✅ Alert mostrando resumen: "✅ X campo(s) seleccionado(s): [nombres]"
+
+- **Tipos Actualizados:**
+  - `ColumnMapping` ahora incluye: `categoricalFields?: string[]`
+  - Consistencia entre API types y wizard types
+
+- **Validación:**
+  - Los campos categóricos se guardan en `mapping.categoricalFields`
+  - Se envían correctamente en el PATCH a backend
+  - Aparecen en MongoDB como `schemaMapping.categoricalFields`
+
+### Frontend: CRITICAL FIX - highlightedKpis no se guardaban (2026-02-15)
+
+- **Problema Root Cause:**
+  - `DataUploadWizard` mapeaba `kpiFields` SIN incluir el campo `highlighted`
+  - Línea 158-164: `.map((kpi) => ({ id, columnName, label, format }))` omitía `highlighted`
+  - Resultado: Filtro `.filter((kpi) => kpi.highlighted)` siempre retornaba array vacío
+  - MongoDB recibía `highlightedKpis: []` sin importar qué checkboxes marcó el usuario
+
+- **Fix Implementado:**
+  1. **DataUploadWizard.tsx**: Agregado `highlighted: kpi.highlighted` en el map de kpiFields
+  2. **api.types.ts**: Actualizado `UpdateMappingRequest.schemaMapping.kpiFields` para incluir `highlighted?: boolean`
+  3. **api.types.ts**: Actualizado `Dataset.schemaMapping.kpiFields` para consistencia de tipos
+  4. **Logs agregados**: Console.log muestra `rawKpiFields` y `highlightedInState` para debugging
+
+- **Flujo Correcto:**
+  1. User marca checkbox "Destacar" en Step 2 → `handleToggleHighlighted()` actualiza `mapping.kpiFields[].highlighted = true`
+  2. Wizard construye payload → **Ahora incluye `highlighted` en cada KPI**
+  3. Filtro `.filter((kpi) => kpi.highlighted)` → Encuentra KPIs marcados ✅
+  4. MongoDB guarda `highlightedKpis: ['MarketingSpend', 'NewCustomers']` ✅
+  5. Dashboard lee y muestra los KPIs destacados ✅
+
+### Backend: Repository Update Fix (2026-02-14)
+
+- **MongoDatasetRepository - Fix Nested Object Updates:**
+  - **Problema Identificado:**
+    - Método `update()` no guardaba correctamente `schemaMapping` y `dashboardLayout`
+    - Causa: `{ ...updates }` spread directo omitía propiedades anidadas
+    - Impacto: `categoricalFields` y `highlightedKpis` no se persistían en MongoDB
+    - Dashboard quedaba vacío porque no existían los datos en DB
+
+  - **Solución Implementada:**
+    - Refactorizado payload builder para ser explícito en cada propiedad
+    - Asegura que `schemaMapping` y `dashboardLayout` se incluyen en `$set`
+    - Mantiene dot notation solo para `meta` (preserva `createdAt`)
+    - Maneja `status`, `aiConfig` explícitamente
+
+  - **Flujo Correcto:**
+    ```typescript
+    updatePayload = {
+      status: 'ready',
+      'meta.name': ...,
+      'meta.updatedAt': new Date(),
+      schemaMapping: { ..., categoricalFields: [...] },  // ✅ Ahora se guarda
+      dashboardLayout: { ..., highlightedKpis: [...] },  // ✅ Ahora se guarda
+      aiConfig: { ... }
+    }
+    ```
+
+  - **Validación:** Cambio alineado con UpdateMappingUseCase (líneas 86-100)
+
+### Frontend: Test Fix - useDatasetDashboard (2026-02-14)
+
+- **Test Mock Data Alignment:**
+  - **Problema:** Test "debe calcular KPIs" fallaba con `expect(revenueKpi).toBeDefined()` → undefined
+  - **Causa:** Mock usaba `highlightedKpis: ['kpi_revenue']` (ID) pero código espera `columnName`
+  - **Fix:** Cambiado a `highlightedKpis: ['revenue']` (columnName)
+  - **Resultado:** ✅ 26 test files passed, 277 tests passed (2 tests previamente fallidos ahora pasan)
+
+### Frontend: Wizard Fix - highlightedKpis y categoricalFields (2026-02-14)
+
+- **Problema Identificado:**
+  - Wizard creaba datasets enviando `kpi.id` en `highlightedKpis`
+  - MongoDB schema espera array de `columnNames` (strings)
+  - Dashboard no mostraba KPIs porque buscaba por `columnName` en vez de `id`
+  - Vista Ejecutiva quedaba vacía aunque los datos existían
+
+- **DataUploadWizard Fix:**
+  - `highlightedKpis` ahora usa `kpi.columnName` en vez de `kpi.id`
+  - Removido límite `slice(0, 4)` - el usuario decide cuántos KPIs destacar con checkbox
+  - `categoricalFields` ya usaba `mapping.categoricalFields` correctamente (sin cambios)
+
+- **Flujo Completo (Wizard → Dashboard):**
+  1. **Step 2**: Usuario marca checkboxes "highlighted" en KPIs seleccionados
+  2. **Wizard State**: `highlighted=true` se guarda en `mapping.kpiFields`
+  3. **Step 3 - PATCH**: Filtra KPIs con `highlighted=true` y extrae `columnName`
+  4. **MongoDB**: Se guarda en `dashboardLayout.highlightedKpis` como array de strings
+  5. **Dashboard**: `useDatasetDashboard` lee `highlightedKpis` de MongoDB y busca KPIs por `columnName`
+
+- **Validación:**
+  - Build: ✓ Clean (TypeScript + Vite, 0 errores)
+  - Schema Match: ✓ DatasetSchema.ts línea 114 (`highlightedKpis: [{ type: String }]`)
+  - No breaking changes
+
+### Frontend: Dashboard Refinement Phase 7.1 (2026-02-14)
+
+- **Alineación con Diseño de Referencia (SideBy-Design):**
+  - Análisis de gaps entre implementación actual y diseño de referencia
+  - Refactorización completa de componentes para coincidir con UX/UI target
+
+- **TrendChart - Nuevo Componente con Recharts:**
+  - Gráfico temporal LineChart con 2 líneas (Grupo A vs Grupo B)
+  - Agrupación automática por `dateField` con suma de valores KPI
+  - Formateo responsive: €Xk para miles, % para porcentajes, números para contadores
+  - Tooltip personalizado con estilos del theme system
+  - Renderizado condicional en templates Executive y Trends (no en Detailed)
+  - Props: data, dateField, kpiField, kpiLabel, groupLabels, colors, format
+
+- **KPIGrid - Refactorización Total:**
+  - **Diseño Compacto:** Icon top-right en bg-muted (10x10), valor grande centrado
+  - **Display Format:** "vs. $XXX" debajo del valor principal para comparación rápida
+  - **Auto-Detection:** Iconos automáticos según nombre KPI (revenue→DollarSign, user→Users, roi→TrendingUp)
+  - **Badge Variants:** success (verde), destructive (rojo), secondary (gris) según % cambio
+  - **Formatting:** Sufijo K para miles (e.g., "245K" en vez de "245,000")
+  - **Layout:** Grid responsive de 4 columnas (antes 3)
+
+- **ComparisonTable - Rediseño con Delta:**
+  - **Estructura:** KPIs como filas (no datos crudos), 5 columnas: Métrica | Categoría | Actual | Comparativo | Cambio
+  - **Nueva Columna Delta:** Badge con % cambio y trend icons (TrendingUp/Down/Minus)
+  - **Auto-Categorization:** Función `getCategoryFromName()` detecta: Ingresos, Marketing, Clientes, Soporte, General
+  - **Visual Indicators:** Colored dots en header para grupos, hover effects en filas
+  - **Props Refactored:** Ahora recibe `kpis: KPIResult[]` en vez de `data: DataRow[], kpiFields`
+  - **Simplified:** Sin paginación/expansión (muestra todos KPIs siempre)
+
+- **DatasetDashboard - Integración de Componentes:**
+  - TrendChart insertado entre KPIGrid y ComparisonChart (only si `dateField` existe)
+  - ComparisonTable actualizado con nueva firma de props (kpis directamente)
+  - Variables preparadas: `dateField`, `firstKpi` para TrendChart
+  - Condicionales ajustados para cada template (Executive: KPIs + Trend + Table, Trends: KPIs + Trend + Chart, Detailed: KPIs + Table)
+
+- **Dependencies Update:**
+  - `recharts: ^2.15.0` instalado para gráficos temporales
+  - Declaraciones de tipos personalizadas (`src/types/recharts.d.ts`) para compatibilidad React 19
+  - Fix: @swc/core-linux-x64-gnu removido (incompatibilidad Windows, EBADPLATFORM)
+  - ESLint: `no-explicit-any` deshabilitado en recharts.d.ts (tipos externos)
+
+- **Validación:**
+  - Build: ✓ Clean (TypeScript + Vite después de recharts.d.ts)
+  - Lint: ✓ No errors (eslint-disable en tipos externos)
+  - Files: 2 nuevos (TrendChart, recharts.d.ts), 5 refactorizados (+862 insertions, -159 deletions)
+  - Visual: Pendiente testing manual con templates/filtros
+
+### Frontend: Dashboard Template System - RFC-004 Phase 7 (2026-02-14)
+
+- **Sistema de Templates con 3 vistas predefinidas:**
+  - **Executive**: KPIs clave para decisiones rápidas (top 3 métricas)
+  - **Trends**: Análisis temporal de métricas (revenue, orders, conversion)
+  - **Detailed**: Vista completa con todos los KPIs disponibles
+
+- **Arquitectura de Componentes Dashboard:**
+  - `dashboard.types.ts`: Tipos TypeScript para templates, filtros, KPIs y resultados
+  - `useDatasetDashboard`: Hook principal con lógica de negocio
+    - Cálculo automático de KPIs (suma, diferencia, porcentaje, tendencia)
+    - Aplicación de filtros categóricos dinámicos
+    - Detección automática de campos categóricos (excluye `_source_group`)
+    - Tests completos: 4/4 pasando (cálculo KPIs, filtros, detección campos)
+  - `TemplateSelector`: Selector de vista con iconos Lucide y descripciones
+  - `DashboardFiltersBar`: Filtros categóricos dinámicos (max 4 campos visibles)
+  - `KPIGrid`: Grid responsive (1/2/3 cols) con cards de KPI, badges de grupo, indicadores de tendencia
+  - `ComparisonChart`: Gráfico de barras horizontales con CSS puro (sin librerías externas)
+  - `ComparisonTable`: Tabla expandible con paginación (10 filas por defecto)
+
+- **Refactorización Major de DatasetDashboard:**
+  - Integración completa del sistema de templates con state management
+  - Reemplazo de componentes legacy (KPICard, DatasetTable)
+  - Selector de template en header con manejo de estado local
+  - Filtros categóricos con actualización dinámica de KPIs
+  - Renderizado condicional de chart (no visible en template Detailed)
+  - Footer con estadísticas de filas totales/filtradas
+
+- **Validación:**
+  - Build: ✓ Clean (TypeScript + Vite, 0 errores)
+  - Tests: ✓ 4/4 pasando (useDatasetDashboard hook)
+  - Lint: ✓ No errors
+  - Archivos: 8 nuevos, 1 refactorizado (996 insertions, 124 deletions)
+
+### Frontend: Dataset Edit Tests + Build Fixes (2026-02-14)
+
+- Tests de edicion de dataset alineados con el DOM real (GroupConfig, KPIFields, AIConfig)
+- AIConfigFields usa control directo para estado inicial de checkbox y render condicional
+- KPIFieldsSection: label asociado a tabla para accesibilidad
+- Lint/TS: globalThis.confirm, ternario de status simplificado, casts innecesarios removidos
+
 ### Added - RFC-003 Part 1: Dataset Creation API & Frontend Integration (2026-02-13)
 
 - **Backend: Datasets Module (2-Phase Flow)**

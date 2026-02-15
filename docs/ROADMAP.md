@@ -645,6 +645,118 @@ queryClient.invalidateQueries({ queryKey: ['datasets'] });     // ✅ Lista se a
 - [ ] Tests E2E del flujo completo
 - [ ] Performance testing
 
+#### Limitaciones Conocidas & Tareas Pendientes Backend
+
+### 🔧 Backend: Soportar edición de `sourceConfig` en endpoint PATCH
+
+**Estado:** Pendiente (Bloqueador para edición completa de grupos)  
+**Prioridad:** Media  
+**Esfuerzo Estimado:** 1 día  
+**Versión Target:** v0.4.1  
+**Bloqueado por:** Phase 6 de RFC-004
+
+#### Contexto
+
+Durante la implementación de **Phase 6: DatasetDetail Edit Page** (RFC-004), se identificó que el backend endpoint `PATCH /api/v1/datasets/:id` **NO soporta actualizar `sourceConfig`**.
+
+**Schema actual (UpdateMappingSchema):**
+```typescript
+{
+  meta: { name, description },           // ✅ Soportado
+  schemaMapping: { ... },                // ✅ Soportado
+  dashboardLayout: { ... },              // ✅ Soportado
+  aiConfig: { enabled, userContext }     // ✅ Soportado
+  // ❌ sourceConfig NO está en el schema
+}
+```
+
+**Problema:**
+- Frontend permite mostrar y eventualmente editar `sourceConfig.groupA/B.label` y `sourceConfig.groupA/B.color`
+- Backend rechaza el payload si se envía `sourceConfig` (Zod validation error)
+- Los labels y colores de grupos son **inmutables** después del upload inicial
+
+#### Solución Propuesta
+
+**Opción A: Extender UpdateMappingSchema (Recomendada)**
+
+Actualizar el schema Zod para aceptar cambios en labels y colores:
+
+```typescript
+// apps/api/src/modules/datasets/presentation/validators/datasets.schemas.ts
+
+export const UpdateMappingSchema = z.object({
+  meta: z.object({ ... }),
+  schemaMapping: z.object({ ... }),
+  dashboardLayout: z.object({ ... }),
+  aiConfig: z.object({ ... }).optional(),
+  
+  // ✨ NUEVO: Permitir editar configuración de grupos
+  sourceConfig: z.object({
+    groupA: z.object({
+      label: z.string().min(1).max(50),
+      color: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
+      // originalFileName y rowCount NO editables
+    }).partial(),
+    groupB: z.object({
+      label: z.string().min(1).max(50),
+      color: z.string().regex(/^#[0-9A-Fa-f]{6}$/),
+    }).partial(),
+  }).optional(),
+});
+```
+
+**Opción B: Endpoint separado (Menos prioritario)**
+
+Crear `PATCH /api/v1/datasets/:id/groups` específico para editar grupos:
+- Ventaja: Separación de responsabilidades
+- Desventaja: Más complejidad (2 mutations en frontend)
+
+#### Tareas de Implementación
+
+- [ ] **Backend:**
+  - [ ] Actualizar `UpdateMappingSchema` con `sourceConfig` opcional
+  - [ ] Validar que solo se editen `label` y `color` (no `originalFileName`, `rowCount`)
+  - [ ] Actualizar `UpdateMappingUseCase` para aplicar cambios a `sourceConfig`
+  - [ ] Tests unitarios para validación y actualización
+  - [ ] Tests de integración para endpoint PATCH
+
+- [ ] **Frontend (después de backend):**
+  - [ ] Habilitar edición de labels y colores en `GroupConfigFields` component
+  - [ ] Actualizar `useUpdateDataset` hook para enviar `sourceConfig` en payload
+  - [ ] Tests de formulario con edición de grupos
+
+#### Workaround Temporal (Phase 6)
+
+Mientras el backend no soporte edición de `sourceConfig`:
+
+1. **Mostrar campos como disabled** (read-only) en `GroupConfigFields.tsx`
+2. **Agregar tooltip explicativo:** "Los labels y colores de grupos se configuran en el upload inicial. Próximamente podrás editarlos aquí."
+3. **NO enviar `sourceConfig` en el payload** de `updateDataset` mutation
+4. **Color picker visible pero disabled** (para preparar UI)
+
+**Nota en código:**
+```typescript
+// GroupConfigFields.tsx
+// TODO: Habilitar edición cuando backend soporte PATCH de sourceConfig
+// Ver: docs/ROADMAP.md → RFC-004 → Backend: Soportar edición de sourceConfig
+<Input disabled value={groupALabel} ... />
+```
+
+#### Mejora Adicional: Wizard Upload con Nombres de Archivo
+
+**Relacionado:** En vez de usar "Grupo A" y "Grupo B" por defecto en el wizard de upload, usar los nombres de archivo originales.
+
+**Cambio en `DataUploadWizard`:**
+```typescript
+// Antes:
+const defaultGroupALabel = "Grupo A"; // ❌ Genérico
+
+// Después:
+const defaultGroupALabel = fileA.name.replace(/\.csv$/i, ''); // ✅ "performance_2023"
+```
+
+Esto hace que los datasets tengan labels más descriptivos desde el inicio y reduce la necesidad de editarlos posteriormente.
+
 #### Beneficios Esperados
 
 **UX:**
@@ -687,6 +799,229 @@ queryClient.invalidateQueries({ queryKey: ['datasets'] });     // ✅ Lista se a
 - Custom templates (drag & drop editor)
 - Anotaciones en gráficos
 - Alertas basadas en umbrales
+
+---
+
+## INFRASTRUCTURE & OBSERVABILITY
+
+### Mejoras Planificadas
+
+### 📊 Structured Logging System with Sentry Integration
+
+**Estado:** Propuesta  
+**Prioridad:** Media  
+**Esfuerzo Estimado:** S (1-3 días)  
+**Versión Target:** v0.5.0
+
+#### Contexto
+
+Durante el desarrollo y debugging de features (ej: RFC-004 highlighted KPIs fix), se identificó la necesidad de logs estructurados que:
+- Se muestren **solo en desarrollo**, no contaminen la consola en producción
+- Tengan **niveles claros** (debug, info, warn, error)
+- Sean **extensibles** para integrar con servicios de observability (Sentry, LogRocket)
+- Mantengan **performance óptimo** en producción (sin overhead de console.log)
+
+**Problema actual:**
+```typescript
+// ❌ Logs ad-hoc durante debugging
+console.log('[Component] Some debug info:', data);
+console.log('[Hook] State update:', state);
+
+// Problemas:
+// 1. Se ejecutan en producción (contamina consola del usuario)
+// 2. Sin estructura ni niveles
+// 3. Difícil de deshabilitar globalmente
+// 4. No se integran con error tracking
+```
+
+#### Solución Propuesta
+
+Implementar un **Logger Service** con detección automática de entorno:
+
+**1. Logger Utility (`src/shared/utils/logger.ts`):**
+```typescript
+const isDev = import.meta.env.MODE === 'development';
+const isTest = import.meta.env.MODE === 'test';
+
+export const logger = {
+  /**
+   * Debug logs - Solo en desarrollo
+   * Uso: Debugging de flujos, state changes, data transformations
+   */
+  debug: (...args: unknown[]) => {
+    if (isDev) console.log('[DEBUG]', ...args);
+  },
+
+  /**
+   * Info logs - Solo en desarrollo
+   * Uso: Operaciones importantes, API calls success, milestones
+   */
+  info: (...args: unknown[]) => {
+    if (isDev) console.info('[INFO]', ...args);
+  },
+
+  /**
+   * Warning logs - Siempre mostrar
+   * Uso: Deprecated APIs, fallbacks, validation warnings
+   */
+  warn: (...args: unknown[]) => {
+    console.warn('[WARN]', ...args);
+    // TODO: Enviar a Sentry como warning
+  },
+
+  /**
+   * Error logs - Siempre mostrar + Enviar a Sentry
+   * Uso: Exceptions, API errors, critical failures
+   */
+  error: (error: Error | unknown, ...args: unknown[]) => {
+    console.error('[ERROR]', error, ...args);
+    // TODO: Sentry.captureException(error, { extra: { ...args } });
+  },
+
+  /**
+   * Performance timing
+   */
+  time: (label: string) => {
+    if (isDev) console.time(`[PERF] ${label}`);
+  },
+
+  timeEnd: (label: string) => {
+    if (isDev) console.timeEnd(`[PERF] ${label}`);
+  },
+};
+```
+
+**2. Uso en Código:**
+```typescript
+// Componentes
+import { logger } from '@/shared/utils/logger.js';
+
+function useWizardState() {
+  const setMapping = (mapping: Partial<ColumnMapping>) => {
+    logger.debug('[useWizardState] setMapping called:', {
+      kpiFieldsCount: mapping.kpiFields?.length,
+      hasHighlighted: mapping.kpiFields?.some(k => k.highlighted),
+    });
+    
+    setState(mapping);
+  };
+}
+
+// Error Boundaries
+function ErrorBoundary() {
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    logger.error(error, { componentStack: errorInfo.componentStack });
+  }
+}
+
+// API Calls
+async function fetchDataset(id: string) {
+  logger.debug('[API] Fetching dataset:', id);
+  logger.time('fetchDataset');
+  
+  try {
+    const response = await axios.get(`/datasets/${id}`);
+    logger.debug('[API] Dataset fetched successfully');
+    return response.data;
+  } catch (error) {
+    logger.error(error, { datasetId: id, endpoint: '/datasets/:id' });
+    throw error;
+  } finally {
+    logger.timeEnd('fetchDataset');
+  }
+}
+```
+
+**3. Sentry Integration (Fase 2):**
+```typescript
+import * as Sentry from '@sentry/react';
+
+export const logger = {
+  error: (error: Error | unknown, context?: Record<string, unknown>) => {
+    console.error('[ERROR]', error, context);
+    
+    if (import.meta.env.PROD && Sentry.isInitialized()) {
+      Sentry.captureException(error, {
+        level: 'error',
+        extra: context,
+        tags: {
+          feature: context?.feature || 'unknown',
+        },
+      });
+    }
+  },
+
+  warn: (message: string, context?: Record<string, unknown>) => {
+    console.warn('[WARN]', message, context);
+    
+    if (import.meta.env.PROD && Sentry.isInitialized()) {
+      Sentry.captureMessage(message, {
+        level: 'warning',
+        extra: context,
+      });
+    }
+  },
+};
+```
+
+#### Tareas de Implementación
+
+**Sprint 1 - Basic Logger (1-2 días):**
+- [ ] Crear `src/shared/utils/logger.ts` con métodos debug/info/warn/error
+- [ ] Agregar detección de entorno (dev/test/prod)
+- [ ] Implementar performance timing helpers
+- [ ] Tests unitarios para logger utility
+
+**Sprint 2 - Code Migration (1 día):**
+- [ ] Migrar console.log existentes a logger.debug() en:
+  - [ ] Wizard components (useWizardState, ColumnMappingStep, DataUploadWizard)
+  - [ ] API hooks (useDataset, useUpdateDataset)
+  - [ ] Error boundaries
+- [ ] Agregar logs estratégicos en flujos críticos:
+  - [ ] Dataset creation flow
+  - [ ] Authentication flow
+  - [ ] Data validation/parsing
+
+**Sprint 3 - Sentry Integration (1 día):**
+- [ ] Setup Sentry SDK (`@sentry/react` + `@sentry/vite-plugin`)
+- [ ] Configurar Sentry.init() en `main.tsx`
+- [ ] Integrar logger.error() con Sentry.captureException()
+- [ ] Configurar source maps para stack traces
+- [ ] Environment variables: `VITE_SENTRY_DSN`, `VITE_SENTRY_ENVIRONMENT`
+
+**Sprint 4 - Documentación (0.5 días):**
+- [ ] Guía de uso del logger en `docs/DEV_GUIDE.md`
+- [ ] Ejemplos de logging patterns
+- [ ] Configuración de Sentry en README
+
+#### Beneficios
+
+1. **Developer Experience:**
+   - Logs estructurados facilitan debugging
+   - No más console.log olvidados en producción
+   - Performance timing out-of-the-box
+
+2. **Production Monitoring:**
+   - Errores capturados automáticamente en Sentry
+   - Context enriquecido (user, feature, breadcrumbs)
+   - Alertas en tiempo real vía Sentry
+
+3. **Performance:**
+   - logger.debug() es no-op en producción (0 overhead)
+   - Conditional logging basado en entorno
+   - Tree-shaking elimina código no usado
+
+#### Referencias
+
+- **Sentry Docs:** https://docs.sentry.io/platforms/javascript/guides/react/
+- **Logger Patterns:** https://12factor.net/logs
+- **Related:** Error Boundary implementation (`src/shared/components/ErrorBoundary.tsx`)
+
+#### Notas Técnicas
+
+- **Tree-shaking:** Vite elimina automáticamente `logger.debug()` calls en prod builds si están detrás de `if (isDev)`
+- **Source Maps:** Configurar `sourcemaps: true` en `vite.config.ts` solo para prod builds
+- **Sentry Rate Limits:** Configurar sample rates para no exceder free tier (10k events/month)
 
 ---
 

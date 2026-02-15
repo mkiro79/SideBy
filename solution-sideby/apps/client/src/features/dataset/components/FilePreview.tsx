@@ -175,31 +175,25 @@ export function FilePreview({
 
           {/* Body */}
           <tbody className="divide-y">
-            {normalizedRows.map((row, rowIndex) => {
-              const rowKey = typeof row === 'object' && row !== null 
-                ? `row-${JSON.stringify(Object.values(row).slice(0, 2))}-${rowIndex}`
-                : `row-${rowIndex}`;
-              return (
-                <tr
-                  key={rowKey}
-                  className="hover:bg-accent/5 transition-colors"
-                >
-                  {headers.map((header) => {
-                    const cellValue = row[header];
-                    const cellKey = `${header}-${String(cellValue)}-${rowIndex}`;
-                    const displayValue = formatCellValue(cellValue);
-                    return (
-                      <td
-                        key={cellKey}
-                        className="px-3 py-2.5 whitespace-nowrap"
-                      >
-                        {displayValue}
-                      </td>
-                    );
-                  })}
-                </tr>
-              );
-            })}
+            {normalizedRows.map((row, rowIndex) => (
+              <tr
+                key={`row-${rowIndex}`}
+                className="hover:bg-accent/5 transition-colors"
+              >
+                {headers.map((header, colIndex) => {
+                  const cellValue = row[header];
+                  const displayValue = formatCellValue(cellValue);
+                  return (
+                    <td
+                      key={`cell-${rowIndex}-${colIndex}`}
+                      className="px-3 py-2.5 whitespace-nowrap"
+                    >
+                      {displayValue}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>

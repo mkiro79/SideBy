@@ -43,6 +43,13 @@ export const DatasetsList = () => {
   };
 
   /**
+   * Navega a la página de edición del dataset
+   */
+  const handleEdit = (id: string) => {
+    navigate(`/datasets/${id}`);
+  };
+
+  /**
    * Navega al wizard de creación de dataset
    */
   const handleCreateNew = () => {
@@ -137,6 +144,7 @@ export const DatasetsList = () => {
                         key={dataset.id}
                         dataset={dataset}
                         onOpen={handleOpenDashboard}
+                        onEdit={handleEdit}
                         onDelete={handleDelete}
                         isDeleting={
                           deleteMutation.isPending &&

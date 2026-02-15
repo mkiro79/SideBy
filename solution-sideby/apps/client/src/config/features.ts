@@ -29,6 +29,17 @@ export const FEATURES = Object.freeze({
    */
   AI_ENABLED: import.meta.env.VITE_FEATURE_AI_ENABLED === "true" || false,
 
+  /**
+   * Habilita la edición de metadatos de datasets
+   * Controla la visibilidad del botón "Editar" en DatasetCard
+   * y la ruta /datasets/:id (DatasetDetail page)
+   *
+   * @default false (oculto hasta completar implementación)
+   * @env VITE_FEATURE_DATASET_EDIT_ENABLED
+   */
+  DATASET_EDIT_ENABLED:
+    import.meta.env.VITE_FEATURE_DATASET_EDIT_ENABLED === "true" || false,
+
   // Futuras features...
   // ADVANCED_FILTERS: import.meta.env.VITE_FEATURE_ADVANCED_FILTERS === 'true' || false,
   // EXPORT_PDF: import.meta.env.VITE_FEATURE_EXPORT_PDF === 'true' || false,
