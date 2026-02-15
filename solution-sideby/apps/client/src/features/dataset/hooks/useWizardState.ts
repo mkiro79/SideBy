@@ -156,9 +156,28 @@ export const useWizardState = create<WizardState & WizardActions>()(
       // ============================================================================
 
       setMapping: (mapping) => {
-        set((state) => ({
-          mapping: { ...state.mapping, ...mapping },
-        }));
+        console.log("[useWizardState] setMapping called with:", {
+          kpiFieldsCount: mapping.kpiFields?.length,
+          kpiFields: mapping.kpiFields?.map((k) => ({
+            id: k.id,
+            label: k.label,
+            highlighted: k.highlighted,
+          })),
+          categoricalFields: mapping.categoricalFields,
+        });
+
+        set((state) => {
+          const newMapping = { ...state.mapping, ...mapping };
+          console.log("[useWizardState] New mapping state:", {
+            kpiFieldsCount: newMapping.kpiFields?.length,
+            kpiFields: newMapping.kpiFields?.map((k) => ({
+              id: k.id,
+              label: k.label,
+              highlighted: k.highlighted,
+            })),
+          });
+          return { mapping: newMapping };
+        });
       },
 
       addKPIField: (field) => {
