@@ -126,6 +126,11 @@ export class MongoDatasetRepository implements DatasetRepository {
 
       // Manejar schemaMapping - usar $set directo porque viene el objeto completo
       if (updates.schemaMapping) {
+        // Validar que tenga los campos requeridos para evitar updates parciales inconsistentes
+        if (!updates.schemaMapping.dimensionField || !updates.schemaMapping.kpiFields) {
+          throw new Error("schemaMapping incompleto: se requiere dimensionField y kpiFields");
+        }
+        
         updatePayload.schemaMapping = updates.schemaMapping;
         logger.debug(
           {
@@ -138,6 +143,11 @@ export class MongoDatasetRepository implements DatasetRepository {
 
       // Manejar dashboardLayout - usar $set directo porque viene el objeto completo
       if (updates.dashboardLayout) {
+        // Validar que tenga los campos requeridos
+        if (!updates.dashboardLayout.templateId) {
+          throw new Error("dashboardLayout incompleto: se requiere templateId");
+        }
+        
         updatePayload.dashboardLayout = updates.dashboardLayout;
         logger.debug(
           {

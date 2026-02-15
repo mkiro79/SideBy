@@ -54,7 +54,6 @@ export const UpdateMappingSchema = z.object({
         DatasetRules.MAX_HIGHLIGHTED_KPIS,
         `Máximo ${DatasetRules.MAX_HIGHLIGHTED_KPIS} KPIs destacados`,
       )
-      .optional()
       .default([]),
   }),
 

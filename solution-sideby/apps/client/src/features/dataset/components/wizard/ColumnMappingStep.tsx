@@ -44,11 +44,22 @@ export function ColumnMappingStep() {
     if (col === dimensionField || col === mapping.dateField) return false;
     if ((kpiFields || []).some((kpi) => kpi.columnName === col)) return false;
     
-    // Detectar si es string
-    const sampleRow = fileA.parsedData?.rows[0];
-    if (!sampleRow) return false;
-    const value = sampleRow[col];
-    return typeof value === 'string';
+    // Detectar si es string analizando múltiples filas (hasta 10)
+    const rows = fileA.parsedData?.rows || [];
+    if (rows.length === 0) return false;
+    
+    const samplesToCheck = Math.min(rows.length, 10);
+    let stringCount = 0;
+    
+    for (let i = 0; i < samplesToCheck; i++) {
+      const value = rows[i][col];
+      if (value !== null && value !== undefined && typeof value === 'string') {
+        stringCount++;
+      }
+    }
+    
+    // Considerar categórica si >80% de las muestras son strings
+    return (stringCount / samplesToCheck) > 0.8;
   });
   
   // Detectar posibles columnas de fecha

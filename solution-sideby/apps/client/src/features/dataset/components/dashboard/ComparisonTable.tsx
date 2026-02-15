@@ -40,6 +40,15 @@ export const ComparisonTable: React.FC<ComparisonTableProps> = ({
   };
 
   const getChangeIndicator = (change: number) => {
+    if (!isFinite(change)) {
+      return (
+        <Badge variant="secondary" className="gap-1">
+          <Minus className="h-3 w-3" />
+          N/A
+        </Badge>
+      );
+    }
+    
     if (Math.abs(change) < 0.1) {
       return (
         <Badge variant="secondary" className="gap-1">

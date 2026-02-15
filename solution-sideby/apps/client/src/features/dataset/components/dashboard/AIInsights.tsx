@@ -74,7 +74,7 @@ requieren atención inmediata.
         {/* Header */}
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-violetto-600 to-purple-600 text-white">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-violet-600 to-purple-600 text-white">
               <Bot className="h-5 w-5" />
             </div>
             <div>

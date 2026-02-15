@@ -40,15 +40,20 @@ import { AIConfigFields } from "../components/edit/AIConfigFields.js";
 
 /**
  * Convierte un Dataset a formato de formulario
- * Auto-detecta highlightedKpis y categoricalFields si están vacíos
+ * 
+ * NOTA: Para datasets creados antes de la feature de highlightedKpis,
+ * si el array está vacío, se auto-seleccionan hasta 5 KPIs como conveniencia
+ * para evitar que los usuarios tengan que configurarlos manualmente.
+ * Si highlightedKpis existe (aunque esté vacío por elección del usuario),
+ * se respeta y no se auto-completa.
  */
 const datasetToFormData = (dataset: Dataset): Partial<DatasetEditFormData> => {
-  // Auto-detectar highlightedKpis si está vacío
+  // Auto-detectar highlightedKpis solo para datasets legacy (sin dashboardLayout)
   let highlightedKpis = dataset.dashboardLayout?.highlightedKpis || [];
-  if (highlightedKpis.length === 0 && dataset.schemaMapping?.kpiFields) {
-    // Tomar los primeros 3-5 KPIs como destacados
+  if (!dataset.dashboardLayout && highlightedKpis.length === 0 && dataset.schemaMapping?.kpiFields) {
+    // UI convenience: para datasets legacy, tomar los primeros 4 KPIs como destacados
     highlightedKpis = dataset.schemaMapping.kpiFields
-      .slice(0, 5)
+      .slice(0, 4)
       .map((kpi) => kpi.columnName);
   }
 

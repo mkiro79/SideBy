@@ -51,7 +51,7 @@ export const KPIGrid: React.FC<KPIGridProps> = ({
       case 'percentage':
         return `${value.toFixed(1)}%`;
       case 'number':
-        if (value >= 1000) {
+        if (value >= 10000) {
           return `${(value / 1000).toFixed(0)}K`;
         }
         return new Intl.NumberFormat('es-ES').format(value);
@@ -108,8 +108,14 @@ export const KPIGrid: React.FC<KPIGridProps> = ({
                   </div>
                   <Badge variant={getBadgeVariant(kpi.trend)} className="gap-1">
                     {getTrendIcon(kpi.trend)}
-                    {kpi.diffPercent > 0 ? '+' : ''}
-                    {kpi.diffPercent.toFixed(1)}%
+                    {isFinite(kpi.diffPercent) ? (
+                      <>
+                        {kpi.diffPercent > 0 ? '+' : ''}
+                        {kpi.diffPercent.toFixed(1)}%
+                      </>
+                    ) : (
+                      'N/A'
+                    )}
                   </Badge>
                 </div>
               </div>

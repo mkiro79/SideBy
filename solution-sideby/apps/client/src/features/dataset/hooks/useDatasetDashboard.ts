@@ -148,11 +148,11 @@ export const useDatasetDashboard = ({
 
       // Diferencia
       const diff = valueA - valueB;
-      const diffPercent = valueB !== 0 ? (diff / valueB) * 100 : 0;
+      const diffPercent = valueB !== 0 ? (diff / valueB) * 100 : Infinity;
 
       // Tendencia (asumiendo que positivo es mejor por defecto)
       const trend: "up" | "down" | "neutral" =
-        Math.abs(diffPercent) < 1 ? "neutral" : diffPercent > 0 ? "up" : "down";
+        !isFinite(diffPercent) || Math.abs(diffPercent) < 1 ? "neutral" : diffPercent > 0 ? "up" : "down";
 
       return {
         name: columnName,
