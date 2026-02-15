@@ -44,17 +44,29 @@ export const TrendChart: React.FC<TrendChartProps> = ({
    * Agrupa datos por fecha y suma valores de cada grupo
    */
   const chartData = React.useMemo(() => {
-    const grouped = new Map<string, { date: string; groupA: number; groupB: number }>();
+    const grouped = new Map<string, { date: string; sortKey: number; groupA: number; groupB: number }>();
 
     data.forEach((row) => {
-      const dateValue = String(row[dateField] || '');
+      const rawDateValue = row[dateField];
+      if (!rawDateValue) return;
+      
+      // Intentar parsear como fecha para ordenamiento consistente
+      const dateValue = String(rawDateValue);
+      let sortKey: number;
+      
+      try {
+        const parsedDate = new Date(dateValue);
+        sortKey = isNaN(parsedDate.getTime()) ? 0 : parsedDate.getTime();
+      } catch {
+        // Si falla el parseo, usar orden lexicográfico
+        sortKey = 0;
+      }
+      
       const kpiValue = Number(row[kpiField]) || 0;
       const group = row._source_group;
 
-      if (!dateValue) return;
-
       if (!grouped.has(dateValue)) {
-        grouped.set(dateValue, { date: dateValue, groupA: 0, groupB: 0 });
+        grouped.set(dateValue, { date: dateValue, sortKey, groupA: 0, groupB: 0 });
       }
 
       const entry = grouped.get(dateValue)!;
@@ -65,10 +77,13 @@ export const TrendChart: React.FC<TrendChartProps> = ({
       }
     });
 
-    // Ordenar por fecha
-    return Array.from(grouped.values()).sort((a, b) =>
-      a.date.localeCompare(b.date)
-    );
+    // Ordenar por timestamp si está disponible, si no por string
+    return Array.from(grouped.values()).sort((a, b) => {
+      if (a.sortKey && b.sortKey) {
+        return a.sortKey - b.sortKey;
+      }
+      return a.date.localeCompare(b.date);
+    });
   }, [data, dateField, kpiField]);
 
   const formatValue = (value: number): string => {
