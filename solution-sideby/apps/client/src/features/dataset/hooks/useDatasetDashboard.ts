@@ -74,7 +74,8 @@ export const useDatasetDashboard = ({
     });
 
     return data;
-  }, [dataset, JSON.stringify(filters.categorical)]); // ✅ Usar JSON.stringify para comparación estable
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dataset, filters.categorical]); // filters.categorical is stable from useState
 
   /**
    * Detectar campos categóricos (para filtros)
