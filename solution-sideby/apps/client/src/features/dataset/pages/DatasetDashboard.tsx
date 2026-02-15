@@ -195,8 +195,6 @@ export default function DatasetDashboard() {
               kpis={kpis}
               groupALabel={groupALabel}
               groupBLabel={groupBLabel}
-              groupAColor={groupAColor}
-              groupBColor={groupBColor}
             />
 
             {/* Trend Chart - Solo si hay dateField y datos*/}

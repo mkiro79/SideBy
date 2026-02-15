@@ -15,8 +15,6 @@ interface KPIGridProps {
   kpis: KPIResult[];
   groupALabel?: string;
   groupBLabel?: string;
-  groupAColor: string;
-  groupBColor: string;
 }
 
 /**
