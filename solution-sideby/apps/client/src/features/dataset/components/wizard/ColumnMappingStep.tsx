@@ -89,24 +89,7 @@ export function ColumnMappingStep() {
       return kpi;
     });
     
-    console.log('[ColumnMappingStep] Toggling highlighted for KPI:', kpiId);
-    console.log('[ColumnMappingStep] Updated KPIs:', updatedKPIs.map(k => ({ 
-      id: k.id, 
-      label: k.label, 
-      highlighted: k.highlighted 
-    })));
-    
     setMapping({ kpiFields: updatedKPIs });
-    
-    // Verificar que el estado se actualizó
-    setTimeout(() => {
-      const currentKpis = mapping.kpiFields || [];
-      console.log('[ColumnMappingStep] State after update:', currentKpis.map(k => ({ 
-        id: k.id, 
-        label: k.label, 
-        highlighted: k.highlighted 
-      })));
-    }, 100);
   };
   
   /**

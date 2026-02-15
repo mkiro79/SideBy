@@ -178,17 +178,6 @@ export default function DataUploadWizard() {
             }
           : undefined,
       };
-
-      console.log('[DataUploadWizard] State Before PATCH:', {
-        rawKpiFields: mapping.kpiFields,
-        highlightedInState: (mapping.kpiFields || []).filter((kpi) => kpi.highlighted),
-      });
-
-      console.log('[DataUploadWizard] PATCH Payload:', {
-        categoricalFields: payload.schemaMapping.categoricalFields,
-        highlightedKpis: payload.dashboardLayout.highlightedKpis,
-        kpiFieldsCount: payload.schemaMapping.kpiFields.length,
-      });
       
       await update(datasetId, payload);
       

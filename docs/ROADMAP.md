@@ -802,6 +802,229 @@ Esto hace que los datasets tengan labels más descriptivos desde el inicio y red
 
 ---
 
+## INFRASTRUCTURE & OBSERVABILITY
+
+### Mejoras Planificadas
+
+### 📊 Structured Logging System with Sentry Integration
+
+**Estado:** Propuesta  
+**Prioridad:** Media  
+**Esfuerzo Estimado:** S (1-3 días)  
+**Versión Target:** v0.5.0
+
+#### Contexto
+
+Durante el desarrollo y debugging de features (ej: RFC-004 highlighted KPIs fix), se identificó la necesidad de logs estructurados que:
+- Se muestren **solo en desarrollo**, no contaminen la consola en producción
+- Tengan **niveles claros** (debug, info, warn, error)
+- Sean **extensibles** para integrar con servicios de observability (Sentry, LogRocket)
+- Mantengan **performance óptimo** en producción (sin overhead de console.log)
+
+**Problema actual:**
+```typescript
+// ❌ Logs ad-hoc durante debugging
+console.log('[Component] Some debug info:', data);
+console.log('[Hook] State update:', state);
+
+// Problemas:
+// 1. Se ejecutan en producción (contamina consola del usuario)
+// 2. Sin estructura ni niveles
+// 3. Difícil de deshabilitar globalmente
+// 4. No se integran con error tracking
+```
+
+#### Solución Propuesta
+
+Implementar un **Logger Service** con detección automática de entorno:
+
+**1. Logger Utility (`src/shared/utils/logger.ts`):**
+```typescript
+const isDev = import.meta.env.MODE === 'development';
+const isTest = import.meta.env.MODE === 'test';
+
+export const logger = {
+  /**
+   * Debug logs - Solo en desarrollo
+   * Uso: Debugging de flujos, state changes, data transformations
+   */
+  debug: (...args: unknown[]) => {
+    if (isDev) console.log('[DEBUG]', ...args);
+  },
+
+  /**
+   * Info logs - Solo en desarrollo
+   * Uso: Operaciones importantes, API calls success, milestones
+   */
+  info: (...args: unknown[]) => {
+    if (isDev) console.info('[INFO]', ...args);
+  },
+
+  /**
+   * Warning logs - Siempre mostrar
+   * Uso: Deprecated APIs, fallbacks, validation warnings
+   */
+  warn: (...args: unknown[]) => {
+    console.warn('[WARN]', ...args);
+    // TODO: Enviar a Sentry como warning
+  },
+
+  /**
+   * Error logs - Siempre mostrar + Enviar a Sentry
+   * Uso: Exceptions, API errors, critical failures
+   */
+  error: (error: Error | unknown, ...args: unknown[]) => {
+    console.error('[ERROR]', error, ...args);
+    // TODO: Sentry.captureException(error, { extra: { ...args } });
+  },
+
+  /**
+   * Performance timing
+   */
+  time: (label: string) => {
+    if (isDev) console.time(`[PERF] ${label}`);
+  },
+
+  timeEnd: (label: string) => {
+    if (isDev) console.timeEnd(`[PERF] ${label}`);
+  },
+};
+```
+
+**2. Uso en Código:**
+```typescript
+// Componentes
+import { logger } from '@/shared/utils/logger.js';
+
+function useWizardState() {
+  const setMapping = (mapping: Partial<ColumnMapping>) => {
+    logger.debug('[useWizardState] setMapping called:', {
+      kpiFieldsCount: mapping.kpiFields?.length,
+      hasHighlighted: mapping.kpiFields?.some(k => k.highlighted),
+    });
+    
+    setState(mapping);
+  };
+}
+
+// Error Boundaries
+function ErrorBoundary() {
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    logger.error(error, { componentStack: errorInfo.componentStack });
+  }
+}
+
+// API Calls
+async function fetchDataset(id: string) {
+  logger.debug('[API] Fetching dataset:', id);
+  logger.time('fetchDataset');
+  
+  try {
+    const response = await axios.get(`/datasets/${id}`);
+    logger.debug('[API] Dataset fetched successfully');
+    return response.data;
+  } catch (error) {
+    logger.error(error, { datasetId: id, endpoint: '/datasets/:id' });
+    throw error;
+  } finally {
+    logger.timeEnd('fetchDataset');
+  }
+}
+```
+
+**3. Sentry Integration (Fase 2):**
+```typescript
+import * as Sentry from '@sentry/react';
+
+export const logger = {
+  error: (error: Error | unknown, context?: Record<string, unknown>) => {
+    console.error('[ERROR]', error, context);
+    
+    if (import.meta.env.PROD && Sentry.isInitialized()) {
+      Sentry.captureException(error, {
+        level: 'error',
+        extra: context,
+        tags: {
+          feature: context?.feature || 'unknown',
+        },
+      });
+    }
+  },
+
+  warn: (message: string, context?: Record<string, unknown>) => {
+    console.warn('[WARN]', message, context);
+    
+    if (import.meta.env.PROD && Sentry.isInitialized()) {
+      Sentry.captureMessage(message, {
+        level: 'warning',
+        extra: context,
+      });
+    }
+  },
+};
+```
+
+#### Tareas de Implementación
+
+**Sprint 1 - Basic Logger (1-2 días):**
+- [ ] Crear `src/shared/utils/logger.ts` con métodos debug/info/warn/error
+- [ ] Agregar detección de entorno (dev/test/prod)
+- [ ] Implementar performance timing helpers
+- [ ] Tests unitarios para logger utility
+
+**Sprint 2 - Code Migration (1 día):**
+- [ ] Migrar console.log existentes a logger.debug() en:
+  - [ ] Wizard components (useWizardState, ColumnMappingStep, DataUploadWizard)
+  - [ ] API hooks (useDataset, useUpdateDataset)
+  - [ ] Error boundaries
+- [ ] Agregar logs estratégicos en flujos críticos:
+  - [ ] Dataset creation flow
+  - [ ] Authentication flow
+  - [ ] Data validation/parsing
+
+**Sprint 3 - Sentry Integration (1 día):**
+- [ ] Setup Sentry SDK (`@sentry/react` + `@sentry/vite-plugin`)
+- [ ] Configurar Sentry.init() en `main.tsx`
+- [ ] Integrar logger.error() con Sentry.captureException()
+- [ ] Configurar source maps para stack traces
+- [ ] Environment variables: `VITE_SENTRY_DSN`, `VITE_SENTRY_ENVIRONMENT`
+
+**Sprint 4 - Documentación (0.5 días):**
+- [ ] Guía de uso del logger en `docs/DEV_GUIDE.md`
+- [ ] Ejemplos de logging patterns
+- [ ] Configuración de Sentry en README
+
+#### Beneficios
+
+1. **Developer Experience:**
+   - Logs estructurados facilitan debugging
+   - No más console.log olvidados en producción
+   - Performance timing out-of-the-box
+
+2. **Production Monitoring:**
+   - Errores capturados automáticamente en Sentry
+   - Context enriquecido (user, feature, breadcrumbs)
+   - Alertas en tiempo real vía Sentry
+
+3. **Performance:**
+   - logger.debug() es no-op en producción (0 overhead)
+   - Conditional logging basado en entorno
+   - Tree-shaking elimina código no usado
+
+#### Referencias
+
+- **Sentry Docs:** https://docs.sentry.io/platforms/javascript/guides/react/
+- **Logger Patterns:** https://12factor.net/logs
+- **Related:** Error Boundary implementation (`src/shared/components/ErrorBoundary.tsx`)
+
+#### Notas Técnicas
+
+- **Tree-shaking:** Vite elimina automáticamente `logger.debug()` calls en prod builds si están detrás de `if (isDev)`
+- **Source Maps:** Configurar `sourcemaps: true` en `vite.config.ts` solo para prod builds
+- **Sentry Rate Limits:** Configurar sample rates para no exceder free tier (10k events/month)
+
+---
+
 ## RFC-005: TBD
 
 ### Mejoras Planificadas
