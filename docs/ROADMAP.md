@@ -1025,13 +1025,359 @@ export const logger = {
 
 ---
 
-## RFC-005: TBD
+## RFC-005: Dashboard UX Improvements
+
+### Mejoras Implementadas (v0.5.0)
+
+✅ **Multi-select Filters:** Permite seleccionar múltiples valores en cada dimensión  
+✅ **Enhanced Template Selector:** Selector mejorado con íconos, descripciones y auto-guardado  
+
+Ver detalles en: [`docs/design/RFC-005-DASHBOARD-UX-IMPROVEMENTS.md`](design/RFC-005-DASHBOARD-UX-IMPROVEMENTS.md)
+
+---
+
+## RFC-006: Dashboard Visualization Enhancements
+
+### Mejoras Planificadas (v0.6.0)
+
+📅 **Date Umbrella System:** Sistema para alinear fechas de diferentes períodos  
+📊 **Executive View:** KPI cards con sparklines + gráfico configurable  
+📈 **Trends View:** Grid 2×2 de mini-charts con trend indicators  
+📋 **Detailed View:** Tabla totales + tabla granular con deltas y export CSV  
+
+Ver detalles en: [`docs/design/RFC-006-DASHBOARD-VISUALIZATION-ENHANCEMENTS.md`](design/RFC-006-DASHBOARD-VISUALIZATION-ENHANCEMENTS.md)
+
+---
+
+## RFC-007: Dashboard PDF Export
+
+### Mejoras Planificadas (v0.7.0)
+
+📄 **PDF Export System:** Exportación interactiva de dashboards a PDF  
+🔗 **Interactive Links:** PDFs con links funcionales al dashboard online  
+⚙️ **Section Selector:** Usuario elige qué secciones exportar  
+🎨 **A4 Optimized:** Layout optimizado para impresión profesional  
+
+Ver detalles en: [`docs/design/RFC-007-DASHBOARD-PDF-EXPORT.md`](design/RFC-007-DASHBOARD-PDF-EXPORT.md)
+
+---
+
+## RFC-008: AI Insights Service
 
 ### Mejoras Planificadas
 
-_Pendiente: Futuras features_
+**Phase 1 (v0.5.0):** Rule Engine con insights básicos  
+**Phase 2 (v0.6.0):** Integración con LLMs (GPT-4/Claude)  
+**Phase 3 (v0.7.0+):** Fine-tuning, feedback loop, predicciones  
+
+🤖 **AI-Powered Insights:** Análisis automático de datos con contexto  
+📊 **5 Tipos de Insights:** Summary, Warning, Suggestion, Trend, Anomaly  
+💡 **Confidence Scoring:** Nivel de confianza por cada insight  
+🔄 **Fallback Strategy:** Rule Engine como backup si falla LLM  
+
+Ver detalles en: [`docs/design/RFC-008-AI-INSIGHTS-SERVICE.md`](design/RFC-008-AI-INSIGHTS-SERVICE.md)
 
 ---
+
+## FEATURES FUTURAS (v1.0+)
+
+### 🔗 Compartir Dashboard (Share Dashboard Links)
+
+**Estado:** Propuesta  
+**Prioridad:** Media  
+**Esfuerzo Estimado:** 2-3 días  
+**Versión Target:** v1.0.0
+
+#### Contexto
+
+Los usuarios necesitan compartir dashboards con stakeholders externos sin requerir que creen cuentas en SideBy. Actualmente no existe un mecanismo de compartir públicamente.
+
+**User Story:**
+> Como usuario, quiero generar un link público de mi dashboard para compartirlo con mi equipo o clientes externos, de forma que puedan ver los datos sin necesidad de login.
+
+#### Solución Propuesta
+
+**1. Generar Link Público con Token JWT**
+
+- Endpoint: `POST /api/v1/datasets/:id/share`
+- Generar un token JWT con payload:
+  ```json
+  {
+    "datasetId": "65f...",
+    "expiresAt": "2026-12-31T23:59:59Z",
+    "permissions": ["read"],
+    "filters": { "categorical": { "Region": ["Norte"] } }
+  }
+  ```
+- Guardar share link en DB con metadata:
+  ```typescript
+  interface ShareLink {
+    _id: ObjectId;
+    datasetId: ObjectId;
+    token: string;
+    createdBy: ObjectId;
+    createdAt: Date;
+    expiresAt: Date;
+    accessCount: number;
+    lastAccessedAt?: Date;
+    filters?: DashboardFilters;
+    isActive: boolean;
+  }
+  ```
+
+**2. Public Dashboard Route**
+
+- Frontend: `/public/datasets/:token`
+- No requiere autenticación
+- Muestra dashboard en modo "read-only" (sin edición)
+- Header indica "Vista Pública" con badge
+- Footer: "Creado con SideBy" + logo
+
+**3. Share Modal UI**
+
+```typescript
+<ShareDashboardModal>
+  <Input value={shareUrl} readOnly />
+  <CopyButton />
+  
+  <DatePicker label="Fecha de expiración" />
+  
+  <Checkbox label="Aplicar filtros actuales" />
+  
+  <Button onClick={generateShareLink}>
+    Generar Link
+  </Button>
+</ShareDashboardModal>
+```
+
+**4. Opciones de Expiración**
+
+- 1 día
+- 7 días
+- 30 días
+- Sin expiración (solo para usuarios premium)
+
+#### Seguridad
+
+- **Rate Limiting:** Máximo 10 share links por dataset
+- **Token Expiration:** Auto-revoke al expirar
+- **Analytics:** Track access count y last accessed
+- **Revocation:** Botón para desactivar link en cualquier momento
+- **Watermark:** Opcional "Compartido por [User Name]" en footer
+
+#### Implementación
+
+**Backend:**
+- `src/modules/share/domain/ShareLink.ts` (Entity)
+- `src/modules/share/application/GenerateShareLinkUseCase.ts`
+- `src/modules/share/infrastructure/ShareLinkRepository.ts`
+- `src/modules/share/presentation/ShareController.ts`
+
+**Frontend:**
+- `src/features/dataset/components/dashboard/ShareDashboardModal.tsx`
+- `src/pages/PublicDashboard.tsx` (nueva página sin auth)
+- `src/features/dataset/hooks/useShareDashboard.ts`
+
+#### Limitaciones MVP
+
+- No soporta edición de filtros en vista pública (filtros fijos del momento de share)
+- No incluye AI Insights en vista pública (solo KPIs y gráficos)
+- No permite exportar PDF desde vista pública
+
+#### Extensiones Futuras (v1.1+)
+
+- **Password Protection:** Proteger link con contraseña
+- **Email Sharing:** Enviar link directamente por email desde la app
+- **Embed Code:** Generar iframe para embeber dashboard en sitios externos
+- **Analytics Dashboard:** Ver quién accedió, cuándo, desde dónde (IP, country)
+
+---
+
+### 🔔 Configurar Alertas (Alerts & Notifications)
+
+**Estado:** Propuesta  
+**Prioridad:** Media  
+**Esfuerzo Estimado:** 5-7 días  
+**Versión Target:** v1.0.0
+
+#### Contexto
+
+Los usuarios necesitan ser notificados automáticamente cuando ciertos KPIs alcanzan umbrales críticos (ej: Revenue baja >20%, Churn sube >15%). Actualmente deben revisar el dashboard manualmente.
+
+**User Story:**
+> Como usuario, quiero configurar alertas para que me notifiquen por email cuando Revenue caiga más de 20% respecto al período anterior, para tomar acciones correctivas de inmediato.
+
+#### Solución Propuesta
+
+**1. Alert Configuration Entity**
+
+```typescript
+interface DatasetAlert {
+  _id: ObjectId;
+  datasetId: ObjectId;
+  userId: ObjectId;
+  
+  name: string;  // "Alerta de Revenue Bajo"
+  description?: string;
+  
+  conditions: {
+    kpi: string;  // "revenue"
+    operator: 'greater_than' | 'less_than' | 'equals' | 'change_percent_above' | 'change_percent_below';
+    threshold: number;
+    compareWith?: 'previous_period' | 'absolute_value';
+  }[];
+  
+  notificationChannels: ('email' | 'in-app' | 'webhook')[];
+  
+  emailConfig?: {
+    recipients: string[];
+    subject: string;
+    template: string;
+  };
+  
+  webhookConfig?: {
+    url: string;
+    method: 'POST' | 'GET';
+    headers?: Record<string, string>;
+  };
+  
+  schedule: {
+    frequency: 'real-time' | 'daily' | 'weekly' | 'monthly';
+    time?: string;  // HH:mm format (para daily)
+    dayOfWeek?: number;  // 0-6 (para weekly)
+    dayOfMonth?: number;  // 1-31 (para monthly)
+  };
+  
+  lastTriggeredAt?: Date;
+  triggerCount: number;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
+**2. Alert Evaluation Cron Job**
+
+- Ejecutar según schedule configurado
+- Evaluar condiciones contra datos actuales
+- Si se cumple condición → trigger notifications
+- Implementar "cooldown period" (no retriggear si ya se disparó en últimas X horas)
+
+```typescript
+// alert-evaluation.job.ts
+export async function evaluateAlerts(): Promise<void> {
+  const activeAlerts = await alertRepository.findActive();
+  
+  for (const alert of activeAlerts) {
+    const dataset = await datasetRepository.findById(alert.datasetId);
+    const currentKPI = calculateKPI(dataset.data, alert.conditions[0].kpi);
+    
+    if (shouldTriggerAlert(currentKPI, alert.conditions)) {
+      await notificationService.send(alert);
+      await alertRepository.updateLastTriggered(alert._id);
+    }
+  }
+}
+```
+
+**3. Frontend: Alert Configuration UI**
+
+```typescript
+<ConfigureAlertsModal>
+  <Input label="Nombre de la alerta" />
+  
+  <Select label="KPI a monitorear">
+    <option>Revenue</option>
+    <option>Traffic</option>
+    <option>ROI</option>
+    <option>Churn Rate</option>
+  </Select>
+  
+  <Select label="Condición">
+    <option>Disminuye más de</option>
+    <option>Aumenta más de</option>
+    <option>Es mayor que</option>
+    <option>Es menor que</option>
+  </Select>
+  
+  <Input type="number" label="Umbral (%)" />
+  
+  <Checkbox label="Notificar por Email" />
+  <Checkbox label="Notificar en App" />
+  <Checkbox label="Webhook (avanzado)" />
+  
+  <Select label="Frecuencia de evaluación">
+    <option>Diaria (9:00 AM)</option>
+    <option>Semanal (Lunes 9:00 AM)</option>
+    <option>Mensual (Día 1, 9:00 AM)</option>
+  </Select>
+  
+  <Button>Crear Alerta</Button>
+</ConfigureAlertsModal>
+```
+
+**4. In-App Notifications**
+
+- Nueva sección en header: "🔔 Notificaciones" con badge de count
+- Dropdown con lista de notificaciones recientes
+- Formato:
+  ```
+  🚨 Revenue bajó 23% en Dataset "Q1 2024"
+  Hace 2 horas • Ver Dashboard →
+  ```
+
+**5. Email Notifications**
+
+- Template HTML profesional
+- Subject: `[SideBy Alert] Revenue bajó 23% en Dataset "Q1 2024"`
+- Body:
+  - Nombre de la alerta
+  - Condición que se cumplió
+  - Valor actual vs esperado
+  - Link directo al dashboard
+  - Botón "Desactivar esta alerta"
+
+#### Implementación
+
+**Backend:**
+- `src/modules/alerts/domain/DatasetAlert.ts`
+- `src/modules/alerts/application/CreateAlertUseCase.ts`
+- `src/modules/alerts/application/EvaluateAlertsUseCase.ts`
+- `src/modules/alerts/infrastructure/AlertRepository.ts`
+- `src/modules/alerts/jobs/alert-evaluation.job.ts`
+- `src/modules/notifications/infrastructure/EmailService.ts` (usar Nodemailer/SendGrid)
+
+**Frontend:**
+- `src/features/dataset/components/dashboard/ConfigureAlertsModal.tsx`
+- `src/features/alerts/components/AlertsList.tsx`
+- `src/features/alerts/components/NotificationDropdown.tsx`
+- `src/features/alerts/hooks/useAlerts.ts`
+
+#### Seguridad & Performance
+
+- **Rate Limiting:** Máximo 5 alertas activas por dataset (plan free), 20 (premium)
+- **Cooldown Period:** No retriggear misma alerta si ya se disparó en últimas 6 horas
+- **Email Limits:** Máximo 10 emails por día por usuario (evitar spam)
+- **Webhook Timeout:** 5 segundos máximo (evitar bloqueos)
+
+#### Limitaciones MVP
+
+- Solo condiciones simples (un solo KPI por alerta)
+- No soporta condiciones complejas (AND/OR múltiples KPIs)
+- No incluye notificaciones SMS/Slack (solo email + in-app + webhook)
+- No hay "snooze" de alertas
+
+#### Extensiones Futuras (v1.1+)
+
+- **Complex Conditions:** Multiple KPIs con AND/OR logic
+- **AI-Powered Alerts:** Detectar anomalías automáticamente sin configuración manual
+- **Slack Integration:** Enviar alertas a canales de Slack
+- **Alert History:** Dashboard de historial de alertas disparadas
+- **Alert Templates:** Plantillas pre-configuradas ("Revenue Drop", "Churn Spike")
+
+---
+
+
 
 ## Convenciones
 
