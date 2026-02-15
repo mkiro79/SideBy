@@ -1030,9 +1030,53 @@ export const logger = {
 ### Mejoras Implementadas (v0.5.0)
 
 ✅ **Multi-select Filters:** Permite seleccionar múltiples valores en cada dimensión  
-✅ **Enhanced Template Selector:** Selector mejorado con íconos, descripciones y auto-guardado  
+✅ **Active Filter Chips:** Chips removibles con botón "Limpiar todos"  
+✅ **Enhanced Template Selector:** Selector mejorado con íconos y descripciones  
 
 Ver detalles en: [`docs/design/RFC-005-DASHBOARD-UX-IMPROVEMENTS.md`](design/RFC-005-DASHBOARD-UX-IMPROVEMENTS.md)
+
+### Mejoras Pendientes (v0.6.0)
+
+**🔄 Auto-save Template Preference**
+
+**Estado:** Pendiente  
+**Prioridad:** Media  
+**Esfuerzo Estimado:** 1-2 días (0.5d Backend + 1d Frontend + 0.5d Testing)  
+**Versión Target:** v0.6.0  
+**Bloqueador:** Requiere endpoint backend que acepte `dashboardLayout.templateId`
+
+#### Contexto
+
+Durante la implementación de RFC-005, se identificó que el selector de templates mejorado necesita persistir la preferencia del usuario. Actualmente el template seleccionado se pierde al recargar la página.
+
+**User Story:**
+> Como usuario, cuando cambio de "Resumen Ejecutivo" a "Análisis de Tendencias", quiero que mi preferencia se guarde automáticamente para que la próxima vez que abra el dashboard se muestre la misma vista.
+
+#### Solución Propuesta
+
+**Backend (0.5 días):**
+- Extender endpoint `PATCH /api/v1/datasets/:id` para aceptar:
+  ```json
+  { "dashboardLayout": { "templateId": "sideby_trends" } }
+  ```
+- Validar `templateId` como enum válido
+- Manejo de errores para template inválido
+
+**Frontend (1 día):**
+- Implementar auto-save con debounce (2 segundos después del cambio)
+- Visual feedback: "Guardando..." → "✓ Guardado" → "No guardado"
+- Integración con `useUpdateDataset` mutation hook
+- Error handling silencioso con logging (no toasts intrusivos)
+- Tests con fake timers para validar debounce
+
+**Testing (0.5 días):**
+- Unit tests: lógica de debounce y estado de guardado
+- Integration tests: mutation + cache invalidation
+- E2E test: Cambiar template → Recargar página → Validar persistencia
+
+#### Referencias
+- Component: `components/dashboard/TemplateSelector.tsx`
+- Hook: `hooks/useUpdateDataset.ts`
 
 ---
 

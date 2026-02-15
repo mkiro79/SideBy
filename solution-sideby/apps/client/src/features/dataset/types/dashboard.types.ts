@@ -27,8 +27,8 @@ export interface DashboardTemplate {
  * Filtros aplicables al dashboard
  */
 export interface DashboardFilters {
-  /** Filtros categóricos (ej: { "region": "Norte", "category": "A" }) */
-  categorical: Record<string, string>;
+  /** Filtros categóricos multi-select (ej: { "region": ["Norte", "Sur"], "category": ["A"] }) */
+  categorical: Record<string, string[]>;
 
   /** Rango de fechas (opcional) */
   dateRange?: {

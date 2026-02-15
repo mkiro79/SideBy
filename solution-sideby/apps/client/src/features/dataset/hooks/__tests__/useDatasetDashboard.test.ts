@@ -19,7 +19,7 @@ type HookParams = {
   datasetId: string | null;
   templateId: DashboardTemplateId;
   filters: {
-    categorical: Record<string, string>;
+    categorical: Record<string, string[]>; // ✅ Multi-select (arrays)
   };
 };
 
@@ -139,9 +139,9 @@ describe("useDatasetDashboard", () => {
     expect(revenueKpi?.trend).toBe("up");
   });
 
-  it("debe aplicar filtros categóricos", () => {
+  it("debe aplicar filtros categóricos (single-select legacy)", () => {
     const { result } = renderUseDatasetDashboard({
-      filters: { categorical: { region: "north" } },
+      filters: { categorical: { region: ["north"] } }, // ✅ Array con un solo valor
     });
 
     expect(result.current.filteredData).toHaveLength(2);
@@ -154,6 +154,83 @@ describe("useDatasetDashboard", () => {
     );
     expect(revenueKpi?.valueA).toBe(100);
     expect(revenueKpi?.valueB).toBe(80);
+  });
+
+  // ===== MULTI-SELECT FILTERS TESTS (RFC-005) =====
+
+  it("[RFC-005] debe filtrar con múltiples valores en una dimensión (OR logic)", () => {
+    const { result } = renderUseDatasetDashboard({
+      filters: { categorical: { region: ["north", "south"] } }, // ✅ Multi-select
+    });
+
+    // Debe incluir filas de north Y south (OR logic dentro de la misma dimensión)
+    expect(result.current.filteredData).toHaveLength(4); // Todas las filas
+    expect(
+      result.current.filteredData.every((row) =>
+        ["north", "south"].includes(row.region as string),
+      ),
+    ).toBe(true);
+  });
+
+  it("[RFC-005] debe retornar todos los datos cuando el array de filtros está vacío", () => {
+    const { result } = renderUseDatasetDashboard({
+      filters: { categorical: { region: [] } }, // ✅ Array vacío = no filtrar
+    });
+
+    // Debe incluir todas las filas (4 filas en total)
+    expect(result.current.filteredData).toHaveLength(4);
+  });
+
+  it("[RFC-005] debe aplicar AND logic entre diferentes dimensiones", () => {
+    const { result } = renderUseDatasetDashboard({
+      filters: {
+        categorical: {
+          region: ["north"], // Solo north
+          channel: ["web"], // Y solo web
+        },
+      },
+    });
+
+    // Debe retornar solo las filas que cumplen AMBAS condiciones
+    expect(result.current.filteredData).toHaveLength(2);
+    expect(
+      result.current.filteredData.every(
+        (row) => row.region === "north" && row.channel === "web",
+      ),
+    ).toBe(true);
+  });
+
+  it("[RFC-005] debe aplicar multi-select en múltiples dimensiones correctamente", () => {
+    const { result } = renderUseDatasetDashboard({
+      filters: {
+        categorical: {
+          region: ["north", "south"], // north O south
+          channel: ["web"], // Y web
+        },
+      },
+    });
+
+    // Debe retornar filas de (north O south) Y web
+    expect(result.current.filteredData).toHaveLength(2); // north+web, south NO (porque south tiene channel=retail)
+    expect(
+      result.current.filteredData.every((row) => row.channel === "web"),
+    ).toBe(true);
+  });
+
+  it("[RFC-005] debe calcular KPIs correctamente con filtros multi-select aplicados", () => {
+    const { result } = renderUseDatasetDashboard({
+      filters: { categorical: { region: ["south"] } },
+    });
+
+    const revenueKpi = result.current.kpis.find(
+      (kpi) => kpi.name === "revenue",
+    );
+
+    // Solo filas de south: groupA=200, groupB=120
+    expect(revenueKpi?.valueA).toBe(200);
+    expect(revenueKpi?.valueB).toBe(120);
+    expect(revenueKpi?.diff).toBe(80);
+    expect(revenueKpi?.diffPercent).toBeCloseTo(66.67, 1); // (200-120)/120 * 100
   });
 
   it("debe detectar campos categóricos excluyendo _source_group", () => {

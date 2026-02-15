@@ -52,15 +52,20 @@ export default function DatasetDashboard() {
     filters,
   });
   
-  // Handler para cambio de filtros
-  const handleFilterChange = (field: string, value: string) => {
+  // Handler para cambio de filtros multi-select (RFC-005)
+  const handleFilterChange = (field: string, values: string[]) => {
     setFilters((prev) => ({
       ...prev,
       categorical: {
         ...prev.categorical,
-        [field]: value,
+        [field]: values,
       },
     }));
+  };
+
+  // Handler para limpiar todos los filtros (RFC-005)
+  const handleClearFilters = () => {
+    setFilters({ categorical: {} });
   };
 
   // ============================================================================
@@ -186,6 +191,7 @@ export default function DatasetDashboard() {
                 categoricalFields={categoricalFields}
                 filters={filters.categorical}
                 onFilterChange={handleFilterChange}
+                onClearFilters={handleClearFilters}
                 dataset={dataset}
               />
             )}
