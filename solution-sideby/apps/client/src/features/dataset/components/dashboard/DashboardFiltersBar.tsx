@@ -232,7 +232,7 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
                     checked={isSelected}
                     className="mr-2"
                     aria-label={`${isSelected ? 'Deseleccionar' : 'Seleccionar'} ${value}`}
-                    onClick={(e) => e.stopPropagation()}
+                    onClick={(e: React.MouseEvent) => e.stopPropagation()}
                   />
                   <span>{value}</span>
                 </CommandItem>

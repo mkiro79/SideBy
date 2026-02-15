@@ -45,6 +45,7 @@ const mockDataset: Dataset = {
   },
   dashboardLayout: {
     templateId: 'sideby_executive',
+    highlightedKpis: [],
   },
   data: [
     { _source_group: 'groupA', region: 'north', channel: 'web' },
