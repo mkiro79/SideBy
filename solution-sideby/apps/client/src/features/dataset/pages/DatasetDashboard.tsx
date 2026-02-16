@@ -26,7 +26,6 @@ import { useDatasetDashboard } from '../hooks/useDatasetDashboard.js';
 import { TemplateSelector } from '../components/dashboard/TemplateSelector.js';
 import { DashboardFiltersBar } from '../components/dashboard/DashboardFiltersBar.js';
 import { KPIGrid } from '../components/dashboard/KPIGrid.js';
-import { ComparisonChart } from '../components/dashboard/ComparisonChart.js';
 import { ComparisonTable } from '../components/dashboard/ComparisonTable.js';
 import { TrendChart } from '../components/dashboard/TrendChart.js';
 import { AIInsights } from '../components/dashboard/AIInsights.js';
@@ -232,17 +231,6 @@ export default function DatasetDashboard() {
               <TrendChart
                 data={filteredData}
                 dateField={dateField}
-                kpis={kpis}
-                groupALabel={groupALabel}
-                groupBLabel={groupBLabel}
-                groupAColor={groupAColor}
-                groupBColor={groupBColor}
-              />
-            )}
-
-            {/* Comparison Chart - Solo en templates Executive y Trends */}
-            {selectedTemplate !== 'sideby_detailed' && (
-              <ComparisonChart
                 kpis={kpis}
                 groupALabel={groupALabel}
                 groupBLabel={groupBLabel}
