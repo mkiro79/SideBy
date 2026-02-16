@@ -134,9 +134,11 @@ describe("useDatasetDashboard", () => {
     expect(revenueKpi).toBeDefined();
     expect(revenueKpi?.valueA).toBe(300);
     expect(revenueKpi?.valueB).toBe(200);
-    expect(revenueKpi?.diff).toBe(100);
-    expect(revenueKpi?.diffPercent).toBe(50);
-    expect(revenueKpi?.trend).toBe("up");
+    // Delta = B - A = 200 - 300 = -100 (crecimiento negativo desde A hacia B)
+    expect(revenueKpi?.diff).toBe(-100);
+    // Porcentaje = (-100 / 300) * 100 = -33.33%
+    expect(revenueKpi?.diffPercent).toBeCloseTo(-33.33, 1);
+    expect(revenueKpi?.trend).toBe("down");
   });
 
   it("debe aplicar filtros categóricos (single-select legacy)", () => {
@@ -229,8 +231,10 @@ describe("useDatasetDashboard", () => {
     // Solo filas de south: groupA=200, groupB=120
     expect(revenueKpi?.valueA).toBe(200);
     expect(revenueKpi?.valueB).toBe(120);
-    expect(revenueKpi?.diff).toBe(80);
-    expect(revenueKpi?.diffPercent).toBeCloseTo(66.67, 1); // (200-120)/120 * 100
+    // Delta = B - A = 120 - 200 = -80 (crecimiento negativo)
+    expect(revenueKpi?.diff).toBe(-80);
+    // Porcentaje = (-80 / 200) * 100 = -40%
+    expect(revenueKpi?.diffPercent).toBeCloseTo(-40, 1);
   });
 
   it("debe detectar campos categóricos excluyendo _source_group", () => {

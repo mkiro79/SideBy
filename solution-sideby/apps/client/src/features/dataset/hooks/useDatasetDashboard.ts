@@ -156,9 +156,9 @@ export const useDatasetDashboard = ({
       const valueA = calculateAggregate(dataA, columnName);
       const valueB = calculateAggregate(dataB, columnName);
 
-      // Diferencia (A - B): Yo (A) comparado CON referencia (B)
-      const diff = valueA - valueB;
-      const diffPercent = valueB !== 0 ? (diff / valueB) * 100 : Infinity;
+      // Diferencia (B - A): Crecimiento desde Grupo A (base) hacia Grupo B (actual)
+      const diff = valueB - valueA;
+      const diffPercent = valueA !== 0 ? (diff / valueA) * 100 : Infinity;
 
       // Tendencia (asumiendo que positivo es mejor por defecto)
       const trend: "up" | "down" | "neutral" =
