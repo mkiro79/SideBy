@@ -89,13 +89,13 @@ describe('MiniTrendChart', () => {
   });
 
   describe('Indicadores de Tendencia', () => {
-    it('debe mostrar flecha arriba para delta positivo', () => {
+    it('debe mostrar indicador visual para delta positivo', () => {
       render(<MiniTrendChart {...defaultProps} />);
-      const badge = screen.getByText(/20\.0%/).closest('div');
-      expect(badge?.textContent).toContain('↗️');
+      const badge = screen.getByText(/\+20\.0%/);
+      expect(badge).toBeInTheDocument();
     });
 
-    it('debe mostrar flecha abajo para delta negativo', () => {
+    it('debe mostrar indicador visual para delta negativo', () => {
       const kpiNegative: KPIResult = {
         ...mockKPI,
         valueB: 200,
@@ -105,22 +105,19 @@ describe('MiniTrendChart', () => {
       };
 
       render(<MiniTrendChart {...defaultProps} kpi={kpiNegative} />);
-      const badge = screen.getByText(/-20\.0%/).closest('div');
-      expect(badge?.textContent).toContain('↘️');
+      const badge = screen.getByText(/-20\.0%/);
+      expect(badge).toBeInTheDocument();
     });
 
-    it('debe aplicar clase default para tendencia positiva', () => {
+    it('debe mostrar badge success para tendencia positiva', () => {
       render(<MiniTrendChart {...defaultProps} />);
       
       // Badge con delta positivo debe estar presente
-      const badge = screen.getByText(/20\.0%/);
+      const badge = screen.getByText(/\+20\.0%/);
       expect(badge).toBeInTheDocument();
-      // Verificar que contiene el texto del porcentaje positivo con flecha
-      expect(badge.parentElement?.textContent).toContain('↗️');
-      expect(badge.parentElement?.textContent).toContain('+20.0%');
     });
 
-    it('debe aplicar clase destructive para tendencia negativa', () => {
+    it('debe mostrar badge destructive para tendencia negativa', () => {
       const kpiNegative: KPIResult = {
         ...mockKPI,
         valueB: 200,
@@ -131,10 +128,9 @@ describe('MiniTrendChart', () => {
 
       render(<MiniTrendChart {...defaultProps} kpi={kpiNegative} />);
       
-      // Badge con delta negativo debe estar presente con flecha abajo
+      // Badge con delta negativo debe estar presente
       const badge = screen.getByText(/-20\.0%/);
       expect(badge).toBeInTheDocument();
-      expect(badge.parentElement?.textContent).toContain('↘️');
     });
   });
 

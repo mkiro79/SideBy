@@ -18,6 +18,7 @@ import {
   CardHeader,
 } from '@/shared/components/ui/card.js';
 import { Badge } from '@/shared/components/ui/badge.js';
+import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import {
   LineChart,
   Line,
@@ -61,7 +62,7 @@ interface MiniTrendChartProps {
  * Formatea un valor según su tipo
  */
 function formatValue(value: number, format: 'currency' | 'percentage' | 'number' | 'text'): string {
-  if (isNaN(value) || !isFinite(value)) {
+  if (Number.isNaN(value) || !Number.isFinite(value)) {
     return '—';
   }
 
@@ -93,6 +94,24 @@ export function MiniTrendChart({
 }: MiniTrendChartProps) {
   const isPositive = kpi.diffPercent > 0;
   const isNegative = kpi.diffPercent < 0;
+
+  /**
+   * Retorna el ícono de tendencia basado en el cambio porcentual
+   */
+  const getTrendIcon = () => {
+    if (isPositive) return <TrendingUp className="h-3 w-3" />;
+    if (isNegative) return <TrendingDown className="h-3 w-3" />;
+    return <Minus className="h-3 w-3" />;
+  };
+
+  /**
+   * Retorna la variante del badge según el cambio porcentual
+   */
+  const getBadgeVariant = (): 'success' | 'destructive' | 'secondary' => {
+    if (isPositive) return 'success';
+    if (isNegative) return 'destructive';
+    return 'secondary';
+  };
 
   /**
    * Usa Date Umbrella System para alinear fechas de diferentes años
@@ -133,8 +152,16 @@ export function MiniTrendChart({
               {formatValue(kpi.valueB, kpi.format)}
             </p>
           </div>
-          <Badge variant={isPositive ? 'default' : isNegative ? 'destructive' : 'secondary'}>
-            {isPositive ? '↗️' : isNegative ? '↘️' : '→'} {isPositive ? '+' : ''}{kpi.diffPercent.toFixed(1)}%
+          <Badge variant={getBadgeVariant()} className="gap-1">
+            {getTrendIcon()}
+            {Number.isFinite(kpi.diffPercent) ? (
+              <>
+                {isPositive ? '+' : ''}
+                {kpi.diffPercent.toFixed(1)}%
+              </>
+            ) : (
+              'N/A'
+            )}
           </Badge>
         </div>
       </CardHeader>
