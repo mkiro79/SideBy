@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck - Temporal workaround for Recharts 2.15.0 type compatibility issues with React 18
 /**
  * TrendChart - Gráfico de líneas temporal para análisis de tendencias
  * 
@@ -207,6 +205,8 @@ export const TrendChart: React.FC<TrendChartProps> = ({
               margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
             >
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+              {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
+              {/* @ts-ignore - Recharts 2.x has type compatibility issues with React 18 */}
               <XAxis
                 dataKey="date"
                 stroke="hsl(var(--muted-foreground))"
@@ -214,6 +214,8 @@ export const TrendChart: React.FC<TrendChartProps> = ({
                 tickLine={false}
                 axisLine={false}
               />
+              {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
+              {/* @ts-ignore - Recharts 2.x has type compatibility issues with React 18 */}
               <YAxis
                 stroke="hsl(var(--muted-foreground))"
                 fontSize={11}
@@ -221,6 +223,8 @@ export const TrendChart: React.FC<TrendChartProps> = ({
                 axisLine={false}
                 tickFormatter={formatValue}
               />
+              {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
+              {/* @ts-ignore - Recharts 2.x has type compatibility issues with React 18 */}
               <Tooltip
                 contentStyle={{
                   backgroundColor: 'hsl(var(--popover))',
@@ -231,6 +235,8 @@ export const TrendChart: React.FC<TrendChartProps> = ({
                 labelStyle={{ color: 'hsl(var(--foreground))' }}
                 formatter={(value: number, name: string) => [formatTooltipValue(value), name]}
               />
+              {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
+              {/* @ts-ignore - Recharts 2.x has type compatibility issues with React 18 */}
               <Line
                 type="monotone"
                 dataKey="groupA"
@@ -240,6 +246,8 @@ export const TrendChart: React.FC<TrendChartProps> = ({
                 dot={{ r: 3, fill: groupAColor }}
                 activeDot={{ r: 5, fill: groupAColor }}
               />
+              {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
+              {/* @ts-ignore - Recharts 2.x has type compatibility issues with React 18 */}
               <Line
                 type="monotone"
                 dataKey="groupB"

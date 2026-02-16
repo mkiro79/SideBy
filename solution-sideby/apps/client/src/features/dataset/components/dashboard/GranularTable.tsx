@@ -152,6 +152,7 @@ function processGranularData(
       }
 
       // Calcular deltas (B - A): Crecimiento desde Grupo A (base) hacia Grupo B (actual)
+      // Usa A como base para cálculo porcentual, siguiendo RFC-006
       const deltaAbs = groupBValue - groupAValue;
       const deltaPercent = groupAValue === 0 ? 0 : (deltaAbs / groupAValue) * 100;
 
