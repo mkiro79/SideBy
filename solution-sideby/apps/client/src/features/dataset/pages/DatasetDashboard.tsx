@@ -179,11 +179,11 @@ export default function DatasetDashboard() {
               </div>
               
               <div className="flex items-center gap-3">
-                {/* Template Selector */}
-                <TemplateSelector
-                  selectedTemplate={selectedTemplate}
-                  onSelectTemplate={setSelectedTemplate}
-                />
+                {/* TODO: RFC-007 - Export PDF Button */}
+                {/* <Button variant="outline" size="sm">
+                  <Download className="h-4 w-4 mr-2" />
+                  Exportar PDF
+                </Button> */}
                 
                 {/* Reload Button */}
                 <Button variant="outline" size="sm" onClick={() => globalThis.location.reload()}>
@@ -194,6 +194,14 @@ export default function DatasetDashboard() {
             </div>
 
             <Separator />
+
+            {/* Template Selector - Nueva sección con label */}
+            <div className="flex items-center gap-3">
+              <TemplateSelector
+                selectedTemplate={selectedTemplate}
+                onSelectTemplate={setSelectedTemplate}
+              />
+            </div>
 
             {/* Filters Bar */}
             {categoricalFields.length > 0 && (

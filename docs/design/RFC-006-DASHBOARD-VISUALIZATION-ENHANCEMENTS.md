@@ -431,9 +431,51 @@ function formatValue(value: number, format: 'number' | 'currency' | 'percentage'
 
 ---
 
-## 3. Executive View Enhancements
+## 3. Dashboard Layout Structure
 
-### 3.1 Layout Final
+### 3.1 Header Layout (Todas las Vistas)
+
+**Prioridad:** Este layout es consistente en Executive, Trends y Detailed views.
+
+```
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃  [←] Dataset Name [ready]          [Exportar PDF] [Recargar]  ┃ ← Header Superior
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃  Visualización: [Análisis de Tendencias ▼ ━━━━━━━━━━━━━━━]   ┃ ← Template Selector
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃  🔍 Filtros                                                    ┃
+┃  [Month ▼] [Country ▼] [Product ▼]                           ┃ ← Filters Bar
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+```
+
+**Especificaciones:**
+
+1. **Header Superior:**
+   - **Izquierda:** Botón volver + Título + Badge de estado
+   - **Derecha:** Botón "Exportar PDF" (RFC-007) + Botón "Recargar"
+   - Altura: `py-8` (32px padding vertical)
+
+2. **Template Selector (Nueva sección):**
+   - Label: "**Visualización:**" (text-sm font-medium text-muted-foreground)
+   - Selector width: `w-[280px]` (amplio para mostrar descripción completa)
+   - Muestra: Icono + Nombre + Descripción
+   - **Ubicación:** Línea propia entre header y filtros
+   - **Justificación:** Evita saturar el header superior y da prominencia visual
+
+3. **Filters Bar:**
+   - Multi-select dropdowns (RFC-005)
+   - Chips de filtros activos
+   - Botón "Limpiar filtros"
+
+---
+
+## 4. Executive View Enhancements
+
+### 4.1 Layout de Contenido
 
 ```
 ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓

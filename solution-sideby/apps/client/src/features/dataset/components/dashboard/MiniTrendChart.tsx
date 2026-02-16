@@ -91,7 +91,7 @@ export function MiniTrendChart({
   groupBLabel,
   groupAColor,
   groupBColor,
-}: MiniTrendChartProps) {
+}: Readonly<MiniTrendChartProps>) {
   const isPositive = kpi.diffPercent > 0;
   const isNegative = kpi.diffPercent < 0;
 
