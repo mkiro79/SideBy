@@ -151,9 +151,9 @@ function processGranularData(
         groupBValue = groupData.groupB.length > 0 ? sumB / groupData.groupB.length : 0;
       }
 
-      // Calcular deltas
-      const deltaAbs = groupBValue - groupAValue;
-      const deltaPercent = groupAValue !== 0 ? (deltaAbs / groupAValue) * 100 : 0;
+      // Calcular deltas (A - B): Grupo A comparado CON Grupo B
+      const deltaAbs = groupAValue - groupBValue;
+      const deltaPercent = groupBValue !== 0 ? (deltaAbs / groupBValue) * 100 : 0;
 
       kpiValues[kpi.id] = {
         groupA: groupAValue,

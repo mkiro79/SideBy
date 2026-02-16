@@ -156,7 +156,7 @@ export const useDatasetDashboard = ({
       const valueA = calculateAggregate(dataA, columnName);
       const valueB = calculateAggregate(dataB, columnName);
 
-      // Diferencia
+      // Diferencia (A - B): Yo (A) comparado CON referencia (B)
       const diff = valueA - valueB;
       const diffPercent = valueB !== 0 ? (diff / valueB) * 100 : Infinity;
 
