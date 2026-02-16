@@ -5,8 +5,9 @@
  * Usa Date Umbrella System para alinear fechas de diferentes años.
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/shared/components/ui/card.js';
+import { Button } from '@/shared/components/ui/button.js';
 import {
   LineChart,
   Line,
@@ -16,7 +17,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-import { createDateUmbrella } from '../../utils/dateUmbrella.js';
+import { createDateUmbrella, type DateGranularity } from '../../utils/dateUmbrella.js';
 import type { DataRow } from '../../types/api.types.js';
 
 interface TrendChartProps {
@@ -42,6 +43,9 @@ export const TrendChart: React.FC<TrendChartProps> = ({
   groupBColor,
   format = 'number',
 }) => {
+  // Estado para granularidad seleccionada
+  const [granularity, setGranularity] = useState<DateGranularity>('months');
+
   /**
    * Usa Date Umbrella System para alinear fechas de diferentes años
    * y agregar datos por fecha con suma de valores
@@ -59,7 +63,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({
       groupBData,
       dateField,
       kpiField,
-      'days', // Usar granularidad diaria para máximo detalle
+      granularity, // Usar granularidad seleccionada
       false,  // No omitir gaps - mostrar todos los períodos
     );
 
@@ -69,7 +73,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({
       groupA: point.groupA?.value ?? 0,
       groupB: point.groupB?.value ?? 0,
     }));
-  }, [data, dateField, kpiField]);
+  }, [data, dateField, kpiField, granularity]);
 
   const formatValue = (value: number): string => {
     switch (format) {
@@ -110,21 +114,61 @@ export const TrendChart: React.FC<TrendChartProps> = ({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg">{kpiLabel}</CardTitle>
-        <div className="flex items-center gap-4 text-xs">
-          <div className="flex items-center gap-1.5">
-            <div
-              className="h-2 w-2 rounded-full"
-              style={{ backgroundColor: groupAColor }}
-            />
-            <span className="text-muted-foreground">{groupALabel}</span>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <CardTitle className="text-lg">{kpiLabel}</CardTitle>
+            <div className="flex items-center gap-4 text-xs mt-2">
+              <div className="flex items-center gap-1.5">
+                <div
+                  className="h-2 w-2 rounded-full"
+                  style={{ backgroundColor: groupAColor }}
+                />
+                <span className="text-muted-foreground">{groupALabel}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div
+                  className="h-2 w-2 rounded-full"
+                  style={{ backgroundColor: groupBColor }}
+                />
+                <span className="text-muted-foreground">{groupBLabel}</span>
+              </div>
+            </div>
           </div>
-          <div className="flex items-center gap-1.5">
-            <div
-              className="h-2 w-2 rounded-full"
-              style={{ backgroundColor: groupBColor }}
-            />
-            <span className="text-muted-foreground">{groupBLabel}</span>
+
+          {/* Selector de Granularidad */}
+          <div className="flex items-center gap-1">
+            <Button
+              variant={granularity === 'days' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setGranularity('days')}
+              className="h-8 text-xs"
+            >
+              Días
+            </Button>
+            <Button
+              variant={granularity === 'weeks' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setGranularity('weeks')}
+              className="h-8 text-xs"
+            >
+              Semanas
+            </Button>
+            <Button
+              variant={granularity === 'months' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setGranularity('months')}
+              className="h-8 text-xs"
+            >
+              Meses
+            </Button>
+            <Button
+              variant={granularity === 'quarters' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setGranularity('quarters')}
+              className="h-8 text-xs"
+            >
+              Trimestres
+            </Button>
           </div>
         </div>
       </CardHeader>
