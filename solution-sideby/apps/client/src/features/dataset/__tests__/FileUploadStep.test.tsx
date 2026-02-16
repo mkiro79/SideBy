@@ -61,6 +61,16 @@ describe('[TDD] FileUploadStep Component', () => {
         enabled: false,
         userContext: '',
       },
+      sourceConfig: {
+        groupA: {
+          label: 'Grupo A',
+          color: '#3b82f6',
+        },
+        groupB: {
+          label: 'Grupo B',
+          color: '#6366f1',
+        },
+      },
       isLoading: false,
       error: null,
       setFileA: mockSetFileA,
@@ -74,6 +84,7 @@ describe('[TDD] FileUploadStep Component', () => {
       removeKPIField: vi.fn(),
       setMetadata: vi.fn(),
       setAIConfig: vi.fn(),
+      setSourceConfig: vi.fn(),
       setLoading: vi.fn(),
       setError: vi.fn(),
       reset: vi.fn(),

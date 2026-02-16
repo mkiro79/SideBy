@@ -46,6 +46,16 @@ export interface UpdateMappingRequest {
     enabled: boolean;
     userContext?: string;
   };
+  sourceConfig?: {
+    groupA?: {
+      label?: string;
+      color?: string;
+    };
+    groupB?: {
+      label?: string;
+      color?: string;
+    };
+  };
 }
 
 // ============================================================================

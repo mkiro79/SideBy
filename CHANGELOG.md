@@ -7,6 +7,19 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### [RFC-009] Wizard Step 3 - SourceConfig (2026-02-16)
+
+**✨ Frontend:**
+- UI para editar labels y colores de Grupo A/B en Step 3
+- Payload del PATCH incluye `sourceConfig` desde el estado del wizard
+- Ajuste de orden: "Información del dataset" al final, antes de grupos
+
+**🛠️ Backend:**
+- Persistencia de `sourceConfig` (labels/colores) en MongoDB con dot-notation
+
+**🧪 Tests:**
+- E2E del wizard actualizado para validar `sourceConfig`
+
 ### [RFC-006] Dashboard Visualization Enhancements - Detailed View & Tests (2026-02-16)
 
 **✅ Fixes y mejoras:**

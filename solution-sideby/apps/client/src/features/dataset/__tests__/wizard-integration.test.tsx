@@ -6,20 +6,38 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor, cleanup } from '@testing-library/react';
+import { render, screen, waitFor, cleanup, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import DataUploadWizard from '../pages/DataUploadWizard';
 import { BrowserRouter } from 'react-router-dom';
+import { useWizardState } from '../hooks/useWizardState.js';
 
 // Mock de useFileUpload para simular procesamiento de archivos
 const mockProcessFile = vi.fn();
+const mockProcessFilePair = vi.fn();
+const mockUpload = vi.fn();
+const mockUpdate = vi.fn();
 
 vi.mock('../hooks/useFileUpload.js', () => ({
   useFileUpload: vi.fn(() => ({
     processFile: mockProcessFile,
-    processFilePair: vi.fn(),
+    processFilePair: mockProcessFilePair,
     quickValidate: vi.fn().mockReturnValue(null),
     isProcessing: false,
+  })),
+}));
+
+vi.mock('../hooks/useDatasetUpload.js', () => ({
+  useDatasetUpload: vi.fn(() => ({
+    upload: mockUpload,
+    isLoading: false,
+  })),
+}));
+
+vi.mock('../hooks/useDatasetMapping.js', () => ({
+  useDatasetMapping: vi.fn(() => ({
+    update: mockUpdate,
+    isLoading: false,
   })),
 }));
 
@@ -32,15 +50,6 @@ vi.mock('react-router-dom', async () => {
     useNavigate: () => mockNavigate,
   };
 });
-
-// Mock del servicio de upload
-vi.mock('../services/datasetUpload.mock.js', () => ({
-  uploadDataset: vi.fn().mockResolvedValue({
-    id: 'dataset-123',
-    name: 'Test Dataset',
-    status: 'active',
-  }),
-}));
 
 // Mock del toast service
 vi.mock('@/shared/services/toast.js', () => ({
@@ -61,25 +70,47 @@ const createMockCSVFile = (
   return new File([blob], name, { type: 'text/csv' });
 };
 
+const createMockFileGroup = (file: File) => ({
+  file,
+  parsedData: {
+    headers: ['fecha', 'region', 'ventas'],
+    rows: [
+      ['2024-01', 'Norte', '45000'],
+      ['2024-02', 'Sur', '38000'],
+    ],
+    rowCount: 2,
+  },
+  error: null,
+  isValid: true,
+});
+
 describe('[INTEGRATION] Dataset Creation Wizard', () => {
   beforeEach(() => {
     cleanup();
     vi.clearAllMocks();
+    localStorage.clear();
+    useWizardState.getState().reset();
+
+    mockUpload.mockResolvedValue({
+      datasetId: 'dataset-123',
+      rowCount: 2,
+    });
+
+    mockUpdate.mockResolvedValue({
+      datasetId: 'dataset-123',
+      status: 'ready',
+    });
     
     // Configurar mock de processFile para devolver archivos procesados
     mockProcessFile.mockImplementation((file: File) => {
+      return Promise.resolve(createMockFileGroup(file));
+    });
+
+    mockProcessFilePair.mockImplementation((fileA: File, fileB: File) => {
       return Promise.resolve({
-        file,
-        parsedData: {
-          headers: ['fecha', 'region', 'ventas'],
-          rows: [
-            ['2024-01', 'Norte', '45000'],
-            ['2024-02', 'Sur', '38000'],
-          ],
-          rowCount: 2,
-        },
-        error: null,
-        isValid: true,
+        hasError: false,
+        fileGroupA: createMockFileGroup(fileA),
+        fileGroupB: createMockFileGroup(fileB),
       });
     });
   });
@@ -146,48 +177,9 @@ describe('[INTEGRATION] Dataset Creation Wizard', () => {
         expect(screen.getAllByText(/mapeo de columnas/i)[0]).toBeInTheDocument();
       });
 
-      // Seleccionar campo de dimensión
-      const dimensionSelect = screen.getByRole('combobox', { name: /campo de dimensión/i });
-      await user.click(dimensionSelect);
-
-      // Buscar option específicamente (no el <th> de la tabla)
-      const options = screen.getAllByRole('option');
-      const regionOption = options.find(opt => opt.textContent?.includes('region'));
-      if (regionOption) {
-        await user.click(regionOption);
-      }
-
-      // Agregar KPI
-      const kpiColumnSelects = screen.getAllByRole('combobox', { name: /columna/i });
-      const kpiColumnSelect = kpiColumnSelects[0]; // El primer combobox de "Columna"
-      await user.click(kpiColumnSelect);
-
-      // Buscar option de "ventas" específicamente (no el <th> de tabla)
-      const kpiOptions = screen.getAllByRole('option');
-      const ventasOption = kpiOptions.find(opt => opt.textContent?.includes('ventas'));
-      if (ventasOption) {
-        await user.click(ventasOption);
-      }
-
-      // Ingresar label del KPI
-      const kpiLabelInput = screen.getByLabelText(/etiqueta para mostrar/i);
-      await user.type(kpiLabelInput, 'Ventas Totales');
-
-      // Seleccionar formato
-      const formatSelect = screen.getByRole('combobox', { name: /formato/i });
-      await user.click(formatSelect);
-
-      const currencyOption = screen.getAllByText(/moneda/i)[0];
-      await user.click(currencyOption);
-
-      // Agregar KPI
-      const addKPIButton = screen.getByRole('button', { name: /agregar kpi/i });
-      await user.click(addKPIButton);
-
-      // Verificar que el KPI se agregó
-      await waitFor(() => {
-        expect(screen.getAllByText('Ventas Totales')[0]).toBeInTheDocument();
-      });
+      // Seleccionar una métrica (checkbox) para habilitar el Step 3
+      const metricCheckbox = await screen.findByRole('checkbox', { name: 'ventas' });
+      await user.click(metricCheckbox);
 
       // El botón "Siguiente" debería estar habilitado
       await waitFor(() => {
@@ -213,6 +205,21 @@ describe('[INTEGRATION] Dataset Creation Wizard', () => {
       const nameInput = screen.getByLabelText(/nombre/i);
       await user.type(nameInput, 'Ventas Q1 2024 vs Q1 2023');
 
+      // Configurar labels y colores de grupos
+      const groupALabelInput = screen.getByLabelText(/etiqueta grupo a/i);
+      await user.clear(groupALabelInput);
+      await user.type(groupALabelInput, 'Actual');
+
+      const groupBLabelInput = screen.getByLabelText(/etiqueta grupo b/i);
+      await user.clear(groupBLabelInput);
+      await user.type(groupBLabelInput, 'Comparativo');
+
+      const groupAColorInput = screen.getByLabelText(/color grupo a/i);
+      fireEvent.change(groupAColorInput, { target: { value: '#123456' } });
+
+      const groupBColorInput = screen.getByLabelText(/color grupo b/i);
+      fireEvent.change(groupBColorInput, { target: { value: '#654321' } });
+
       // El botón "Crear dataset" debería estar habilitado
       const submitButton = screen.getByRole('button', { name: /crear dataset/i });
       await waitFor(() => {
@@ -222,9 +229,27 @@ describe('[INTEGRATION] Dataset Creation Wizard', () => {
       // Enviar el formulario
       await user.click(submitButton);
 
+      await waitFor(() => {
+        expect(mockUpdate).toHaveBeenCalledWith(
+          'dataset-123',
+          expect.objectContaining({
+            sourceConfig: {
+              groupA: {
+                label: 'Actual',
+                color: '#123456',
+              },
+              groupB: {
+                label: 'Comparativo',
+                color: '#654321',
+              },
+            },
+          }),
+        );
+      });
+
       // Verificar que se navega a la página de datasets
       await waitFor(() => {
-        expect(mockNavigate).toHaveBeenCalledWith('/datasets');
+        expect(mockNavigate).toHaveBeenCalledWith('/datasets/dataset-123/dashboard');
       }, { timeout: 5000 });
     });
 
@@ -241,34 +266,68 @@ describe('[INTEGRATION] Dataset Creation Wizard', () => {
     });
 
     it('[E2E] should not allow proceeding without mapping configuration', async () => {
+      const user = userEvent.setup();
+
       render(
         <BrowserRouter>
           <DataUploadWizard />
         </BrowserRouter>
       );
 
-      // Step 1: Cargar archivos (simulado con estado inicial)
-      // ... (código de carga de archivos omitido por brevedad)
+      // Step 1: Cargar archivos
+      const fileInputA = screen.getAllByLabelText(/seleccionar archivo a/i)[0] as HTMLInputElement;
+      const fileA = createMockCSVFile('ventas_2024.csv');
+      await user.upload(fileInputA, fileA);
 
-      // Step 2: Sin configurar mapping
-      // El botón "Siguiente" debería estar deshabilitado
+      const fileInputB = screen.getAllByLabelText(/seleccionar archivo b/i)[0] as HTMLInputElement;
+      const fileB = createMockCSVFile('ventas_2023.csv', 'fecha,region,ventas\n2023-01,Norte,38000\n2023-02,Sur,32000');
+      await user.upload(fileInputB, fileB);
+
+      const uploadButton = screen.getByRole('button', { name: /subir archivos/i });
+      await waitFor(() => {
+        expect(uploadButton).not.toBeDisabled();
+      });
+      await user.click(uploadButton);
+
+      // Step 2: Sin seleccionar métricas
+      const nextButton = await screen.findByRole('button', { name: /siguiente/i });
+      expect(nextButton).toBeDisabled();
     });
 
     it('[E2E] should not allow submission without dataset name', async () => {
+      const user = userEvent.setup();
+
       render(
         <BrowserRouter>
           <DataUploadWizard />
         </BrowserRouter>
       );
 
-      // Avanzar todos los pasos hasta Step 3 sin nombre
-      // ... (código omitido por brevedad)
+      // Step 1: Cargar archivos
+      const fileInputA = screen.getAllByLabelText(/seleccionar archivo a/i)[0] as HTMLInputElement;
+      const fileA = createMockCSVFile('ventas_2024.csv');
+      await user.upload(fileInputA, fileA);
 
-      // El botón "Crear dataset" debería estar deshabilitado
-      const submitButton = screen.queryByRole('button', { name: /crear dataset/i });
-      if (submitButton) {
-        expect(submitButton).toBeDisabled();
-      }
+      const fileInputB = screen.getAllByLabelText(/seleccionar archivo b/i)[0] as HTMLInputElement;
+      const fileB = createMockCSVFile('ventas_2023.csv', 'fecha,region,ventas\n2023-01,Norte,38000\n2023-02,Sur,32000');
+      await user.upload(fileInputB, fileB);
+
+      const uploadButton = screen.getByRole('button', { name: /subir archivos/i });
+      await waitFor(() => {
+        expect(uploadButton).not.toBeDisabled();
+      });
+      await user.click(uploadButton);
+
+      // Step 2: Seleccionar métrica mínima
+      const metricCheckbox = await screen.findByRole('checkbox', { name: 'ventas' });
+      await user.click(metricCheckbox);
+
+      const nextButton = await screen.findByRole('button', { name: /siguiente/i });
+      await user.click(nextButton);
+
+      // Step 3: Sin nombre
+      const submitButton = await screen.findByRole('button', { name: /crear dataset/i });
+      expect(submitButton).toBeDisabled();
     });
   });
 
