@@ -9,8 +9,7 @@
  * - Producto
  * - etc.
  * 
- * Muestra gráfico de barras agrupadas comparando Grupo A vs Grupo B
- * para cada valor de la dimensión seleccionada.
+ * Soporta visualización en Barras, Líneas o Área
  */
 
 import React, { useState, useMemo } from 'react';
@@ -22,9 +21,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/shared/components/ui/select.js';
+import { BarChart3, LineChart as LineChartIcon, AreaChart as AreaChartIcon } from 'lucide-react';
 import {
   BarChart,
   Bar,
+  LineChart,
+  Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -34,6 +38,7 @@ import {
 } from 'recharts';
 import type { KPIResult } from '../../types/dashboard.types.js';
 import type { DataRow } from '../../types/api.types.js';
+import type { ChartType } from './DimensionGrid.js';
 
 interface CategoryChartProps {
   /** Array de datos filtrados */
@@ -83,6 +88,9 @@ export const CategoryChart: React.FC<CategoryChartProps> = ({
   const [selectedKpiName, setSelectedKpiName] = useState<string>(
     kpis[0]?.name || ''
   );
+  
+  // Estado para tipo de gráfico
+  const [chartType, setChartType] = useState<ChartType>('bar');
   
   // KPI actualmente seleccionado
   const selectedKpi = kpis.find(k => k.name === selectedKpiName) || kpis[0];
@@ -221,6 +229,33 @@ export const CategoryChart: React.FC<CategoryChartProps> = ({
                 ))}
               </SelectContent>
             </Select>
+            
+            {/* Selector de tipo de gráfico */}
+            <Select value={chartType} onValueChange={(value: ChartType) => setChartType(value)}>
+              <SelectTrigger className="w-[150px] h-9">
+                <SelectValue placeholder="Tipo de gráfico" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="bar">
+                  <div className="flex items-center gap-2">
+                    <BarChart3 className="h-4 w-4" />
+                    <span>Barras</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="line">
+                  <div className="flex items-center gap-2">
+                    <LineChartIcon className="h-4 w-4" />
+                    <span>Líneas</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="area">
+                  <div className="flex items-center gap-2">
+                    <AreaChartIcon className="h-4 w-4" />
+                    <span>Área</span>
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </CardHeader>
@@ -228,54 +263,170 @@ export const CategoryChart: React.FC<CategoryChartProps> = ({
       <CardContent>
         <div className="h-[400px] w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={chartData}
-              margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis
-                dataKey="category"
-                stroke="hsl(var(--muted-foreground))"
-                fontSize={12}
-                tickLine={false}
-                axisLine={false}
-              />
-              <YAxis
-                stroke="hsl(var(--muted-foreground))"
-                fontSize={12}
-                tickLine={false}
-                axisLine={false}
-                tickFormatter={formatValue}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: 'hsl(var(--popover))',
-                  borderColor: 'hsl(var(--border))',
-                  borderRadius: '8px',
-                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-                }}
-                labelStyle={{ color: 'hsl(var(--foreground))' }}
-                formatter={(value: number, name: string) => [formatTooltipValue(value), name]}
-              />
-              <Legend
-                wrapperStyle={{
-                  paddingTop: '20px',
-                }}
-                iconType="circle"
-              />
-              <Bar
-                dataKey="groupA"
-                name={groupALabel}
-                fill={groupAColor}
-                radius={[4, 4, 0, 0]}
-              />
-              <Bar
-                dataKey="groupB"
-                name={groupBLabel}
-                fill={groupBColor}
-                radius={[4, 4, 0, 0]}
-              />
-            </BarChart>
+            {chartType === 'bar' && (
+              <BarChart
+                data={chartData}
+                margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis
+                  dataKey="category"
+                  stroke="hsl(var(--muted-foreground))"
+                  fontSize={12}
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <YAxis
+                  stroke="hsl(var(--muted-foreground))"
+                  fontSize={12}
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={formatValue}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'hsl(var(--popover))',
+                    borderColor: 'hsl(var(--border))',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                  }}
+                  labelStyle={{ color: 'hsl(var(--foreground))' }}
+                  formatter={(value: number, name: string) => [formatTooltipValue(value), name]}
+                />
+                <Legend
+                  wrapperStyle={{
+                    paddingTop: '20px',
+                  }}
+                  iconType="circle"
+                />
+                <Bar
+                  dataKey="groupA"
+                  name={groupALabel}
+                  fill={groupAColor}
+                  radius={[4, 4, 0, 0]}
+                />
+                <Bar
+                  dataKey="groupB"
+                  name={groupBLabel}
+                  fill={groupBColor}
+                  radius={[4, 4, 0, 0]}
+                />
+              </BarChart>
+            )}
+            
+            {chartType === 'line' && (
+              <LineChart
+                data={chartData}
+                margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis
+                  dataKey="category"
+                  stroke="hsl(var(--muted-foreground))"
+                  fontSize={12}
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <YAxis
+                  stroke="hsl(var(--muted-foreground))"
+                  fontSize={12}
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={formatValue}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'hsl(var(--popover))',
+                    borderColor: 'hsl(var(--border))',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                  }}
+                  labelStyle={{ color: 'hsl(var(--foreground))' }}
+                  formatter={(value: number, name: string) => [formatTooltipValue(value), name]}
+                />
+                <Legend
+                  wrapperStyle={{
+                    paddingTop: '20px',
+                  }}
+                  iconType="circle"
+                />
+                <Line
+                  type="monotone"
+                  dataKey="groupA"
+                  name={groupALabel}
+                  stroke={groupAColor}
+                  strokeWidth={2}
+                  dot={{ r: 4 }}
+                  activeDot={{ r: 6 }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="groupB"
+                  name={groupBLabel}
+                  stroke={groupBColor}
+                  strokeWidth={2}
+                  dot={{ r: 4 }}
+                  activeDot={{ r: 6 }}
+                />
+              </LineChart>
+            )}
+            
+            {chartType === 'area' && (
+              <AreaChart
+                data={chartData}
+                margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis
+                  dataKey="category"
+                  stroke="hsl(var(--muted-foreground))"
+                  fontSize={12}
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <YAxis
+                  stroke="hsl(var(--muted-foreground))"
+                  fontSize={12}
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={formatValue}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'hsl(var(--popover))',
+                    borderColor: 'hsl(var(--border))',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                  }}
+                  labelStyle={{ color: 'hsl(var(--foreground))' }}
+                  formatter={(value: number, name: string) => [formatTooltipValue(value), name]}
+                />
+                <Legend
+                  wrapperStyle={{
+                    paddingTop: '20px',
+                  }}
+                  iconType="circle"
+                />
+                <Area
+                  type="monotone"
+                  dataKey="groupA"
+                  name={groupALabel}
+                  stroke={groupAColor}
+                  fill={groupAColor}
+                  fillOpacity={0.3}
+                  strokeWidth={2}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="groupB"
+                  name={groupBLabel}
+                  stroke={groupBColor}
+                  fill={groupBColor}
+                  fillOpacity={0.3}
+                  strokeWidth={2}
+                />
+              </AreaChart>
+            )}
           </ResponsiveContainer>
         </div>
       </CardContent>

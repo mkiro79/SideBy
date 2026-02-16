@@ -91,9 +91,27 @@ describe('CategoryChart', () => {
         />
       );
 
-      // Debe haber selects (dimension + kpi)
+      // Debe haber 3 selects (dimension + kpi + tipo de gráfico)
       const selects = screen.getAllByRole('combobox');
-      expect(selects.length).toBeGreaterThanOrEqual(2);
+      expect(selects.length).toBe(3);
+    });
+    
+    it('debe mostrar selector de tipo de gráfico', () => {
+      render(
+        <CategoryChart
+          data={mockData}
+          kpis={mockKpis}
+          dimensions={mockDimensions}
+          groupALabel="2024"
+          groupBLabel="2023"
+          groupAColor="hsl(var(--primary))"
+          groupBColor="hsl(var(--secondary))"
+        />
+      );
+
+      // Debe haber 3 selects: dimensión, KPI y tipo de gráfico
+      const selects = screen.getAllByRole('combobox');
+      expect(selects).toHaveLength(3);
     });
   });
 
