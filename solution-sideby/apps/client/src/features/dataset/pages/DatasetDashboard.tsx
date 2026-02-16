@@ -30,6 +30,9 @@ import { ComparisonChart } from '../components/dashboard/ComparisonChart.js';
 import { ComparisonTable } from '../components/dashboard/ComparisonTable.js';
 import { TrendChart } from '../components/dashboard/TrendChart.js';
 import { AIInsights } from '../components/dashboard/AIInsights.js';
+import { TrendsGrid } from '../components/dashboard/TrendsGrid.js';
+import { SummaryTable } from '../components/dashboard/SummaryTable.js';
+import { GranularTable } from '../components/dashboard/GranularTable.js';
 import type { DashboardTemplateId, DashboardFilters } from '../types/dashboard.types.js';
 
 
@@ -67,6 +70,16 @@ export default function DatasetDashboard() {
   const handleClearFilters = () => {
     setFilters({ categorical: {} });
   };
+
+  // Helper: Mapea de API KPI fields a formato wizard KPIField
+  const mappedKpiFields = dataset?.schemaMapping?.kpiFields.map(kpi => ({
+    id: kpi.id,
+    sourceColumn: kpi.columnName,
+    label: kpi.label,
+    type: kpi.format as 'number' | 'currency' | 'percentage',
+    aggregation: 'sum' as const,
+    format: kpi.format as 'number' | 'currency' | 'percentage',
+  })) ?? [];
 
   // ============================================================================
   // LOADING STATE
@@ -203,8 +216,21 @@ export default function DatasetDashboard() {
               groupBLabel={groupBLabel}
             />
 
+            {/* RFC-006 Trends View: Grid 2×2 de mini-charts temporales */}
+            {selectedTemplate === 'sideby_trends' && dateField && filteredData.length > 0 && (
+              <TrendsGrid
+                kpis={kpis}
+                data={filteredData}
+                dateField={dateField}
+                groupALabel={groupALabel}
+                groupBLabel={groupBLabel}
+                groupAColor={groupAColor}
+                groupBColor={groupBColor}
+              />
+            )}
+
             {/* Trend Chart - Solo si hay dateField y datos*/}
-            {dateField && firstKpi && filteredData.length > 0 && selectedTemplate !== 'sideby_detailed' && (
+            {dateField && firstKpi && filteredData.length > 0 && selectedTemplate !== 'sideby_detailed' && selectedTemplate !== 'sideby_trends' && (
               <TrendChart
                 data={filteredData}
                 dateField={dateField}
@@ -229,12 +255,31 @@ export default function DatasetDashboard() {
               />
             )}
 
-            {/* Comparison Table - Ahora recibe kpis en vez de data raw */}
-            <ComparisonTable
-              kpis={kpis}
-              groupALabel={groupALabel}
-              groupBLabel={groupBLabel}
-            />
+            {/* RFC-006 Detailed View: SummaryTable + GranularTable */}
+            {selectedTemplate === 'sideby_detailed' ? (
+              <div className="space-y-6">
+                <SummaryTable
+                  kpis={kpis}
+                  groupALabel={groupALabel}
+                  groupBLabel={groupBLabel}
+                />
+                
+                <GranularTable
+                  data={filteredData}
+                  dimensions={categoricalFields}
+                  kpis={mappedKpiFields}
+                  groupALabel={groupALabel}
+                  groupBLabel={groupBLabel}
+                />
+              </div>
+            ) : (
+              /* Comparison Table - Solo en Executive y Trends */
+              <ComparisonTable
+                kpis={kpis}
+                groupALabel={groupALabel}
+                groupBLabel={groupBLabel}
+              />
+            )}
 
             {/* AI Insights - Solo si está habilitado */}
             {dataset.aiConfig?.enabled && (
