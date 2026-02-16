@@ -206,16 +206,7 @@ export default function DatasetDashboard() {
             )}
 
             {/* KPI Grid */}
-            <KPIGrid
-              kpis={kpis}
-              groupALabel={groupALabel}
-              groupBLabel={groupBLabel}
-              data={filteredData}
-              dateField={dateField || ''}
-              groupField="_source_group"
-              groupAValue="groupA"
-              groupBValue="groupB"
-            />
+            <KPIGrid kpis={kpis} />
 
             {/* RFC-006 Trends View: Grid 2×2 de mini-charts temporales */}
             {selectedTemplate === 'sideby_trends' && dateField && filteredData.length > 0 && (

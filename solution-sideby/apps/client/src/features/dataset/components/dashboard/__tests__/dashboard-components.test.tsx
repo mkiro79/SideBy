@@ -52,8 +52,6 @@ describe("Dashboard Components - PR Review Fixes", () => {
       render(
         <KPIGrid
           kpis={[largeKPI]}
-          groupALabel="2024"
-          groupBLabel="2023"
         />
       );
 
@@ -70,8 +68,6 @@ describe("Dashboard Components - PR Review Fixes", () => {
       render(
         <KPIGrid
           kpis={[smallKPI]}
-          groupALabel="2024"
-          groupBLabel="2023"
         />
       );
 
@@ -96,8 +92,6 @@ describe("Dashboard Components - PR Review Fixes", () => {
       render(
         <KPIGrid
           kpis={[infiniteKPI]}
-          groupALabel="2024"
-          groupBLabel="2023"
         />
       );
 
@@ -108,8 +102,6 @@ describe("Dashboard Components - PR Review Fixes", () => {
       render(
         <KPIGrid
           kpis={[mockKPIs[0]]}
-          groupALabel="2024"
-          groupBLabel="2023"
         />
       );
 
@@ -170,8 +162,6 @@ describe("Dashboard Components - PR Review Fixes", () => {
       render(
         <KPIGrid
           kpis={mockKPIs}
-          groupALabel="2024"
-          groupBLabel="2023"
         />
       );
 
@@ -196,8 +186,6 @@ describe("Dashboard Components - PR Review Fixes", () => {
       render(
         <KPIGrid
           kpis={[]}
-          groupALabel="2024"
-          groupBLabel="2023"
         />
       );
 

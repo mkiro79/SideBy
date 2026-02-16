@@ -125,40 +125,4 @@ describe('KPICard', () => {
       expect(sparklineContainer).not.toBeInTheDocument();
     });
   }); */
-
-  describe('labels de grupos', () => {
-    it('debe mostrar labels personalizados cuando se proporcionan', () => {
-      render(
-        <KPICard
-          title="Revenue"
-          currentValue="$50,000"
-          comparativeValue="$40,000"
-          percentageChange={25}
-          icon={DollarSign}
-          groupALabel="2024"
-          groupBLabel="2023"
-        />
-      );
-
-      expect(screen.getByText('2024')).toBeInTheDocument();
-      expect(screen.getByText('2023')).toBeInTheDocument();
-    });
-
-    it('NO debe mostrar labels cuando son los defaults', () => {
-      render(
-        <KPICard
-          title="Revenue"
-          currentValue="$50,000"
-          comparativeValue="$40,000"
-          percentageChange={25}
-          icon={DollarSign}
-          groupALabel="Actual"
-          groupBLabel="Comparativo"
-        />
-      );
-
-      // No debe renderizar el div de labels
-      expect(screen.queryByText('Actual')).not.toBeInTheDocument();
-    });
-  });
 });

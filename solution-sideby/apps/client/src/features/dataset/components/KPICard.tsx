@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck - Temporal workaround for Recharts 2.15.0 type compatibility issues with React 18
 /**
  * KPICard Component
  * 
@@ -7,18 +5,15 @@
  * - Valor actual vs valor comparativo
  * - Cambio porcentual (badge con trend icon)
  * - Ícono del KPI
- * - Sparkline opcional para mostrar tendencia histórica
  * 
- * Basado en el diseño de SideBy-Design con adaptaciones para datasets dinámicos.
+ * Basado en el diseño de SideBy-Design.
  * 
  * @see {@link docs/STYLE_GUIDE_SIDEBY.md} - Guía de estilos
- * @see {@link docs/design/RFC-006-DASHBOARD-VISUALIZATION-ENHANCEMENTS.md} - Sparklines
  */
 
 import { Card, CardContent } from '@/shared/components/ui/card.js';
 import { Badge } from '@/shared/components/ui/badge.js';
 import { TrendingUp, TrendingDown, Minus, type LucideIcon } from 'lucide-react';
-import { LineChart, Line, ResponsiveContainer } from 'recharts';
 import { cn } from '@/shared/utils/cn.js';
 
 // ============================================================================
@@ -43,15 +38,6 @@ export interface KPICardProps {
   
   /** Clases CSS adicionales */
   className?: string;
-  
-  /** Label del grupo A (default: "Actual") */
-  groupALabel?: string;
-  
-  /** Label del grupo B (default: "Comparativo") */
-  groupBLabel?: string;
-  
-  /** Datos históricos para sparkline (opcional) */
-  sparklineData?: number[];
 }
 
 // ============================================================================
@@ -65,9 +51,6 @@ export function KPICard({
   percentageChange,
   icon: Icon,
   className,
-  groupALabel = 'Actual',
-  groupBLabel = 'Comparativo',
-  sparklineData = [],
 }: KPICardProps) {
   const isPositive = percentageChange > 0;
   const isNegative = percentageChange < 0;
@@ -114,43 +97,17 @@ export function KPICard({
             </div>
             <Badge variant={getBadgeVariant()} className="gap-1">
               {getTrendIcon()}
-              {isPositive ? '+' : ''}
-              {percentageChange.toFixed(1)}%
+              {isFinite(percentageChange) ? (
+                <>
+                  {isPositive ? '+' : ''}
+                  {percentageChange.toFixed(1)}%
+                </>
+              ) : (
+                'N/A'
+              )}
             </Badge>
           </div>
         </div>
-
-        {/* Sparkline (si hay datos) */}
-        {sparklineData.length > 0 && (
-          <div className="mt-3 h-12 -mx-2">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={sparklineData.map((value, idx) => ({ idx, value }))}>
-                <Line
-                  type="monotone"
-                  dataKey="value"
-                  stroke={isPositive ? 'hsl(var(--success))' : 'hsl(var(--destructive))'}
-                  strokeWidth={2}
-                  dot={false}
-                  isAnimationActive={false}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        )}
-
-        {/* Labels de grupos (opcional) */}
-        {(groupALabel !== 'Actual' || groupBLabel !== 'Comparativo') && (
-          <div className="mt-3 flex gap-3 text-xs text-muted-foreground">
-            <div className="flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-data-primary" />
-              {groupALabel}
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-data-comparative" />
-              {groupBLabel}
-            </div>
-          </div>
-        )}
       </CardContent>
     </Card>
   );
