@@ -344,10 +344,10 @@ function generateKeysInRange(
   } else if (granularity === "days") {
     // Para días, generar TODOS los días del año (01/01 a 31/12)
     // Formato esperado: "MM/DD" o "DD/MM" (asumimos MM/DD basado en generateGranularityKey)
-    
+
     // Días por mes (año no bisiesto por defecto)
     const daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-    
+
     for (let month = 1; month <= 12; month++) {
       const maxDay = daysInMonth[month - 1];
       for (let day = 1; day <= maxDay; day++) {

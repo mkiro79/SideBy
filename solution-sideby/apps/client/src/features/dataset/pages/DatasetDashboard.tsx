@@ -33,6 +33,7 @@ import { AIInsights } from '../components/dashboard/AIInsights.js';
 import { TrendsGrid } from '../components/dashboard/TrendsGrid.js';
 import { SummaryTable } from '../components/dashboard/SummaryTable.js';
 import { GranularTable } from '../components/dashboard/GranularTable.js';
+import { CategoryChart } from '../components/dashboard/CategoryChart.js';
 import type { DashboardTemplateId, DashboardFilters } from '../types/dashboard.types.js';
 
 
@@ -243,6 +244,19 @@ export default function DatasetDashboard() {
             {selectedTemplate !== 'sideby_detailed' && (
               <ComparisonChart
                 kpis={kpis}
+                groupALabel={groupALabel}
+                groupBLabel={groupBLabel}
+                groupAColor={groupAColor}
+                groupBColor={groupBColor}
+              />
+            )}
+
+            {/* RFC-006 CategoryChart - Análisis por dimensión categórica (Solo Executive) */}
+            {selectedTemplate === 'sideby_executive' && categoricalFields.length > 0 && (
+              <CategoryChart
+                data={filteredData}
+                kpis={kpis}
+                dimensions={categoricalFields}
                 groupALabel={groupALabel}
                 groupBLabel={groupBLabel}
                 groupAColor={groupAColor}
