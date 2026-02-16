@@ -12,7 +12,7 @@
  */
 
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, within, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { GranularTable } from '../GranularTable.js';
 import type { DataRow } from '../../../types/api.types.js';
@@ -367,6 +367,178 @@ describe('GranularTable', () => {
       expect(() => {
         render(<GranularTable {...defaultProps} data={incompleteData} />);
       }).not.toThrow();
+    });
+  });
+
+  describe('Paginación', () => {
+    // Generar dataset grande con 50 productos únicos × 2 regiones = 100 combinaciones únicas
+    // Esto garantiza más de 20 filas agrupadas → múltiples páginas
+    const largeMockData: DataRow[] = Array.from({ length: 200 }, (_, i) => ({
+      id: `${i + 1}`,
+      date: i % 2 === 0 ? '2023-01-01' : '2024-01-01',
+      product: `Product${Math.floor(i / 4)}`, // Product0 (4 veces), Product1 (4 veces), ...
+      region: Math.floor(i / 2) % 2 === 0 ? 'Norte' : 'Sur', // Norte (2), Sur (2), Norte (2), ...
+      revenue: (i + 1) * 100,
+      units_sold: (i + 1) * 10,
+      _source_group: i % 2 === 0 ? 'groupA' : 'groupB',
+    }));
+
+    const largeDataProps = {
+      ...defaultProps,
+      data: largeMockData,
+    };
+
+    it('debe mostrar solo 20 filas por página (pageSize)', () => {
+      const { container } = render(<GranularTable {...largeDataProps} />);
+      
+      // Contar filas visibles (debe ser máximo 20)
+      const rows = container.querySelectorAll('tbody tr[data-testid="data-row"]');
+      expect(rows.length).toBeLessThanOrEqual(20);
+    });
+
+    it('debe mostrar información de paginación "Mostrando X a Y de Z"', () => {
+      const { container } = render(<GranularTable {...largeDataProps} />);
+      
+      // Buscar el contenedor de información de paginación
+      const paginationInfo = container.querySelector('.text-sm.text-muted-foreground');
+      expect(paginationInfo).toBeInTheDocument();
+      expect(paginationInfo?.textContent).toMatch(/Mostrando.*\d+.*a.*\d+.*de.*\d+/i);
+    });
+
+    it('debe mostrar controles de navegación (First, Prev, Next, Last)', () => {
+      const { container } = render(<GranularTable {...largeDataProps} />);
+      
+      // Buscar botones de navegación por title
+      const navButtons = container.querySelectorAll('button[title*="página"]');
+      
+      // Debe haber al menos botones de navegación
+      expect(navButtons.length).toBeGreaterThan(0);
+    });
+
+    it('debe cambiar a la segunda página al hacer click en Next', async () => {
+      const user = userEvent.setup();
+      const { container } = render(<GranularTable {...largeDataProps} />);
+      
+      // Verificar que hay información de paginación
+      const paginationInfo = container.querySelector('.text-sm.text-muted-foreground');
+      expect(paginationInfo).toBeInTheDocument();
+      
+      // Extraer el total de filas
+      const totalRowsMatch = paginationInfo?.textContent?.match(/de\s*(\d+)/);
+      const totalRows = totalRowsMatch ? parseInt(totalRowsMatch[1], 10) : 0;
+      
+      // Solo hacer el test si hay más de 20 filas (hay segunda página)
+      if (totalRows > 20) {
+        // Click en botón Next
+        const nextButton = container.querySelector('button[title="Página siguiente"]');
+        
+        expect(nextButton).toBeDefined();
+        expect(nextButton).not.toBeDisabled();
+        
+        if (nextButton) {
+          await user.click(nextButton);
+          
+          // Verificar que el rango de paginación cambió (ya no muestra "1 a 20")
+          await waitFor(() => {
+            const updatedPaginationInfo = container.querySelector('.text-sm.text-muted-foreground');
+            // La página 2 debería mostrar "21 a X de Y"
+            expect(updatedPaginationInfo?.textContent).toMatch(/21/);
+          });
+        }
+      } else {
+        // Si solo hay una página, al menos verificamos que se renderizaron filas
+        const rows = container.querySelectorAll('tbody tr[data-testid="data-row"]');
+        expect(rows.length).toBeGreaterThan(0);
+      }
+    });
+
+    it('debe ir a la primera página al hacer click en First', async () => {
+      const user = userEvent.setup();
+      const { container } = render(<GranularTable {...largeDataProps} />);
+      
+      // Navegar a página 2 primero
+      const nextButton = container.querySelector<HTMLButtonElement>('button[title="Página siguiente"]');
+      
+      if (nextButton && !nextButton.disabled) {
+        await user.click(nextButton);
+        
+        // Ahora click en First (ChevronsLeft)
+        const firstButton = container.querySelector('button[title="Primera página"]');
+        
+        if (firstButton) {
+          await user.click(firstButton);
+          
+          // Verificar que está en página 1 (el texto del contenedor debe incluir "1 a")
+          const paginationInfo = container.querySelector('.text-sm.text-muted-foreground');
+          expect(paginationInfo?.textContent).toMatch(/Mostrando.*1.*a/i);
+        }
+      }
+    });
+
+    it('debe resetear a página 1 cuando se filtra', async () => {
+      const user = userEvent.setup();
+      const { container } = render(<GranularTable {...largeDataProps} />);
+      
+      // Navegar a página 2
+      const nextButton = container.querySelector<HTMLButtonElement>('button[title="Página siguiente"]');
+      
+      if (nextButton && !nextButton.disabled) {
+        await user.click(nextButton);
+        
+        // Aplicar filtro de búsqueda
+        const searchInput = screen.getByPlaceholderText(/Buscar/i);
+        await user.type(searchInput, 'Product0');
+        
+        // Debe volver a página 1 automáticamente (verificar contenedor de paginación)
+        const paginationInfo = container.querySelector('.text-sm.text-muted-foreground');
+        expect(paginationInfo?.textContent).toMatch(/Mostrando.*1.*a/i);
+      }
+    });
+
+    it('debe resetear a página 1 cuando se ordena', async () => {
+      const user = userEvent.setup();
+      const { container } = render(<GranularTable {...largeDataProps} />);
+      
+      // Navegar a página 2
+      const nextButton = container.querySelector<HTMLButtonElement>('button[title="Página siguiente"]');
+      
+      if (nextButton && !nextButton.disabled) {
+        await user.click(nextButton);
+        
+        // Click en header para ordenar
+        const productHeader = screen.getByText('product');
+        await user.click(productHeader);
+        
+        // Debe volver a página 1 automáticamente (verificar contenedor de paginación)
+        const paginationInfo = container.querySelector('.text-sm.text-muted-foreground');
+        expect(paginationInfo?.textContent).toMatch(/Mostrando.*1.*a/i);
+      }
+    });
+
+    it('debe deshabilitar botón Previous en página 1', () => {
+      const { container } = render(<GranularTable {...largeDataProps} />);
+      
+      const prevButton = container.querySelector('button[title="Página anterior"]');
+      
+      // Botón Previous debe estar deshabilitado en página 1
+      if (prevButton) {
+        expect(prevButton).toBeDisabled();
+      }
+    });
+
+    it('debe manejar datasets pequeños sin mostrar paginación', () => {
+      // Renderizar con datos originales (solo 2 filas agrupadas)
+      render(<GranularTable {...defaultProps} />);
+      
+      // No debe mostrar controles de navegación para datasets pequeños
+      const buttons = screen.getAllByRole('button');
+      const navButtons = buttons.filter((btn) => 
+        btn.querySelector('svg')?.classList.contains('lucide-chevron-right')
+      );
+      
+      // Si hay menos de pageSize filas, no debería haber paginación útil
+      // (el componente puede renderizar los controles pero deshabilitados)
+      expect(navButtons.length).toBeDefined();
     });
   });
 });

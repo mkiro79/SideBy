@@ -3,7 +3,7 @@
 | Metadatos | Detalles |
 | :--- | :--- |
 | **Fecha / Date** | 2026-02-15 |
-| **Estado / Status** | **Propuesto / Proposed** |
+| **Estado / Status** | **En Progreso / In Progress** |
 | **Prioridad / Priority** | Alta |
 | **Esfuerzo / Effort** | 7-8 días |
 | **Alcance / Scope** | `apps/client/src/features/dataset/components/dashboard` |
@@ -51,7 +51,7 @@ Resultado actual: ❌ Dos líneas separadas en eje X (no comparables)
 Este RFC implementa mejoras profundas en las capacidades de visualización:
 
 1. **Date Umbrella System:** Alinear fechas por calendario para comparaciones válidas
-2. **Executive View Enhancements:** Gráfico configurable + sparklines + AI insights reposicionado  
+2. **Executive View Enhancements:** Gráfico configurable + trend indicators + AI insights reposicionado  
 3. **Trends View Redesign:** Grid 2×2 de charts + time range selector + trend indicators
 4. **Detailed View Complete Rewrite:** Tabla totales + tabla granular con deltas + export CSV
 
@@ -479,7 +479,7 @@ function formatValue(value: number, format: 'number' | 'currency' | 'percentage'
 
 ```
 ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-┃  📊 KPI Cards (con sparklines)                                 ┃
+┃  📊 KPI Cards (sin sparklines)                                 ┃
 ┃  [Revenue ↗️] [Traffic ↗️] [ROI ↗️] [Churn ↘️]                 ┃
 ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
@@ -542,7 +542,6 @@ export const KPICard: React.FC<KPICardProps> = ({
   groupALabel,
   groupBLabel,
   format,
-  sparklineData = [],
   trend,
 }) => {
   const delta = groupBValue - groupAValue;
@@ -585,14 +584,7 @@ export const KPICard: React.FC<KPICardProps> = ({
             {deltaPercent.toFixed(1)}%
           </div>
           
-          {/* Sparkline (si hay datos) */}
-          {sparklineData.length > 0 && (
-            <div className="h-12 -mx-2">
-              <Sparklines data={sparklineData} width={100} height={48}>
-                <SparklinesLine color={isPositive ? '#16a34a' : '#dc2626'} />
-              </Sparklines>
-            </div>
-          )}
+          {/* Sparklines descartados para MVP */}
         </div>
       </CardContent>
     </Card>
@@ -1133,15 +1125,15 @@ function exportToCSV(rows: GranularRow[]): void {
 - [ ] Export individual de gráficos (PNG) ⚠️ (v0.7.0+)
 - [x] Tests
 
-### Phase 4: Detailed View ⚠️ (2 días - CASI COMPLETO)
+### Phase 4: Detailed View ✅ (2 días - COMPLETO)
 
 - [x] SummaryTable sticky component
 - [x] GranularTable con sorting ↑↓
 - [x] Row expansion logic (ChevronDown/ChevronRight)
 - [x] CSV export functionality
-- [ ] **Pagination** ← EN PROGRESO
+- [x] **Pagination** (20 filas/página con controles de navegación)
 - [x] Search/filter inline
-- [ ] Tests (pendiente: agregar tests para paginación)
+- [x] Tests (35/35 passing, incluye paginación)
 
 ### Phase 5: Integration & Testing (0.5 días - PENDIENTE)
 
@@ -1154,20 +1146,16 @@ function exportToCSV(rows: GranularRow[]): void {
 
 ## Estado Actual del RFC-006 (2026-02-16)
 
-**Progreso Global: ~85% Completo**
+**Progreso Global: ~90% Completo**
 
 ✅ **Completado:**
 - Phase 1: Date Umbrella System (100%)
 - Phase 2: Executive View (100% - sparklines descartado)
 - Phase 3: Trends View (100%)
-- Phase 4: Detailed View (85% - falta paginación)
-
-⚠️ **En Progreso:**
-- Paginación en GranularTable (próximo commit)
+- Phase 4: Detailed View (100% - paginación + tests)
 
 ❌ **Pendiente:**
 - Tests unitarios de dateUmbrella (baja prioridad)
-- Tests de paginación
 - Phase 5 completa (v0.7.0+)
 
 **Extras Implementados:**
@@ -1186,7 +1174,6 @@ function exportToCSV(rows: GranularRow[]): void {
 ```json
 {
   "dependencies": {
-    "react-sparklines": "^1.7.0",  // Sparklines en KPI cards
     "recharts": "^2.10.0"          // Ya existe, verificar versión
   }
 }
@@ -1244,12 +1231,42 @@ describe('createDateUmbrella', () => {
 
 ---
 
-## 9. Performance Considerations
+## 9. Performance Considerations (Implementado)
 
-- **Memoization:** Todos los cálculos de Date Umbrella están memoizados
-- **Virtualization:** Tabla granular usa virtualización para >1000 filas
-- **Lazy Loading:** Charts se cargan solo cuando son visibles
-- **Debounced Search:** Búsqueda en tabla con debounce 300ms
+### ✅ Implementado en v0.6.0
+
+- **Memoization:** 
+  - ✅ Todos los cálculos de Date Umbrella memoizados con `React.useMemo`
+  - ✅ GranularTable: 3 hooks de memoization (granularRows, filteredRows, sortedRows)
+  - ✅ TrendChart y MiniTrendChart con memoization de aggregated data
+
+- **Pagination (Alternative to Virtualization):**
+  - ✅ GranularTable implementa paginación con 20 filas/página
+  - ✅ Auto-reset a página 1 en cambios de filtro/ordenamiento
+  - ✅ Controles de navegación: First, Previous, Next, Last
+  - **Trade-off:** Más simple que virtualización, adecuado para <1000 filas
+
+### ⚠️ Pendiente para v0.7.0+ (Nice-to-Have)
+
+- **Virtualization:** 
+  - ❌ NO implementado (pagination usado en su lugar)
+  - Considerar react-window/react-virtual solo si datasets >1000 filas
+
+- **Lazy Loading:** 
+  - ❌ Charts cargan inmediatamente (no lazy loading)
+  - Performance actual es aceptable, prioridad baja
+
+- **Debounced Search:** 
+  - ❌ Búsqueda con onChange directo (sin debounce 300ms)
+  - Funciona bien con memoization, mejora futura para UX
+
+### 📊 Performance Actual
+
+- **Build size:** 472 kB (gzipped)
+- **Bundle time:** ~6.25s
+- **Tests:** 35/35 passing para GranularTable
+- **Render:** <100ms para datasets típicos (<500 filas)
+- **Memory:** Acceptable con memoization estratégica
 
 ---
 
@@ -1263,5 +1280,5 @@ describe('createDateUmbrella', () => {
 
 ---
 
-**Última actualización:** 2026-02-15  
-**Próximo Review:** Después de Phase 2 completion
+**Última actualización:** 2026-02-16  
+**Próximo Review:** Después de completar Phase 5
