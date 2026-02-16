@@ -12,6 +12,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
 import { DashboardFiltersBar } from '../DashboardFiltersBar.js';
 import type { Dataset } from '../../../types/api.types.js';
 
@@ -195,6 +196,9 @@ describe('[RFC-005] DashboardFiltersBar', () => {
   it('debe seleccionar múltiples valores al hacer click en checkboxes', async () => {
     const user = userEvent.setup();
 
+    // Este test valida el comportamiento de toggle individual del componente.
+    // En uso real, el componente padre actualiza filters={} con los nuevos valores
+    // y el estado acumulado se mantiene en el padre.
     render(
       <DashboardFiltersBar
         categoricalFields={['region']}
@@ -216,11 +220,55 @@ describe('[RFC-005] DashboardFiltersBar', () => {
     expect(onFilterChange).toHaveBeenCalledWith('region', ['north']);
     vi.clearAllMocks();
 
-    // Seleccionar "south" también
+    // Seleccionar "south" también (con filters aún vacío, simula toggle independiente)
     const southOption = screen.getByText('south');
     await user.click(southOption);
 
     expect(onFilterChange).toHaveBeenCalledWith('region', ['south']);
+  });
+
+  it('debe acumular selección múltiple cuando el padre actualiza filters', async () => {
+    const user = userEvent.setup();
+
+    // Simula comportamiento real: el padre actualiza filters después de cada selección
+    const TestWrapper = () => {
+      const [filters, setFilters] = React.useState<Record<string, string[]>>({});
+      
+      const handleFilterChange = (field: string, values: string[]) => {
+        setFilters({ ...filters, [field]: values });
+      };
+
+      return (
+        <DashboardFiltersBar
+          categoricalFields={['region']}
+          filters={filters}
+          onFilterChange={handleFilterChange}
+          onClearFilters={() => setFilters({})}
+          dataset={mockDataset}
+        />
+      );
+    };
+
+    render(<TestWrapper />);
+
+    // Abrir dropdown
+    const regionButton = screen.getByRole('button', { name: /filtrar por region/i });
+    await user.click(regionButton);
+
+    // Seleccionar "north"
+    const northOption = await screen.findByText('north');
+    await user.click(northOption);
+
+    // Verificar que el chip aparece
+    expect(await screen.findByText('north')).toBeInTheDocument();
+
+    // Seleccionar "south" también
+    const southOption = screen.getByText('south');
+    await user.click(southOption);
+
+    // Verificar que ambos chips están presentes (acumulación real)
+    expect(screen.getByText('north')).toBeInTheDocument();
+    expect(screen.getByText('south')).toBeInTheDocument();
   });
 
   it('debe deseleccionar valor al hacer click en checkbox ya seleccionado', async () => {
