@@ -321,7 +321,7 @@ function generateKeysInRange(minKey: string, maxKey: string, granularity: DateGr
  * @param value - Valor de fecha (string, number, Date)
  * @returns Objeto Date o null si no se puede parsear
  */
-function parseFlexibleDate(value: string | number | boolean): Date | null {
+function parseFlexibleDate(value: string | number | boolean | Date): Date | null {
   if (!value) return null;
   
   // Si ya es un objeto Date válido

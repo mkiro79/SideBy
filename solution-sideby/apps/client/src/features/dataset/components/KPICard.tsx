@@ -5,15 +5,19 @@
  * - Valor actual vs valor comparativo
  * - Cambio porcentual (badge con trend icon)
  * - Ícono del KPI
+ * - Sparkline opcional para mostrar tendencia histórica
  * 
  * Basado en el diseño de SideBy-Design con adaptaciones para datasets dinámicos.
  * 
  * @see {@link docs/STYLE_GUIDE_SIDEBY.md} - Guía de estilos
+ * @see {@link docs/design/RFC-006-DASHBOARD-VISUALIZATION-ENHANCEMENTS.md} - Sparklines
  */
 
 import { Card, CardContent } from '@/shared/components/ui/card.js';
 import { Badge } from '@/shared/components/ui/badge.js';
 import { TrendingUp, TrendingDown, Minus, type LucideIcon } from 'lucide-react';
+// TEMPORALMENTE DESHABILITADO - RFC-006 Phase 2 (Recharts type issue)
+// import { LineChart, Line, ResponsiveContainer } from 'recharts';
 import { cn } from '@/shared/utils/cn.js';
 
 // ============================================================================
@@ -44,6 +48,9 @@ export interface KPICardProps {
   
   /** Label del grupo B (default: "Comparativo") */
   groupBLabel?: string;
+  
+  /** Datos históricos para sparkline (opcional) - TEMPORALMENTE DESHABILITADO (Recharts type issue) */
+  sparklineData?: number[];
 }
 
 // ============================================================================
@@ -59,6 +66,7 @@ export function KPICard({
   className,
   groupALabel = 'Actual',
   groupBLabel = 'Comparativo',
+  // sparklineData = [], // TEMPORALMENTE DESHABILITADO
 }: KPICardProps) {
   const isPositive = percentageChange > 0;
   const isNegative = percentageChange < 0;
@@ -110,6 +118,25 @@ export function KPICard({
             </Badge>
           </div>
         </div>
+
+        {/* Sparkline (si hay datos) - TEMPORALMENTE DESHABILITADO (Recharts type issue) */}
+        {/* TODO: RFC-006 Phase 2 - Re-habilitar cuando se resuelva el problema de tipos con Recharts */}
+        {/* {sparklineData.length > 0 && (
+          <div className="mt-3 h-12 -mx-2">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={sparklineData.map((value, idx) => ({ idx, value }))}>
+                <Line
+                  type="monotone"
+                  dataKey="value"
+                  stroke={isPositive ? 'hsl(var(--success))' : 'hsl(var(--destructive))'}
+                  strokeWidth={2}
+                  dot={false}
+                  isAnimationActive={false}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )} */}
 
         {/* Labels de grupos (opcional) */}
         {(groupALabel !== 'Actual' || groupBLabel !== 'Comparativo') && (

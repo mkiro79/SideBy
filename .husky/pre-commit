@@ -1,4 +1,13 @@
 #!/usr/bin/env sh
+echo "🚀 [HUSKY] Running pre-commit hook..."
+echo "[HUSKY] Detecting secrets in your code.."
 node .husky/detect-secrets.js || exit 1
+echo "[HUSKY] Building client..."
+npm run build --prefix solution-sideby/apps/client
+echo "[HUSKY] Building app..."
+npm run build --prefix solution-sideby/apps/app
+echo "[HUSKY] Linting client..."
 npm run lint --prefix solution-sideby/apps/client
+echo "[HUSKY] Linting app..."
+npm run lint --prefix solution-sideby/apps/app
 # npx lint-staged
