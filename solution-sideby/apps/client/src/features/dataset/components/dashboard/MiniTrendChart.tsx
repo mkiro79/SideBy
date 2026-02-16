@@ -7,6 +7,8 @@
  * - Título y valor principal
  * - Badge con delta porcentual y dirección
  * - Mini gráfico de líneas temporal (2 grupos)
+ * 
+ * Usa Date Umbrella System para alinear fechas de diferentes años.
  */
 
 import React from 'react';
@@ -25,6 +27,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
+import { createDateUmbrella } from '../../utils/dateUmbrella.js';
 import type { DataRow } from '../../types/api.types.js';
 import type { KPIResult } from '../../types/dashboard.types.js';
 
@@ -75,65 +78,6 @@ function formatValue(value: number, format: 'currency' | 'percentage' | 'number'
   }
 }
 
-/**
- * Prepara datos para el gráfico temporal
- * Agrupa por fecha y calcula valores para cada grupo
- */
-function prepareChartData(
-  data: DataRow[],
-  dateField: string,
-  kpiField: string,
-  groupALabel: string,
-  groupBLabel: string
-): Array<{ date: string; [key: string]: string | number }> {
-  if (!data || data.length === 0) {
-    return [];
-  }
-
-  // Agrupar por fecha
-  const dateMap = new Map<string, { groupA: number[], groupB: number[] }>();
-
-  data.forEach((row) => {
-    const dateValue = row[dateField];
-    if (!dateValue) return;
-
-    const dateStr = String(dateValue);
-    
-    if (!dateMap.has(dateStr)) {
-      dateMap.set(dateStr, { groupA: [], groupB: [] });
-    }
-
-    const group = dateMap.get(dateStr)!;
-    const value = Number(row[kpiField]) || 0;
-
-    if (row._source_group === 'groupA') {
-      group.groupA.push(value);
-    } else if (row._source_group === 'groupB') {
-      group.groupB.push(value);
-    }
-  });
-
-  // Calcular promedios y construir array final
-  const chartData = Array.from(dateMap.entries()).map(([date, groups]) => {
-    const avgA = groups.groupA.length > 0
-      ? groups.groupA.reduce((sum, val) => sum + val, 0) / groups.groupA.length
-      : 0;
-    
-    const avgB = groups.groupB.length > 0
-      ? groups.groupB.reduce((sum, val) => sum + val, 0) / groups.groupB.length
-      : 0;
-
-    return {
-      date,
-      [groupALabel]: avgA,
-      [groupBLabel]: avgB,
-    };
-  });
-
-  // Ordenar por fecha
-  return chartData.sort((a, b) => a.date.localeCompare(b.date));
-}
-
 export function MiniTrendChart({
   kpi,
   data,
@@ -146,9 +90,33 @@ export function MiniTrendChart({
   const isPositive = kpi.diffPercent > 0;
   const isNegative = kpi.diffPercent < 0;
 
-  // Preparar datos para el gráfico
+  /**
+   * Usa Date Umbrella System para alinear fechas de diferentes años
+   * y agregar datos por fecha con suma de valores
+   */
   const chartData = React.useMemo(() => {
-    return prepareChartData(data, dateField, kpi.name, groupALabel, groupBLabel);
+    if (data.length === 0) return [];
+
+    // Separar datos por grupo
+    const groupAData = data.filter(row => row._source_group === 'groupA');
+    const groupBData = data.filter(row => row._source_group === 'groupB');
+
+    // Aplicar Date Umbrella para alinear fechas
+    const umbrellaPoints = createDateUmbrella(
+      groupAData,
+      groupBData,
+      dateField,
+      kpi.name, // KPI de este mini-chart
+      'days', // Usar granularidad de días para máximo detalle
+      false,  // No omitir gaps - mostrar TODOS los períodos
+    );
+
+    // Transformar UmbrellaDatePoint[] a formato compatible con Recharts
+    return umbrellaPoints.map(point => ({
+      date: point.label, // Usar label (ej: "15/01") para eje X
+      [groupALabel]: point.groupA?.value || 0,
+      [groupBLabel]: point.groupB?.value || 0,
+    }));
   }, [data, dateField, kpi.name, groupALabel, groupBLabel]);
 
   return (
