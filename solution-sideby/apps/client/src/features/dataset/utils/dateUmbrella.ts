@@ -342,9 +342,20 @@ function generateKeysInRange(
       keys.push(`Week ${w.toString().padStart(2, "0")}`);
     }
   } else if (granularity === "days") {
-    // Para días, generar secuencia es más complejo (requiere parsear MM/DD)
-    // Por simplicidad, devolvemos solo las keys existentes
-    keys.push(minKey, maxKey);
+    // Para días, generar TODOS los días del año (01/01 a 31/12)
+    // Formato esperado: "MM/DD" o "DD/MM" (asumimos MM/DD basado en generateGranularityKey)
+    
+    // Días por mes (año no bisiesto por defecto)
+    const daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    
+    for (let month = 1; month <= 12; month++) {
+      const maxDay = daysInMonth[month - 1];
+      for (let day = 1; day <= maxDay; day++) {
+        const monthStr = month.toString().padStart(2, "0");
+        const dayStr = day.toString().padStart(2, "0");
+        keys.push(`${monthStr}/${dayStr}`);
+      }
+    }
   }
 
   return keys;

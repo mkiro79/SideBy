@@ -9,6 +9,13 @@ import React, { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/shared/components/ui/card.js';
 import { Button } from '@/shared/components/ui/button.js';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/shared/components/ui/select.js';
+import {
   LineChart,
   Line,
   XAxis,
@@ -19,32 +26,36 @@ import {
 } from 'recharts';
 import { createDateUmbrella, type DateGranularity } from '../../utils/dateUmbrella.js';
 import type { DataRow } from '../../types/api.types.js';
+import type { KPIResult } from '../../types/dashboard.types.js';
 
 interface TrendChartProps {
   data: DataRow[];
   dateField: string;
-  kpiField: string;
-  kpiLabel: string;
+  kpis: KPIResult[]; // Todos los KPIs disponibles
   groupALabel: string;
   groupBLabel: string;
   groupAColor: string;
   groupBColor: string;
-  format?: 'number' | 'currency' | 'percentage';
 }
 
 export const TrendChart: React.FC<TrendChartProps> = ({
   data,
   dateField,
-  kpiField,
-  kpiLabel,
+  kpis,
   groupALabel,
   groupBLabel,
   groupAColor,
   groupBColor,
-  format = 'number',
 }) => {
   // Estado para granularidad seleccionada
   const [granularity, setGranularity] = useState<DateGranularity>('months');
+  
+  // Estado para KPI seleccionado
+  const [selectedKpiName, setSelectedKpiName] = useState<string>(kpis[0]?.name || '');
+  
+  // KPI actualmente seleccionado
+  const selectedKpi = kpis.find(k => k.name === selectedKpiName) || kpis[0];
+  const format = selectedKpi?.format || 'number';
 
   /**
    * Usa Date Umbrella System para alinear fechas de diferentes años
@@ -62,9 +73,9 @@ export const TrendChart: React.FC<TrendChartProps> = ({
       groupAData,
       groupBData,
       dateField,
-      kpiField,
+      selectedKpi.name, // KPI seleccionado
       granularity, // Usar granularidad seleccionada
-      false,  // No omitir gaps - mostrar todos los períodos
+      false,  // No omitir gaps - mostrar TODOS los períodos (ej: todos los días del año)
     );
 
     // Transformar UmbrellaDatePoint[] a formato compatible con Recharts
@@ -73,7 +84,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({
       groupA: point.groupA?.value ?? 0,
       groupB: point.groupB?.value ?? 0,
     }));
-  }, [data, dateField, kpiField, granularity]);
+  }, [data, dateField, selectedKpi.name, granularity]);
 
   const formatValue = (value: number): string => {
     switch (format) {
@@ -115,9 +126,23 @@ export const TrendChart: React.FC<TrendChartProps> = ({
     <Card>
       <CardHeader>
         <div className="flex items-start justify-between gap-4">
-          <div>
-            <CardTitle className="text-lg">{kpiLabel}</CardTitle>
-            <div className="flex items-center gap-4 text-xs mt-2">
+          <div className="flex-1">
+            <div className="flex items-center gap-3 mb-2">
+              <CardTitle className="text-lg">Tendencia de</CardTitle>
+              <Select value={selectedKpiName} onValueChange={setSelectedKpiName}>
+                <SelectTrigger className="w-[200px] h-9">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {kpis.map((kpi) => (
+                    <SelectItem key={kpi.name} value={kpi.name}>
+                      {kpi.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center gap-4 text-xs">
               <div className="flex items-center gap-1.5">
                 <div
                   className="h-2 w-2 rounded-full"

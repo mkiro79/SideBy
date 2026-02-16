@@ -153,9 +153,6 @@ export default function DatasetDashboard() {
   
   // Date field para gráficos temporales
   const dateField = schemaMapping?.dateField;
-  
-  // Tomar primer KPI para el gráfico de tendencias
-  const firstKpi = kpis[0];
 
   return (
     <SidebarProvider defaultOpen={true}>
@@ -230,17 +227,15 @@ export default function DatasetDashboard() {
             )}
 
             {/* Trend Chart - Solo si hay dateField y datos*/}
-            {dateField && firstKpi && filteredData.length > 0 && selectedTemplate !== 'sideby_detailed' && selectedTemplate !== 'sideby_trends' && (
+            {dateField && kpis.length > 0 && filteredData.length > 0 && selectedTemplate !== 'sideby_detailed' && selectedTemplate !== 'sideby_trends' && (
               <TrendChart
                 data={filteredData}
                 dateField={dateField}
-                kpiField={firstKpi.name}
-                kpiLabel={`Tendencia de ${firstKpi.label}`}
+                kpis={kpis}
                 groupALabel={groupALabel}
                 groupBLabel={groupBLabel}
                 groupAColor={groupAColor}
                 groupBColor={groupBColor}
-                format={firstKpi.format as 'number' | 'currency' | 'percentage'}
               />
             )}
 
