@@ -59,18 +59,28 @@ export const useDatasetDashboard = ({
   const { dataset, isLoading, error } = useDataset(datasetId);
 
   /**
-   * Datos filtrados según filtros categóricos
+   * Datos filtrados según filtros categóricos multi-select
+   *
+   * Lógica:
+   * - OR dentro de la misma dimensión (ej: region IN ["north", "south"])
+   * - AND entre diferentes dimensiones (ej: region IN [...] AND channel IN [...])
+   * - Array vacío = no filtrar
    */
   const filteredData = useMemo(() => {
     if (!dataset || !dataset.data) return [];
 
     let data = [...dataset.data];
 
-    // Aplicar filtros categóricos
-    Object.entries(filters.categorical).forEach(([field, value]) => {
-      if (value && value !== "all") {
-        data = data.filter((row) => row[field] === value);
-      }
+    // Aplicar filtros categóricos (multi-select con arrays)
+    Object.entries(filters.categorical).forEach(([field, selectedValues]) => {
+      // Si no hay valores seleccionados (array vacío), no filtrar
+      if (!selectedValues || selectedValues.length === 0) return;
+
+      // Filtrar filas que coincidan con cualquiera de los valores seleccionados (OR logic)
+      data = data.filter((row) => {
+        const rowValue = String(row[field] ?? "");
+        return selectedValues.includes(rowValue);
+      });
     });
 
     return data;
@@ -152,7 +162,11 @@ export const useDatasetDashboard = ({
 
       // Tendencia (asumiendo que positivo es mejor por defecto)
       const trend: "up" | "down" | "neutral" =
-        !isFinite(diffPercent) || Math.abs(diffPercent) < 1 ? "neutral" : diffPercent > 0 ? "up" : "down";
+        !isFinite(diffPercent) || Math.abs(diffPercent) < 1
+          ? "neutral"
+          : diffPercent > 0
+            ? "up"
+            : "down";
 
       return {
         name: columnName,

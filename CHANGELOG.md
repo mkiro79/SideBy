@@ -7,6 +7,65 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### [RFC-005] Dashboard UX Improvements - Multi-Select Filters (2026-02-15)
+
+**🎯 Objetivo:** Mejorar la UX del dashboard permitiendo filtros multi-select y visualización de filtros activos.
+
+**✨ Nuevas Funcionalidades:**
+- **Multi-Select Filters:** Los usuarios pueden seleccionar múltiples valores dentro de una misma dimensión
+  - Lógica OR dentro de la misma dimensión: `region IN ["north", "south"]`
+  - Lógica AND entre dimensiones: `region IN [...] AND channel IN [...]`
+  - Array vacío = sin filtro (mostrar todo)
+- **Active Filter Chips:** Visualización de filtros activos como chips con botón X para removerlos individualmente
+- **Clear All Filters:** Botón "Limpiar filtros" para resetear todos los filtros de una vez
+- **Filter Counter:** Indicador visual del número total de filtros activos
+- **Multi-Select Dropdowns:** Dropdowns con checkboxes y funcionalidad "Seleccionar todo" / "Limpiar"
+
+**🏗️ Cambios en Arquitectura:**
+- **Breaking Change:** `DashboardFilters.categorical` cambió de `Record<string, string>` a `Record<string, string[]>`
+  - Todos los componentes consumidores actualizados
+  - Handlers adaptados para manejar arrays
+- **Componentes Nuevos:**
+  - `Popover.tsx` (Radix UI wrapper)
+  - `Command.tsx` (cmdk wrapper, CommandDialog comentado por no ser necesario)
+- **Componentes Modificados:**
+  - `DashboardFiltersBar.tsx` (reescritura completa ~260 líneas)
+  - `useDatasetDashboard.ts` (lógica de filtrado multi-select)
+  - `DatasetDashboard.tsx` (handlers actualizados)
+
+**🎨 UI/UX:**
+- Dropdowns con búsqueda y selección múltiple
+- Chips de filtros activos con X individual
+- Botón "Limpiar filtros" visible solo cuando hay filtros activos
+- Contador "X activos" en cada dropdown
+- Accesibilidad: aria-labels, role regions, navegación por teclado
+
+**✅ Cobertura de Tests:**
+- **Unit Tests:** 9/9 pasando (`useDatasetDashboard.test.ts`)
+  - 5 nuevos tests para multi-select (OR logic, AND logic, empty arrays, KPI calculation)
+- **Integration Tests:** 12/12 pasando (`DashboardFiltersBar.test.tsx`)
+  - Renderizado de dropdowns
+  - Selección/deselección múltiple
+  - Chips con botón X
+  - Clear all filters
+  - Seleccionar todo / Limpiar dropdown
+  - Edge cases (sin campos categóricos, sin filtros activos)
+
+**📦 Dependencies:**
+- `@radix-ui/react-popover` v1.1.15
+- `cmdk` (command palette library)
+- `lucide-react` (Search icon)
+
+**📋 Pendiente (Movido a ROADMAP):**
+- Auto-save de preferencia de template (requiere endpoint backend)
+- Screen reader live announcements complejos
+
+**🔗 Referencias:**
+- RFC-005: `docs/design/RFC-005-DASHBOARD-UX-IMPROVEMENTS.md`
+- Branch: `feature/rfc-005-dashboard-ux-improvements`
+
+---
+
 ### CRITICAL FIX: Backend Schema & Validator Not Accepting highlighted Field (2026-02-15)
 
 - **Root Cause Identified:**
