@@ -61,7 +61,7 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - Screen reader live announcements complejos
 
 **🔗 Referencias:**
-- RFC-005: `docs/design/RFC-005-DASHBOARD-TEMPLATE.md`
+- RFC-005: `docs/design/RFC-005-DASHBOARD-UX-IMPROVEMENTS.md`
 - Branch: `feature/rfc-005-dashboard-ux-improvements`
 
 ---

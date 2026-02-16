@@ -121,7 +121,7 @@ export const DashboardFiltersBar: React.FC<DashboardFiltersBarProps> = ({
           {activeFiltersCount > 0 && (
             <div 
               className="flex flex-wrap gap-2 pt-2 border-t"
-              arial-label="Filtros activos"
+              aria-label="Filtros activos"
               role="region"
             >
               {Object.entries(filters).map(([field, values]) =>
@@ -220,24 +220,27 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
               <span className="font-medium">Limpiar</span>
             </CommandItem>
             <CommandSeparator />
-            {availableValues.map((value) => {
-              const isSelected = selectedValues.includes(value);
-              return (
-                <CommandItem
-                  key={value}
-                  onSelect={() => toggleValue(value)}
-                  className="cursor-pointer"
-                >
-                  <Checkbox
-                    checked={isSelected}
-                    className="mr-2"
-                    aria-label={`${isSelected ? 'Deseleccionar' : 'Seleccionar'} ${value}`}
-                    onClick={(e: React.MouseEvent) => e.stopPropagation()}
-                  />
-                  <span>{value}</span>
-                </CommandItem>
-              );
-            })}
+            {(() => {
+              const selectedValuesSet = new Set(selectedValues);
+              return availableValues.map((value) => {
+                const isSelected = selectedValuesSet.has(value);
+                return (
+                  <CommandItem
+                    key={value}
+                    onSelect={() => toggleValue(value)}
+                    className="cursor-pointer"
+                  >
+                    <Checkbox
+                      checked={isSelected}
+                      className="mr-2"
+                      aria-label={`${isSelected ? 'Deseleccionar' : 'Seleccionar'} ${value}`}
+                      onClick={(e: React.MouseEvent) => e.stopPropagation()}
+                    />
+                    <span>{value}</span>
+                  </CommandItem>
+                );
+              });
+            })()}
           </CommandGroup>
         </Command>
       </PopoverContent>
