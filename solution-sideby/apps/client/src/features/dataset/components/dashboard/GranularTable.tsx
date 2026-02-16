@@ -25,7 +25,7 @@ import {
 } from '@/shared/components/ui/table.js';
 import { Input } from '@/shared/components/ui/Input.js';
 import { Button } from '@/shared/components/ui/button.js';
-import { ChevronRight, ChevronDown, Download } from 'lucide-react';
+import { ChevronRight, ChevronDown, Download, ChevronLeft, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import type { DataRow } from '../../types/api.types.js';
 import type { KPIField, KPIFormat } from '../../types/wizard.types.js';
 
@@ -63,7 +63,7 @@ interface GranularRow {
  * Formatea un valor según su tipo
  */
 function formatValue(value: number, format?: KPIFormat): string {
-  if (isNaN(value) || !isFinite(value)) {
+  if (Number.isNaN(value) || !Number.isFinite(value)) {
     return '—';
   }
 
@@ -153,13 +153,13 @@ function processGranularData(
 
       // Calcular deltas (A - B): Grupo A comparado CON Grupo B
       const deltaAbs = groupAValue - groupBValue;
-      const deltaPercent = groupBValue !== 0 ? (deltaAbs / groupBValue) * 100 : 0;
+      const deltaPercent = groupBValue === 0 ? 0 : (deltaAbs / groupBValue) * 100;
 
       kpiValues[kpi.id] = {
         groupA: groupAValue,
         groupB: groupBValue,
         deltaAbs,
-        deltaPercent: isFinite(deltaPercent) ? deltaPercent : 0,
+        deltaPercent: Number.isFinite(deltaPercent) ? deltaPercent : 0,
       };
     });
 
@@ -236,11 +236,15 @@ export function GranularTable({
   kpis,
   groupALabel,
   groupBLabel,
-}: GranularTableProps) {
+}: Readonly<GranularTableProps>) {
   const [searchTerm, setSearchTerm] = React.useState('');
   const [sortColumn, setSortColumn] = React.useState<string | null>(null);
   const [sortDirection, setSortDirection] = React.useState<'asc' | 'desc'>('asc');
   const [expandedRows, setExpandedRows] = React.useState<Set<string>>(new Set());
+  
+  // Estado de paginación
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const pageSize = 20; // Filas por página
 
   // Procesar datos en estructura granular
   const granularRows = React.useMemo(() => {
@@ -301,6 +305,18 @@ export function GranularTable({
       }
     });
   }, [filteredRows, sortColumn, sortDirection, dimensions, kpis]);
+
+  // Calcular paginación
+  const totalRows = sortedRows.length;
+  const totalPages = Math.ceil(totalRows / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = Math.min(startIndex + pageSize, totalRows);
+  const paginatedRows = sortedRows.slice(startIndex, endIndex);
+
+  // Resetear a página 1 cuando cambian los filtros o el ordenamiento
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, sortColumn, sortDirection]);
 
   /**
    * Maneja el click en un header para ordenar
@@ -387,14 +403,14 @@ export function GranularTable({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sortedRows.length === 0 ? (
+              {paginatedRows.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={2 + dimensions.length + (kpis.length * 2)} className="text-center py-8 text-muted-foreground">
                     No hay datos para mostrar
                   </TableCell>
                 </TableRow>
               ) : (
-                sortedRows.map((row) => {
+                paginatedRows.map((row) => {
                   const rowKey = generateRowKey(row.dimensionValues);
                   const isExpanded = expandedRows.has(rowKey);
 
@@ -489,6 +505,77 @@ export function GranularTable({
             </TableBody>
           </Table>
         </div>
+
+        {/* Paginación */}
+        {totalRows > 0 && (
+          <div className="flex items-center justify-between mt-4 px-2">
+            {/* Info de filas */}
+            <div className="text-sm text-muted-foreground">
+              Mostrando <span className="font-medium">{startIndex + 1}</span> a{' '}
+              <span className="font-medium">{endIndex}</span> de{' '}
+              <span className="font-medium">{totalRows}</span> fila{totalRows === 1 ? '' : 's'}
+            </div>
+
+            {/* Controles de navegación */}
+            <div className="flex items-center gap-2">
+              {/* Ir a primera página */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(1)}
+                disabled={currentPage === 1}
+                className="h-8 w-8 p-0"
+                title="Primera página"
+              >
+                <ChevronsLeft className="h-4 w-4" />
+              </Button>
+
+              {/* Página anterior */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className="h-8 w-8 p-0"
+                title="Página anterior"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+
+              {/* Indicador de página actual */}
+              <div className="flex items-center gap-1 text-sm">
+                <span className="text-muted-foreground">Página</span>
+                <span className="font-medium">{currentPage}</span>
+                <span className="text-muted-foreground">de</span>
+                <span className="font-medium">{totalPages}</span>
+              </div>
+
+              {/* Página siguiente */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+                className="h-8 w-8 p-0"
+                title="Página siguiente"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+
+              {/* Ir a última página */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(totalPages)}
+                disabled={currentPage === totalPages}
+                className="h-8 w-8 p-0"
+                title="Última página"
+              >
+                <ChevronsRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

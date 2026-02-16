@@ -503,29 +503,36 @@ function formatValue(value: number, format: 'number' | 'currency' | 'percentage'
 ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 ```
 
-### 3.2 KPICard con Sparklines
+### 4.2 KPICard ~~con Sparklines~~ (DESCARTADO)
 
-**Archivo:** `solution-sideby/apps/client/src/features/dataset/components/dashboard/KPICard.tsx`
+**⚠️ DECISIÓN DE DISEÑO (2026-02-16):**
+
+La funcionalidad de **sparklines en KPICard fue descartada** durante la implementación por:
+- Complejidad adicional innecesaria para el MVP
+- Los mini-charts en Trends View ya proveen visualización de tendencias
+- El badge con trend indicator es suficiente para el Executive View
+- Posible feature para v0.7.0+ si hay demanda
+
+**Implementación actual (sin sparklines):**
 
 ```typescript
 /**
- * KPICard con sparkline integrado
+ * KPICard - Versión simplificada sin sparklines
+ * 
+ * Muestra:
+ * - Título del KPI
+ * - Valor actual vs comparativo
+ * - Badge con trend indicator (TrendingUp/Down icons)
+ * - Cambio porcentual con color semántico
  */
 
-import React from 'react';
-import { Card, CardContent } from '@/shared/components/ui/card.js';
-import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
-import { Sparklines, SparklinesLine } from 'react-sparklines';  // Librería tiny
-
 interface KPICardProps {
-  label: string;
-  groupAValue: number;
-  groupBValue: number;
-  groupALabel: string;
-  groupBLabel: string;
-  format: 'number' | 'currency' | 'percentage';
-  sparklineData?: number[];  // ✅ Array de valores históricos para sparkline
-  trend?: 'up' | 'down' | 'stable';
+  title: string;
+  currentValue: string | number;
+  comparativeValue: string | number;
+  percentageChange: number;
+  icon: LucideIcon;
+  className?: string;
 }
 
 export const KPICard: React.FC<KPICardProps> = ({
@@ -593,31 +600,48 @@ export const KPICard: React.FC<KPICardProps> = ({
 };
 ```
 
-### 3.3 Configurable Main Chart
+### 4.3 ConfigurableChart ✅ (IMPLEMENTADO)
 
-**Componente:** `ConfigurableChart.tsx`
+**✅ Estado:** Completo con tests (10/10 passing)
+
+**Archivo:** `solution-sideby/apps/client/src/features/dataset/components/dashboard/ConfigurableChart.tsx`
 
 ```typescript
 /**
- * Gráfico principal con dropdowns para seleccionar KPI y Dimensión
+ * ConfigurableChart - Gráfico configurable con selector de KPI y Dimensión
+ * 
+ * Permite al usuario seleccionar:
+ * - Qué KPI visualizar
+ * - Por qué dimensión (temporal o categórica)
+ * 
+ * Renderiza dinámicamente:
+ * - TrendChart si dimensión es temporal (dateField)
+ * - CategoryChart si dimensión es categórica
  */
 
 interface ConfigurableChartProps {
-  dataset: Dataset;
-  kpis: KPICalculation[];
+  data: DataRow[];
+  kpis: KPIResult[];
   dateField?: string;
+  dimensions: string[];
+  groupALabel: string;
+  groupBLabel: string;
+  groupAColor: string;
+  groupBColor: string;
 }
 
 export const ConfigurableChart: React.FC<ConfigurableChartProps> = ({
-  dataset,
+  data,
   kpis,
   dateField,
+  dimensions,
+  ...labels
 }) => {
   const [selectedKPI, setSelectedKPI] = React.useState(kpis[0]?.name || '');
-  const [selectedDimension, setSelectedDimension] = React.useState<string>(dateField || '');
+  const [selectedDimension, setSelectedDimension] = React.useState<string>(dateField || dimensions[0] || '');
   
   // Determinar si la dimensión seleccionada es temporal
-  const isTemporalDimension = selectedDimension === dateField;
+  const isTemporalDimension = dateField && selectedDimension === dateField;
   
   return (
     <Card>
@@ -1079,50 +1103,79 @@ function exportToCSV(rows: GranularRow[]): void {
 
 ## 6. Implementación / Implementation Plan
 
-### Phase 1: Date Umbrella System (2 días)
+### Phase 1: Date Umbrella System ✅ (2 días - COMPLETO)
 
-- [ ] Crear `dateUmbrella.ts` utility
-- [ ] Implementar `createDateUmbrella` function
-- [ ] Implementar `groupDataByGranularity`
-- [ ] Implementar granularidad Days/Weeks/Months/Quarters
-- [ ] Tests unitarios exhaustivos
-- [ ] Documentación con ejemplos
+- [x] Crear `dateUmbrella.ts` utility
+- [x] Implementar `createDateUmbrella` function
+- [x] Implementar `groupDataByGranularity`
+- [x] Implementar granularidad Days/Weeks/Months/Quarters
+- [ ] Tests unitarios exhaustivos ⚠️ (Pendiente: cobertura completa)
+- [x] Documentación con ejemplos
 
-### Phase 2: Executive View (2 días)
+### Phase 2: Executive View ✅ (2 días - COMPLETO)
 
-- [ ] KPICard con sparklines integration
-- [ ] ConfigurableChart component
-- [ ] TrendChart con Date Umbrella
-- [ ] CategoryChart para dimensiones no-temporales
-- [ ] Reordenar layout (AI Insights al final)
-- [ ] Tests
+- [x] ~~KPICard con sparklines integration~~ **DESCARTADO** (ver sección 4.2)
+- [x] ConfigurableChart component (10/10 tests passing)
+- [x] TrendChart con Date Umbrella
+- [x] CategoryChart para dimensiones no-temporales (10/10 tests)
+- [x] CategoryChart con chart type selector (bar/line/area)
+- [x] Reordenar layout (AI Insights al final)
+- [x] Tests
 
-### Phase 3: Trends View (1.5 días)
+### Phase 3: Trends View ✅ (1.5 días - COMPLETO)
 
-- [ ] MiniTrendChart component
-- [ ] Grid 2×2 layout
-- [ ] Integración con Date Umbrella
-- [ ] DimensionGrid (categórico 2×2) nuevo
-- [ ] Trend indicators
-- [ ] Export individual de gráficos (PNG)
-- [ ] Tests
+- [x] MiniTrendChart component (16/16 tests passing)
+- [x] Grid 2×2 layout (TrendsGrid)
+- [x] Integración con Date Umbrella
+- [x] DimensionGrid (categórico 2×2) nuevo (9/9 tests)
+- [x] DimensionGrid con chart type selector (bar/line/area)
+- [x] Trend indicators (badges unificados con lucide icons)
+- [ ] Export individual de gráficos (PNG) ⚠️ (v0.7.0+)
+- [x] Tests
 
-### Phase 4: Detailed View (2 días)
+### Phase 4: Detailed View ⚠️ (2 días - CASI COMPLETO)
 
-- [ ] SummaryTable sticky component
-- [ ] GranularTable con sorting
-- [ ] Row expansion logic
-- [ ] CSV export functionality
-- [ ] Pagination
-- [ ] Search/filter inline
-- [ ] Tests
+- [x] SummaryTable sticky component
+- [x] GranularTable con sorting ↑↓
+- [x] Row expansion logic (ChevronDown/ChevronRight)
+- [x] CSV export functionality
+- [ ] **Pagination** ← EN PROGRESO
+- [x] Search/filter inline
+- [ ] Tests (pendiente: agregar tests para paginación)
 
-### Phase 5: Integration & Testing (0.5 días)
+### Phase 5: Integration & Testing (0.5 días - PENDIENTE)
 
 - [ ] E2E tests de las 3 vistas
 - [ ] Performance profiling
 - [ ] Mobile responsiveness
 - [ ] Accessibility audit
+
+---
+
+## Estado Actual del RFC-006 (2026-02-16)
+
+**Progreso Global: ~85% Completo**
+
+✅ **Completado:**
+- Phase 1: Date Umbrella System (100%)
+- Phase 2: Executive View (100% - sparklines descartado)
+- Phase 3: Trends View (100%)
+- Phase 4: Detailed View (85% - falta paginación)
+
+⚠️ **En Progreso:**
+- Paginación en GranularTable (próximo commit)
+
+❌ **Pendiente:**
+- Tests unitarios de dateUmbrella (baja prioridad)
+- Tests de paginación
+- Phase 5 completa (v0.7.0+)
+
+**Extras Implementados:**
+- Chart type selectors (bar/line/area) en DimensionGrid y CategoryChart
+- Badge styling unificado (lucide icons)
+- Layout del header reorganizado (RFC-006 Sección 3.1)
+
+**Total de commits en esta feature branch:** 24
 
 ---
 
