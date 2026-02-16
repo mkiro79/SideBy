@@ -1,7 +1,8 @@
 /**
  * TrendChart - Gráfico de líneas temporal para análisis de tendencias
  * 
- * Visualiza KPIs a lo largo del tiempo con dos líneas comparativas (Grupo A vs B)
+ * Visualiza KPIs a lo largo del tiempo con dos líneas comparativas (Grupo A vs B).
+ * Usa Date Umbrella System para alinear fechas de diferentes años.
  */
 
 import React from 'react';
@@ -15,6 +16,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
+import { createDateUmbrella } from '../../utils/dateUmbrella.js';
 import type { DataRow } from '../../types/api.types.js';
 
 interface TrendChartProps {
@@ -41,49 +43,32 @@ export const TrendChart: React.FC<TrendChartProps> = ({
   format = 'number',
 }) => {
   /**
-   * Agrupa datos por fecha y suma valores de cada grupo
+   * Usa Date Umbrella System para alinear fechas de diferentes años
+   * y agregar datos por fecha con suma de valores
    */
   const chartData = React.useMemo(() => {
-    const grouped = new Map<string, { date: string; sortKey: number; groupA: number; groupB: number }>();
+    if (data.length === 0) return [];
 
-    data.forEach((row) => {
-      const rawDateValue = row[dateField];
-      if (!rawDateValue) return;
-      
-      // Intentar parsear como fecha para ordenamiento consistente
-      const dateValue = String(rawDateValue);
-      let sortKey: number;
-      
-      try {
-        const parsedDate = new Date(dateValue);
-        sortKey = isNaN(parsedDate.getTime()) ? 0 : parsedDate.getTime();
-      } catch {
-        // Si falla el parseo, usar orden lexicográfico
-        sortKey = 0;
-      }
-      
-      const kpiValue = Number(row[kpiField]) || 0;
-      const group = row._source_group;
+    // Separar datos por grupo
+    const groupAData = data.filter(row => row._source_group === 'groupA');
+    const groupBData = data.filter(row => row._source_group === 'groupB');
 
-      if (!grouped.has(dateValue)) {
-        grouped.set(dateValue, { date: dateValue, sortKey, groupA: 0, groupB: 0 });
-      }
+    // Aplicar Date Umbrella para alinear fechas (devuelve array ya agrupado)
+    const umbrellaPoints = createDateUmbrella(
+      groupAData,
+      groupBData,
+      dateField,
+      kpiField,
+      'days', // Usar granularidad diaria para máximo detalle
+      false,  // No omitir gaps - mostrar todos los períodos
+    );
 
-      const entry = grouped.get(dateValue)!;
-      if (group === 'groupA') {
-        entry.groupA += kpiValue;
-      } else if (group === 'groupB') {
-        entry.groupB += kpiValue;
-      }
-    });
-
-    // Ordenar por timestamp si está disponible, si no por string
-    return Array.from(grouped.values()).sort((a, b) => {
-      if (a.sortKey && b.sortKey) {
-        return a.sortKey - b.sortKey;
-      }
-      return a.date.localeCompare(b.date);
-    });
+    // Transformar UmbrellaDatePoint[] a formato compatible con Recharts
+    return umbrellaPoints.map(point => ({
+      date: point.label, // Usar label (ej: "Ene", "15/01") para eje X
+      groupA: point.groupA?.value ?? 0,
+      groupB: point.groupB?.value ?? 0,
+    }));
   }, [data, dateField, kpiField]);
 
   const formatValue = (value: number): string => {
