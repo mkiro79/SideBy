@@ -63,6 +63,7 @@ describe('MiniTrendChart', () => {
     kpi: mockKPI,
     data: mockData,
     dateField: 'date',
+    granularity: 'months' as const,
     groupALabel: '2023',
     groupBLabel: '2024',
     groupAColor: '#3b82f6',

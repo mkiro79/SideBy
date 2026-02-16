@@ -27,7 +27,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-import { createDateUmbrella } from '../../utils/dateUmbrella.js';
+import { createDateUmbrella, type DateGranularity } from '../../utils/dateUmbrella.js';
 import type { DataRow } from '../../types/api.types.js';
 import type { KPIResult } from '../../types/dashboard.types.js';
 
@@ -40,6 +40,9 @@ interface MiniTrendChartProps {
   
   /** Nombre del campo de fecha */
   dateField: string;
+  
+  /** Granularidad temporal (days, weeks, months, quarters) */
+  granularity: DateGranularity;
   
   /** Label del grupo A (ej: "2023") */
   groupALabel: string;
@@ -82,6 +85,7 @@ export function MiniTrendChart({
   kpi,
   data,
   dateField,
+  granularity,
   groupALabel,
   groupBLabel,
   groupAColor,
@@ -107,7 +111,7 @@ export function MiniTrendChart({
       groupBData,
       dateField,
       kpi.name, // KPI de este mini-chart
-      'days', // Usar granularidad de días para máximo detalle
+      granularity, // Usar granularidad seleccionada
       false,  // No omitir gaps - mostrar TODOS los períodos
     );
 
@@ -117,7 +121,7 @@ export function MiniTrendChart({
       [groupALabel]: point.groupA?.value || 0,
       [groupBLabel]: point.groupB?.value || 0,
     }));
-  }, [data, dateField, kpi.name, groupALabel, groupBLabel]);
+  }, [data, dateField, kpi.name, granularity, groupALabel, groupBLabel]);
 
   return (
     <Card>
