@@ -7,6 +7,19 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### [RFC-006] Dashboard Visualization Enhancements - Detailed View & Tests (2026-02-16)
+
+**✅ Fixes y mejoras:**
+- Correccion de calculo de deltas en GranularTable (B - A como crecimiento base)
+- Tests de paginacion agregados y estables (35/35 passing)
+- RFC-006 actualizado con estado real, performance y dependencias
+
+**📄 Documentacion:**
+- RFC-006 alineado con sparklines descartado, Phase 4 completada y metricas de tests
+
+**🧪 Tests ejecutados:**
+- `GranularTable.test.tsx` (35/35 passing)
+
 ### [RFC-005] Dashboard UX Improvements - Multi-Select Filters (2026-02-15)
 
 **🎯 Objetivo:** Mejorar la UX del dashboard permitiendo filtros multi-select y visualización de filtros activos.

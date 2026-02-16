@@ -6,7 +6,7 @@
  * - Cambio porcentual (badge con trend icon)
  * - Ícono del KPI
  * 
- * Basado en el diseño de SideBy-Design con adaptaciones para datasets dinámicos.
+ * Basado en el diseño de SideBy-Design.
  * 
  * @see {@link docs/STYLE_GUIDE_SIDEBY.md} - Guía de estilos
  */
@@ -38,12 +38,6 @@ export interface KPICardProps {
   
   /** Clases CSS adicionales */
   className?: string;
-  
-  /** Label del grupo A (default: "Actual") */
-  groupALabel?: string;
-  
-  /** Label del grupo B (default: "Comparativo") */
-  groupBLabel?: string;
 }
 
 // ============================================================================
@@ -57,8 +51,6 @@ export function KPICard({
   percentageChange,
   icon: Icon,
   className,
-  groupALabel = 'Actual',
-  groupBLabel = 'Comparativo',
 }: KPICardProps) {
   const isPositive = percentageChange > 0;
   const isNegative = percentageChange < 0;
@@ -105,25 +97,17 @@ export function KPICard({
             </div>
             <Badge variant={getBadgeVariant()} className="gap-1">
               {getTrendIcon()}
-              {isPositive ? '+' : ''}
-              {percentageChange.toFixed(1)}%
+              {isFinite(percentageChange) ? (
+                <>
+                  {isPositive ? '+' : ''}
+                  {percentageChange.toFixed(1)}%
+                </>
+              ) : (
+                'N/A'
+              )}
             </Badge>
           </div>
         </div>
-
-        {/* Labels de grupos (opcional) */}
-        {(groupALabel !== 'Actual' || groupBLabel !== 'Comparativo') && (
-          <div className="mt-3 flex gap-3 text-xs text-muted-foreground">
-            <div className="flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-data-primary" />
-              {groupALabel}
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-data-comparative" />
-              {groupBLabel}
-            </div>
-          </div>
-        )}
       </CardContent>
     </Card>
   );

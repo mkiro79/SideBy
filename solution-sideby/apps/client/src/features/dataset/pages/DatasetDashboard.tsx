@@ -26,10 +26,13 @@ import { useDatasetDashboard } from '../hooks/useDatasetDashboard.js';
 import { TemplateSelector } from '../components/dashboard/TemplateSelector.js';
 import { DashboardFiltersBar } from '../components/dashboard/DashboardFiltersBar.js';
 import { KPIGrid } from '../components/dashboard/KPIGrid.js';
-import { ComparisonChart } from '../components/dashboard/ComparisonChart.js';
-import { ComparisonTable } from '../components/dashboard/ComparisonTable.js';
 import { TrendChart } from '../components/dashboard/TrendChart.js';
 import { AIInsights } from '../components/dashboard/AIInsights.js';
+import { TrendsGrid } from '../components/dashboard/TrendsGrid.js';
+import { DimensionGrid } from '../components/dashboard/DimensionGrid.js';
+import { SummaryTable } from '../components/dashboard/SummaryTable.js';
+import { GranularTable } from '../components/dashboard/GranularTable.js';
+import { CategoryChart } from '../components/dashboard/CategoryChart.js';
 import type { DashboardTemplateId, DashboardFilters } from '../types/dashboard.types.js';
 
 
@@ -67,6 +70,16 @@ export default function DatasetDashboard() {
   const handleClearFilters = () => {
     setFilters({ categorical: {} });
   };
+
+  // Helper: Mapea de API KPI fields a formato wizard KPIField
+  const mappedKpiFields = dataset?.schemaMapping?.kpiFields.map(kpi => ({
+    id: kpi.id,
+    sourceColumn: kpi.columnName,
+    label: kpi.label,
+    type: kpi.format as 'number' | 'currency' | 'percentage',
+    aggregation: 'sum' as const,
+    format: kpi.format as 'number' | 'currency' | 'percentage',
+  })) ?? [];
 
   // ============================================================================
   // LOADING STATE
@@ -140,9 +153,6 @@ export default function DatasetDashboard() {
   
   // Date field para gráficos temporales
   const dateField = schemaMapping?.dateField;
-  
-  // Tomar primer KPI para el gráfico de tendencias
-  const firstKpi = kpis[0];
 
   return (
     <SidebarProvider defaultOpen={true}>
@@ -169,11 +179,11 @@ export default function DatasetDashboard() {
               </div>
               
               <div className="flex items-center gap-3">
-                {/* Template Selector */}
-                <TemplateSelector
-                  selectedTemplate={selectedTemplate}
-                  onSelectTemplate={setSelectedTemplate}
-                />
+                {/* TODO: RFC-007 - Export PDF Button */}
+                {/* <Button variant="outline" size="sm">
+                  <Download className="h-4 w-4 mr-2" />
+                  Exportar PDF
+                </Button> */}
                 
                 {/* Reload Button */}
                 <Button variant="outline" size="sm" onClick={() => globalThis.location.reload()}>
@@ -184,6 +194,14 @@ export default function DatasetDashboard() {
             </div>
 
             <Separator />
+
+            {/* Template Selector - Nueva sección con label */}
+            <div className="flex items-center gap-3">
+              <TemplateSelector
+                selectedTemplate={selectedTemplate}
+                onSelectTemplate={setSelectedTemplate}
+              />
+            </div>
 
             {/* Filters Bar */}
             {categoricalFields.length > 0 && (
@@ -197,30 +215,52 @@ export default function DatasetDashboard() {
             )}
 
             {/* KPI Grid */}
-            <KPIGrid
-              kpis={kpis}
-              groupALabel={groupALabel}
-              groupBLabel={groupBLabel}
-            />
+            <KPIGrid kpis={kpis} />
 
-            {/* Trend Chart - Solo si hay dateField y datos*/}
-            {dateField && firstKpi && filteredData.length > 0 && selectedTemplate !== 'sideby_detailed' && (
-              <TrendChart
+            {/* RFC-006 Trends View: Grid 2×2 de mini-charts temporales */}
+            {selectedTemplate === 'sideby_trends' && dateField && filteredData.length > 0 && (
+              <TrendsGrid
+                kpis={kpis}
                 data={filteredData}
                 dateField={dateField}
-                kpiField={firstKpi.name}
-                kpiLabel={`Tendencia de ${firstKpi.label}`}
                 groupALabel={groupALabel}
                 groupBLabel={groupBLabel}
                 groupAColor={groupAColor}
                 groupBColor={groupBColor}
-                format={firstKpi.format as 'number' | 'currency' | 'percentage'}
               />
             )}
 
-            {/* Comparison Chart - Solo en templates Executive y Trends */}
-            {selectedTemplate !== 'sideby_detailed' && (
-              <ComparisonChart
+            {/* RFC-006 Trends View: Grid 2×2 de mini-charts por dimensión */}
+            {selectedTemplate === 'sideby_trends' && categoricalFields.length > 0 && (
+              <DimensionGrid
+                kpis={kpis}
+                data={filteredData}
+                dimensions={categoricalFields}
+                groupALabel={groupALabel}
+                groupBLabel={groupBLabel}
+                groupAColor={groupAColor}
+                groupBColor={groupBColor}
+              />
+            )}
+
+            {/* RFC-006 CategoryChart - Análisis por dimensión categórica (Solo Executive) */}
+            {selectedTemplate === 'sideby_executive' && categoricalFields.length > 0 && (
+              <CategoryChart
+                data={filteredData}
+                kpis={kpis}
+                dimensions={categoricalFields}
+                groupALabel={groupALabel}
+                groupBLabel={groupBLabel}
+                groupAColor={groupAColor}
+                groupBColor={groupBColor}
+              />
+            )}
+
+            {/* Trend Chart - Solo si hay dateField y datos (no en Detailed ni Trends)*/}
+            {dateField && kpis.length > 0 && filteredData.length > 0 && selectedTemplate !== 'sideby_detailed' && selectedTemplate !== 'sideby_trends' && (
+              <TrendChart
+                data={filteredData}
+                dateField={dateField}
                 kpis={kpis}
                 groupALabel={groupALabel}
                 groupBLabel={groupBLabel}
@@ -229,12 +269,31 @@ export default function DatasetDashboard() {
               />
             )}
 
-            {/* Comparison Table - Ahora recibe kpis en vez de data raw */}
-            <ComparisonTable
-              kpis={kpis}
-              groupALabel={groupALabel}
-              groupBLabel={groupBLabel}
-            />
+            {/* RFC-006 Detailed View: SummaryTable + GranularTable */}
+            {selectedTemplate === 'sideby_detailed' ? (
+              <div className="space-y-6">
+                <SummaryTable
+                  kpis={kpis}
+                  groupALabel={groupALabel}
+                  groupBLabel={groupBLabel}
+                />
+                
+                <GranularTable
+                  data={filteredData}
+                  dimensions={categoricalFields}
+                  kpis={mappedKpiFields}
+                  groupALabel={groupALabel}
+                  groupBLabel={groupBLabel}
+                />
+              </div>
+            ) : (
+              /* Summary Table - Tabla de totales en Executive y Trends */
+              <SummaryTable
+                kpis={kpis}
+                groupALabel={groupALabel}
+                groupBLabel={groupBLabel}
+              />
+            )}
 
             {/* AI Insights - Solo si está habilitado */}
             {dataset.aiConfig?.enabled && (
