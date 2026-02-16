@@ -173,7 +173,15 @@ export function MiniTrendChart({
             <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
             <XAxis dataKey="date" tick={{ fontSize: 10 }} />
             <YAxis tick={{ fontSize: 10 }} />
-            <Tooltip />
+            <Tooltip
+              contentStyle={{
+                backgroundColor: 'hsl(var(--popover))',
+                borderColor: 'hsl(var(--border))',
+                borderRadius: '8px',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+              }}
+              labelStyle={{ color: 'hsl(var(--foreground))' }}
+            />
             <Line
               type="monotone"
               dataKey={groupALabel}

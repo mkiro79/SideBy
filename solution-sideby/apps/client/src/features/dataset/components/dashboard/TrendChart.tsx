@@ -229,7 +229,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({
                   boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
                 }}
                 labelStyle={{ color: 'hsl(var(--foreground))' }}
-                formatter={(value: number) => [formatTooltipValue(value), '']}
+                formatter={(value: number, name: string) => [formatTooltipValue(value), name]}
               />
               <Line
                 type="monotone"
