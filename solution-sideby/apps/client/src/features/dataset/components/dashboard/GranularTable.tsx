@@ -28,6 +28,7 @@ import { Button } from '@/shared/components/ui/button.js';
 import { ChevronRight, ChevronDown, Download, ChevronLeft, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import type { DataRow } from '../../types/api.types.js';
 import type { KPIField, KPIFormat } from '../../types/wizard.types.js';
+import { calculateDelta } from '@/features/dataset/utils/delta.js';
 
 interface GranularTableProps {
   /** Array de datos crudos */
@@ -151,10 +152,8 @@ function processGranularData(
         groupBValue = groupData.groupB.length > 0 ? sumB / groupData.groupB.length : 0;
       }
 
-      // Calcular deltas (B - A): Crecimiento desde Grupo A (base) hacia Grupo B (actual)
-      // Usa A como base para cálculo porcentual, siguiendo RFC-006
-      const deltaAbs = groupBValue - groupAValue;
-      const deltaPercent = groupAValue === 0 ? 0 : (deltaAbs / groupAValue) * 100;
+      // Delta = actual (A) - referencia (B)
+      const { deltaAbs, deltaPercent } = calculateDelta(groupAValue, groupBValue);
 
       kpiValues[kpi.id] = {
         groupA: groupAValue,

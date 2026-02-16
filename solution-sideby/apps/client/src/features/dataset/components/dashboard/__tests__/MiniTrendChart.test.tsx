@@ -78,8 +78,8 @@ describe('MiniTrendChart', () => {
 
     it('debe renderizar el valor principal formateado', () => {
       render(<MiniTrendChart {...defaultProps} />);
-      // Value B formateado como currency
-      expect(screen.getByText(/\$300/)).toBeInTheDocument();
+      // Value A formateado como currency
+      expect(screen.getByText(/\$250/)).toBeInTheDocument();
     });
 
     it('debe renderizar badge con delta porcentual', () => {

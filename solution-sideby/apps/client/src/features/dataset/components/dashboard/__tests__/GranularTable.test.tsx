@@ -45,8 +45,8 @@ describe('GranularTable', () => {
       date: '2023-01-01',
       product: 'Balón',
       region: 'Norte',
-      revenue: 500,
-      units_sold: 10,
+      revenue: 700,
+      units_sold: 15,
       _source_group: 'groupA',
     },
     {
@@ -54,8 +54,8 @@ describe('GranularTable', () => {
       date: '2024-01-01',
       product: 'Balón',
       region: 'Norte',
-      revenue: 700,
-      units_sold: 15,
+      revenue: 500,
+      units_sold: 10,
       _source_group: 'groupB',
     },
     {
@@ -63,8 +63,8 @@ describe('GranularTable', () => {
       date: '2023-01-01',
       product: 'Camiseta',
       region: 'Sur',
-      revenue: 300,
-      units_sold: 20,
+      revenue: 350,
+      units_sold: 22,
       _source_group: 'groupA',
     },
     {
@@ -72,8 +72,8 @@ describe('GranularTable', () => {
       date: '2024-01-01',
       product: 'Camiseta',
       region: 'Sur',
-      revenue: 350,
-      units_sold: 22,
+      revenue: 300,
+      units_sold: 20,
       _source_group: 'groupB',
     },
   ];
@@ -82,8 +82,8 @@ describe('GranularTable', () => {
     data: mockData,
     dimensions: ['product', 'region'],
     kpis: mockKPIs,
-    groupALabel: '2023',
-    groupBLabel: '2024',
+    groupALabel: '2024',
+    groupBLabel: '2014',
   };
 
   describe('Renderizado básico', () => {
@@ -150,8 +150,8 @@ describe('GranularTable', () => {
 
     it('debe mostrar deltas negativos sin signo +', () => {
       const dataWithNegative: DataRow[] = [
-        { ...mockData[0], revenue: 1000 },
-        { ...mockData[1], revenue: 800 },
+        { ...mockData[0], revenue: 800 },
+        { ...mockData[1], revenue: 1000 },
       ];
 
       render(<GranularTable {...defaultProps} data={dataWithNegative} />);
@@ -171,8 +171,8 @@ describe('GranularTable', () => {
 
     it('debe aplicar color rojo a deltas negativos', () => {
       const dataWithNegative: DataRow[] = [
-        { ...mockData[0], revenue: 1000 },
-        { ...mockData[1], revenue: 800 },
+        { ...mockData[0], revenue: 800 },
+        { ...mockData[1], revenue: 1000 },
       ];
 
       const { container } = render(<GranularTable {...defaultProps} data={dataWithNegative} />);

@@ -1089,6 +1089,9 @@ Durante la implementación de RFC-005, se identificó que el selector de templat
 📈 **Trends View:** Grid 2×2 de mini-charts con trend indicators  
 📋 **Detailed View:** Tabla totales + tabla granular con deltas y export CSV  
 
+🧭 **KPIs con métrica inversa:** Soporte para métricas donde “menos es mejor” (ej: costos, churn, tiempos).  
+Requiere persistir un flag por KPI y ajustar cálculo de tendencia/colores.
+
 Ver detalles en: [`docs/design/RFC-006-DASHBOARD-VISUALIZATION-ENHANCEMENTS.md`](design/RFC-006-DASHBOARD-VISUALIZATION-ENHANCEMENTS.md)
 
 ---

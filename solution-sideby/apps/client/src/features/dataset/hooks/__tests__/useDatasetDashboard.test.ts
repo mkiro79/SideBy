@@ -134,11 +134,11 @@ describe("useDatasetDashboard", () => {
     expect(revenueKpi).toBeDefined();
     expect(revenueKpi?.valueA).toBe(300);
     expect(revenueKpi?.valueB).toBe(200);
-    // Delta = B - A = 200 - 300 = -100 (crecimiento negativo desde A hacia B)
-    expect(revenueKpi?.diff).toBe(-100);
-    // Porcentaje = (-100 / 300) * 100 = -33.33%
-    expect(revenueKpi?.diffPercent).toBeCloseTo(-33.33, 1);
-    expect(revenueKpi?.trend).toBe("down");
+    // Delta = A - B = 300 - 200 = 100 (crecimiento positivo)
+    expect(revenueKpi?.diff).toBe(100);
+    // Porcentaje = (100 / 200) * 100 = 50%
+    expect(revenueKpi?.diffPercent).toBeCloseTo(50, 1);
+    expect(revenueKpi?.trend).toBe("up");
   });
 
   it("debe aplicar filtros categóricos (single-select legacy)", () => {
@@ -231,10 +231,10 @@ describe("useDatasetDashboard", () => {
     // Solo filas de south: groupA=200, groupB=120
     expect(revenueKpi?.valueA).toBe(200);
     expect(revenueKpi?.valueB).toBe(120);
-    // Delta = B - A = 120 - 200 = -80 (crecimiento negativo)
-    expect(revenueKpi?.diff).toBe(-80);
-    // Porcentaje = (-80 / 200) * 100 = -40%
-    expect(revenueKpi?.diffPercent).toBeCloseTo(-40, 1);
+    // Delta = A - B = 200 - 120 = 80 (crecimiento positivo)
+    expect(revenueKpi?.diff).toBe(80);
+    // Porcentaje = (80 / 120) * 100 = 66.67%
+    expect(revenueKpi?.diffPercent).toBeCloseTo(66.67, 1);
   });
 
   it("debe detectar campos categóricos excluyendo _source_group", () => {
