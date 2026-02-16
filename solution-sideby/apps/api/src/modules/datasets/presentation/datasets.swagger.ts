@@ -307,6 +307,22 @@ registry.registerPath({
             schemaMapping: SchemaMappingSchema,
             dashboardLayout: DashboardLayoutSchema.optional(),
             aiConfig: AIConfigSchema.optional(),
+            sourceConfig: z
+              .object({
+                groupA: z
+                  .object({
+                    label: z.string().max(50).optional(),
+                    color: z.string().optional(),
+                  })
+                  .optional(),
+                groupB: z
+                  .object({
+                    label: z.string().max(50).optional(),
+                    color: z.string().optional(),
+                  })
+                  .optional(),
+              })
+              .optional(),
           }),
         },
       },

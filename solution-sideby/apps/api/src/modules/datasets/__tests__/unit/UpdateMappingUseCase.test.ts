@@ -332,6 +332,70 @@ describe("UpdateMappingUseCase", () => {
         }),
       ).rejects.toThrow(MappingValidationError);
     });
+
+    it("should throw error if group label exceeds max length", async () => {
+      repository.seed(createTestDataset());
+
+      await expect(
+        useCase.execute({
+          datasetId: "dataset_123",
+          ownerId: "user_123",
+          meta: { name: "Test Dataset" },
+          schemaMapping: {
+            dimensionField: "fecha",
+            kpiFields: [
+              {
+                id: "kpi_1",
+                columnName: "ventas",
+                label: "Ventas",
+                format: "currency",
+              },
+            ],
+          },
+          dashboardLayout: {
+            templateId: "sideby_executive",
+            highlightedKpis: ["kpi_1"],
+          },
+          sourceConfig: {
+            groupA: {
+              label: "x".repeat(51),
+            },
+          },
+        }),
+      ).rejects.toThrow(MappingValidationError);
+    });
+
+    it("should throw error if group color is invalid", async () => {
+      repository.seed(createTestDataset());
+
+      await expect(
+        useCase.execute({
+          datasetId: "dataset_123",
+          ownerId: "user_123",
+          meta: { name: "Test Dataset" },
+          schemaMapping: {
+            dimensionField: "fecha",
+            kpiFields: [
+              {
+                id: "kpi_1",
+                columnName: "ventas",
+                label: "Ventas",
+                format: "currency",
+              },
+            ],
+          },
+          dashboardLayout: {
+            templateId: "sideby_executive",
+            highlightedKpis: ["kpi_1"],
+          },
+          sourceConfig: {
+            groupB: {
+              color: "not-a-hex",
+            },
+          },
+        }),
+      ).rejects.toThrow(MappingValidationError);
+    });
   });
 
   // ========================================
@@ -475,6 +539,51 @@ describe("UpdateMappingUseCase", () => {
       expect(result.datasetId).toBe("dataset_123");
       expect(result.status).toBe("ready");
       expect(result.updatedAt).toBeInstanceOf(Date);
+    });
+
+    it("should update sourceConfig labels and colors", async () => {
+      repository.seed(createTestDataset());
+
+      await useCase.execute({
+        datasetId: "dataset_123",
+        ownerId: "user_123",
+        meta: { name: "Test Dataset" },
+        schemaMapping: {
+          dimensionField: "fecha",
+          kpiFields: [
+            {
+              id: "kpi_1",
+              columnName: "ventas",
+              label: "Ventas",
+              format: "currency",
+            },
+          ],
+        },
+        dashboardLayout: {
+          templateId: "sideby_executive",
+          highlightedKpis: ["kpi_1"],
+        },
+        sourceConfig: {
+          groupA: {
+            label: "Actual",
+            color: "#3b82f6",
+          },
+          groupB: {
+            label: "Comparativo",
+            color: "#6366f1",
+          },
+        },
+      });
+
+      const updated = await repository.findById("dataset_123");
+      expect(updated!.sourceConfig.groupA.label).toBe("Actual");
+      expect(updated!.sourceConfig.groupA.color).toBe("#3b82f6");
+      expect(updated!.sourceConfig.groupB.label).toBe("Comparativo");
+      expect(updated!.sourceConfig.groupB.color).toBe("#6366f1");
+      expect(updated!.sourceConfig.groupA.originalFileName).toBe("fileA.csv");
+      expect(updated!.sourceConfig.groupB.originalFileName).toBe("fileB.csv");
+      expect(updated!.sourceConfig.groupA.rowCount).toBe(100);
+      expect(updated!.sourceConfig.groupB.rowCount).toBe(100);
     });
   });
 });

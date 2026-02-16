@@ -85,7 +85,7 @@ export const DatasetRules = {
   DEFAULT_COLOR_GROUP_A: "#3b82f6", // Blue
 
   /** Color por defecto para el Grupo B */
-  DEFAULT_COLOR_GROUP_B: "#ef4444", // Red
+  DEFAULT_COLOR_GROUP_B: "#6366f1", // Indigo
 
   // ========================================
   // LÍMITES DE TIEMPO

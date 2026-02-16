@@ -3,10 +3,14 @@ import type {
   UpdateMappingInput,
   UpdateMappingOutput,
 } from "@/modules/datasets/application/dtos/dataset.dtos.js";
+import type { Dataset } from "@/modules/datasets/domain/Dataset.entity.js";
 import { DatasetNotFoundError } from "@/modules/datasets/domain/errors/DatasetNotFoundError.js";
 import { UnauthorizedAccessError } from "@/modules/datasets/domain/errors/UnauthorizedAccessError.js";
 import { MappingValidationError } from "@/modules/datasets/domain/errors/MappingValidationError.js";
-import { DatasetRules } from "@/modules/datasets/domain/validation.rules.js";
+import {
+  DatasetRules,
+  isValidHexColor,
+} from "@/modules/datasets/domain/validation.rules.js";
 import logger from "@/utils/logger.js";
 
 /**
@@ -82,7 +86,16 @@ export class UpdateMappingUseCase {
       this.validateAIConfig(input.aiConfig);
     }
 
-    // PASO 7: Actualizar dataset
+    // PASO 7: Validar source config (si está presente)
+    if (input.sourceConfig) {
+      this.validateSourceConfig(input.sourceConfig);
+    }
+
+    const nextSourceConfig = input.sourceConfig
+      ? this.mergeSourceConfig(dataset.sourceConfig, input.sourceConfig)
+      : dataset.sourceConfig;
+
+    // PASO 8: Actualizar dataset
     const updatedDataset = await this.repository.update(input.datasetId, {
       status: "ready", // Cambiar de "processing" a "ready"
       meta: {
@@ -94,6 +107,7 @@ export class UpdateMappingUseCase {
       schemaMapping: input.schemaMapping,
       dashboardLayout: input.dashboardLayout,
       aiConfig: input.aiConfig,
+      ...(input.sourceConfig ? { sourceConfig: nextSourceConfig } : {}),
     });
 
     logger.info(
@@ -104,7 +118,7 @@ export class UpdateMappingUseCase {
       "Dataset mapping updated successfully",
     );
 
-    // PASO 8: Retornar resultado
+    // PASO 9: Retornar resultado
     return {
       datasetId: updatedDataset.id,
       status: updatedDataset.status as "ready",
@@ -240,5 +254,68 @@ export class UpdateMappingUseCase {
         `El contexto de IA no puede exceder ${DatasetRules.MAX_AI_CONTEXT_LENGTH} caracteres`,
       );
     }
+  }
+
+  /**
+   * Valida la configuración de grupos (labels y colores).
+   */
+  private validateSourceConfig(
+    sourceConfig: NonNullable<UpdateMappingInput["sourceConfig"]>,
+  ): void {
+    this.validateGroupConfig(sourceConfig.groupA, "Grupo A");
+    this.validateGroupConfig(sourceConfig.groupB, "Grupo B");
+  }
+
+  /**
+   * Valida label y color para un grupo específico.
+   */
+  private validateGroupConfig(
+    group: NonNullable<UpdateMappingInput["sourceConfig"]>["groupA"] | undefined,
+    groupName: string,
+  ): void {
+    if (!group) return;
+
+    if (group.label !== undefined) {
+      const trimmedLabel = group.label.trim();
+      if (trimmedLabel.length === 0) {
+        throw new MappingValidationError(
+          "INVALID_GROUP_LABEL",
+          `El label de ${groupName} es obligatorio`,
+        );
+      }
+
+      if (trimmedLabel.length > DatasetRules.MAX_GROUP_LABEL_LENGTH) {
+        throw new MappingValidationError(
+          "INVALID_GROUP_LABEL",
+          `El label de ${groupName} no puede exceder ${DatasetRules.MAX_GROUP_LABEL_LENGTH} caracteres`,
+        );
+      }
+    }
+
+    if (group.color !== undefined && !isValidHexColor(group.color)) {
+      throw new MappingValidationError(
+        "INVALID_COLOR",
+        `El color de ${groupName} no es un hex válido`,
+      );
+    }
+  }
+
+  /**
+   * Combina la configuración existente con los cambios solicitados.
+   */
+  private mergeSourceConfig(
+    current: Dataset["sourceConfig"],
+    updates: NonNullable<UpdateMappingInput["sourceConfig"]>,
+  ): Dataset["sourceConfig"] {
+    return {
+      groupA: {
+        ...current.groupA,
+        ...updates.groupA,
+      },
+      groupB: {
+        ...current.groupB,
+        ...updates.groupB,
+      },
+    };
   }
 }
