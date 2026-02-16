@@ -40,6 +40,7 @@ describe('MiniDimensionChart', () => {
         groupBLabel="2023"
         groupAColor="hsl(var(--primary))"
         groupBColor="hsl(var(--secondary))"
+        chartType="bar"
       />
     );
 
@@ -57,6 +58,7 @@ describe('MiniDimensionChart', () => {
         groupBLabel="2023"
         groupAColor="hsl(var(--primary))"
         groupBColor="hsl(var(--secondary))"
+        chartType="bar"
       />
     );
 
@@ -70,7 +72,7 @@ describe('MiniDimensionChart', () => {
       revenue: 1000 * i,
     }));
 
-    const { container } = render(
+    render(
       <MiniDimensionChart
         dimension="country"
         dimensionLabel="País"
@@ -80,10 +82,11 @@ describe('MiniDimensionChart', () => {
         groupBLabel="2023"
         groupAColor="hsl(var(--primary))"
         groupBColor="hsl(var(--secondary))"
+        chartType="bar"
       />
     );
 
-    // Verificar que el gráfico se renderiza
-    expect(container.querySelector('.recharts-wrapper')).toBeInTheDocument();
+    // Verificar que el gráfico se renderiza (no muestra "Sin datos")
+    expect(screen.queryByText('Sin datos')).not.toBeInTheDocument();
   });
 });

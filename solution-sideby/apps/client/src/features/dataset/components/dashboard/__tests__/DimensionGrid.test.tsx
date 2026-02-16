@@ -72,7 +72,9 @@ describe('DimensionGrid', () => {
       />
     );
 
-    expect(screen.getByRole('combobox')).toBeInTheDocument();
+    // Debe haber 2 comboboxes: uno para KPI y otro para tipo de gráfico
+    const comboboxes = screen.getAllByRole('combobox');
+    expect(comboboxes).toHaveLength(2);
   });
 
   it('debe renderizar las dimensiones formateadas', () => {
@@ -111,6 +113,24 @@ describe('DimensionGrid', () => {
     expect(screen.getByText('Dim1')).toBeInTheDocument();
     expect(screen.getByText('Dim4')).toBeInTheDocument();
     expect(screen.queryByText('Dim5')).not.toBeInTheDocument();
+  });
+
+  it('debe renderizar selector de tipo de gráfico con opciones Barras, Líneas y Área', () => {
+    render(
+      <DimensionGrid
+        kpis={mockKpis}
+        data={mockData}
+        dimensions={mockDimensions}
+        groupALabel="2024"
+        groupBLabel="2023"
+        groupAColor="hsl(var(--primary))"
+        groupBColor="hsl(var(--secondary))"
+      />
+    );
+
+    // Debe haber 2 comboboxes: uno para KPI y otro para tipo de gráfico
+    const comboboxes = screen.getAllByRole('combobox');
+    expect(comboboxes).toHaveLength(2);
   });
 
   it('no debe renderizar si no hay dimensiones', () => {

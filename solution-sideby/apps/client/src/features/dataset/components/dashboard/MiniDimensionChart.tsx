@@ -1,10 +1,11 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck - Temporal workaround for Recharts 2.15.0 type compatibility issues with React 18
 /**
- * MiniDimensionChart - Mini gráfico de barras para análisis por dimensión categórica
+ * MiniDimensionChart - Mini gráfico para análisis por dimensión categórica
  * 
  * Versión compacta del CategoryChart para usar en grid 2×2
  * Muestra un KPI específico desglosado por una dimensión (ej: Country, Channel)
+ * Soporta visualización en Barras, Líneas o Área
  */
 
 import React, { useMemo } from 'react';
@@ -12,6 +13,10 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/shared/components/ui
 import {
   BarChart,
   Bar,
+  LineChart,
+  Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -20,6 +25,7 @@ import {
 } from 'recharts';
 import type { KPIResult } from '../../types/dashboard.types.js';
 import type { DataRow } from '../../types/api.types.js';
+import type { ChartType } from './DimensionGrid.js';
 
 interface MiniDimensionChartProps {
   /** Nombre de la dimensión a analizar (ej: "country", "channel") */
@@ -41,6 +47,9 @@ interface MiniDimensionChartProps {
   /** Colores de grupos */
   groupAColor: string;
   groupBColor: string;
+
+  /** Tipo de gráfico a renderizar */
+  chartType: ChartType;
 }
 
 interface CategoryDataPoint {
@@ -112,6 +121,7 @@ export const MiniDimensionChart: React.FC<MiniDimensionChartProps> = ({
   groupBLabel,
   groupAColor,
   groupBColor,
+  chartType,
 }) => {
   /**
    * Agregar datos por dimensión
@@ -194,36 +204,132 @@ export const MiniDimensionChart: React.FC<MiniDimensionChartProps> = ({
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={200}>
-          <BarChart data={chartData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-            <XAxis
-              dataKey="category"
-              stroke="hsl(var(--muted-foreground))"
-              fontSize={11}
-              tickLine={false}
-              axisLine={false}
-            />
-            <YAxis
-              stroke="hsl(var(--muted-foreground))"
-              fontSize={11}
-              tickLine={false}
-              axisLine={false}
-              tickFormatter={formatValue}
-            />
-            <Tooltip
-              content={
-                <CustomTooltip
-                  groupALabel={groupALabel}
-                  groupBLabel={groupBLabel}
-                  groupAColor={groupAColor}
-                  groupBColor={groupBColor}
-                  formatValue={formatValue}
-                />
-              }
-            />
-            <Bar dataKey="groupA" fill={groupAColor} radius={[4, 4, 0, 0]} />
-            <Bar dataKey="groupB" fill={groupBColor} radius={[4, 4, 0, 0]} />
-          </BarChart>
+          {chartType === 'bar' && (
+            <BarChart data={chartData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+              <XAxis
+                dataKey="category"
+                stroke="hsl(var(--muted-foreground))"
+                fontSize={11}
+                tickLine={false}
+                axisLine={false}
+              />
+              <YAxis
+                stroke="hsl(var(--muted-foreground))"
+                fontSize={11}
+                tickLine={false}
+                axisLine={false}
+                tickFormatter={formatValue}
+              />
+              <Tooltip
+                content={
+                  <CustomTooltip
+                    groupALabel={groupALabel}
+                    groupBLabel={groupBLabel}
+                    groupAColor={groupAColor}
+                    groupBColor={groupBColor}
+                    formatValue={formatValue}
+                  />
+                }
+              />
+              <Bar dataKey="groupA" fill={groupAColor} radius={[4, 4, 0, 0]} />
+              <Bar dataKey="groupB" fill={groupBColor} radius={[4, 4, 0, 0]} />
+            </BarChart>
+          )}
+
+          {chartType === 'line' && (
+            <LineChart data={chartData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+              <XAxis
+                dataKey="category"
+                stroke="hsl(var(--muted-foreground))"
+                fontSize={11}
+                tickLine={false}
+                axisLine={false}
+              />
+              <YAxis
+                stroke="hsl(var(--muted-foreground))"
+                fontSize={11}
+                tickLine={false}
+                axisLine={false}
+                tickFormatter={formatValue}
+              />
+              <Tooltip
+                content={
+                  <CustomTooltip
+                    groupALabel={groupALabel}
+                    groupBLabel={groupBLabel}
+                    groupAColor={groupAColor}
+                    groupBColor={groupBColor}
+                    formatValue={formatValue}
+                  />
+                }
+              />
+              <Line
+                type="monotone"
+                dataKey="groupA"
+                stroke={groupAColor}
+                strokeWidth={2}
+                dot={{ r: 3 }}
+                activeDot={{ r: 5 }}
+              />
+              <Line
+                type="monotone"
+                dataKey="groupB"
+                stroke={groupBColor}
+                strokeWidth={2}
+                dot={{ r: 3 }}
+                activeDot={{ r: 5 }}
+              />
+            </LineChart>
+          )}
+
+          {chartType === 'area' && (
+            <AreaChart data={chartData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+              <XAxis
+                dataKey="category"
+                stroke="hsl(var(--muted-foreground))"
+                fontSize={11}
+                tickLine={false}
+                axisLine={false}
+              />
+              <YAxis
+                stroke="hsl(var(--muted-foreground))"
+                fontSize={11}
+                tickLine={false}
+                axisLine={false}
+                tickFormatter={formatValue}
+              />
+              <Tooltip
+                content={
+                  <CustomTooltip
+                    groupALabel={groupALabel}
+                    groupBLabel={groupBLabel}
+                    groupAColor={groupAColor}
+                    groupBColor={groupBColor}
+                    formatValue={formatValue}
+                  />
+                }
+              />
+              <Area
+                type="monotone"
+                dataKey="groupA"
+                stroke={groupAColor}
+                fill={groupAColor}
+                fillOpacity={0.3}
+                strokeWidth={2}
+              />
+              <Area
+                type="monotone"
+                dataKey="groupB"
+                stroke={groupBColor}
+                fill={groupBColor}
+                fillOpacity={0.3}
+                strokeWidth={2}
+              />
+            </AreaChart>
+          )}
         </ResponsiveContainer>
       </CardContent>
     </Card>

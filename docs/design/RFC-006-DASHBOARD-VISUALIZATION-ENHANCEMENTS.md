@@ -1059,6 +1059,8 @@ function exportToCSV(rows: GranularRow[]): void {
 
 - [ ] MiniTrendChart component
 - [ ] Grid 2×2 layout
+- [ ] Integración con Date Umbrella
+- [ ] DimensionGrid (categórico 2×2) nuevo
 - [ ] Trend indicators
 - [ ] Export individual de gráficos (PNG)
 - [ ] Tests
