@@ -1,20 +1,30 @@
 /**
  * KPIGrid - Grid de tarjetas KPI con comparación A vs B
  * 
- * Diseño: Icono arriba-derecha, valor grande, "vs. $XXX", badge cambio %
+ * Diseño: Usa componente KPICard con soporte para sparklines
+ * Genera datos temporales para visualizar tendencias históricas
  */
 
 import React from 'react';
-import { Card, CardContent } from '@/shared/components/ui/card.js';
-import { ArrowUp, ArrowDown, Minus, TrendingUp, DollarSign, Users, Activity } from 'lucide-react';
-import { Badge } from '@/shared/components/ui/badge.js';
+import { TrendingUp, DollarSign, Users, Activity } from 'lucide-react';
 import type { KPIResult } from '../../types/dashboard.types.js';
 import type { LucideIcon } from 'lucide-react';
+import { KPICard } from '../KPICard.js';
 
 interface KPIGridProps {
   kpis: KPIResult[];
   groupALabel?: string;
   groupBLabel?: string;
+  /** Datos filtrados para generar sparklines (opcional) */
+  data?: Record<string, unknown>[];
+  /** Campo de fecha para agrupar sparklines (opcional) */
+  dateField?: string;
+  /** Campo del grupo de comparación */
+  groupField?: string;
+  /** Valor del Grupo A */
+  groupAValue?: string;
+  /** Valor del Grupo B */
+  groupBValue?: string;
 }
 
 /**
@@ -34,91 +44,112 @@ const getKPIIcon = (kpiName: string): LucideIcon => {
   return Activity;
 };
 
+/**
+ * Genera sparkline data para un KPI desde datos temporales
+ * Toma los últimos N puntos de datos del Grupo A ordenados por fecha
+ */
+const generateSparklineData = (
+  data: Record<string, unknown>[],
+  dateField: string,
+  groupField: string,
+  groupAValue: string,
+  kpiName: string
+): number[] => {
+  try {
+    // Filtrar por Grupo A
+    const groupAData = data.filter(
+      (row) => String(row[groupField]) === groupAValue
+    );
+
+    // Ordenar por fecha (ascendente)
+    const sortedData = [...groupAData].sort((a, b) => {
+      const dateA = new Date(String(a[dateField])).getTime();
+      const dateB = new Date(String(b[dateField])).getTime();
+      return dateA - dateB;
+    });
+
+    // Extraer valores del KPI (últimos 30 puntos máximo)
+    const values = sortedData
+      .slice(-30) // Últimos 30 puntos
+      .map((row) => {
+        const value = row[kpiName];
+        return typeof value === 'number' ? value : 0;
+      })
+      .filter((v) => !isNaN(v) && isFinite(v));
+
+    return values.length > 0 ? values : [];
+  } catch {
+    return [];
+  }
+};
+
+/**
+ * Formatea valor según su tipo
+ */
+const formatValue = (value: number, format: string): string => {
+  switch (format) {
+    case 'currency':
+      return new Intl.NumberFormat('es-ES', {
+        style: 'currency',
+        currency: 'EUR',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      }).format(value);
+    case 'percentage':
+      return `${value.toFixed(1)}%`;
+    case 'number':
+      if (value >= 10000) {
+        return `${(value / 1000).toFixed(0)}K`;
+      }
+      return new Intl.NumberFormat('es-ES').format(value);
+    default:
+      return String(value);
+  }
+};
+
 export const KPIGrid: React.FC<KPIGridProps> = ({
   kpis,
+  groupALabel = 'Actual',
+  groupBLabel = 'Comparativo',
+  data = [],
+  dateField = '',
+  groupField = '',
+  groupAValue = '',
+  // groupBValue podría usarse en el futuro para sparklines comparativas
 }) => {
-  const formatValue = (value: number, format: string): string => {
-    switch (format) {
-      case 'currency':
-        return new Intl.NumberFormat('es-ES', {
-          style: 'currency',
-          currency: 'EUR',
-          minimumFractionDigits: 0,
-          maximumFractionDigits: 0,
-        }).format(value);
-      case 'percentage':
-        return `${value.toFixed(1)}%`;
-      case 'number':
-        if (value >= 10000) {
-          return `${(value / 1000).toFixed(0)}K`;
-        }
-        return new Intl.NumberFormat('es-ES').format(value);
-      default:
-        return String(value);
-    }
-  };
-
-  const getTrendIcon = (trend: 'up' | 'down' | 'neutral') => {
-    if (trend === 'up') return <ArrowUp className="h-3 w-3" />;
-    if (trend === 'down') return <ArrowDown className="h-3 w-3" />;
-    return <Minus className="h-3 w-3" />;
-  };
-
-  const getBadgeVariant = (trend: 'up' | 'down' | 'neutral'): 'success' | 'destructive' | 'secondary' => {
-    if (trend === 'up') return 'success';
-    if (trend === 'down') return 'destructive';
-    return 'secondary';
-  };
-
   if (kpis.length === 0) {
     return (
-      <Card>
-        <CardContent className="pt-6 text-center text-muted-foreground">
-          No hay KPIs para mostrar
-        </CardContent>
-      </Card>
+      <div className="p-6 text-center text-muted-foreground">
+        No hay KPIs para mostrar
+      </div>
     );
   }
+
+  // Determinar si tenemos datos suficientes para sparklines
+  const hasSparklineData = data.length > 0 && dateField && groupField && groupAValue;
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
       {kpis.map((kpi) => {
-        const Icon = getKPIIcon(kpi.name);
+        const icon = getKPIIcon(kpi.name);
         
+        // Generar sparkline data si hay datos temporales
+        const sparklineData = hasSparklineData
+          ? generateSparklineData(data, dateField, groupField, groupAValue, kpi.name)
+          : [];
+
         return (
-          <Card key={kpi.name}>
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between">
-                <div className="space-y-2">
-                  <p className="text-sm font-medium text-muted-foreground">{kpi.label}</p>
-                  <div className="space-y-1">
-                    <p className="text-3xl font-semibold tracking-tight">
-                      {formatValue(kpi.valueA, kpi.format)}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      vs. {formatValue(kpi.valueB, kpi.format)}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex flex-col items-end gap-2">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
-                    <Icon className="h-5 w-5 text-muted-foreground" />
-                  </div>
-                  <Badge variant={getBadgeVariant(kpi.trend)} className="gap-1">
-                    {getTrendIcon(kpi.trend)}
-                    {isFinite(kpi.diffPercent) ? (
-                      <>
-                        {kpi.diffPercent > 0 ? '+' : ''}
-                        {kpi.diffPercent.toFixed(1)}%
-                      </>
-                    ) : (
-                      'N/A'
-                    )}
-                  </Badge>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          <KPICard
+            key={kpi.name}
+            title={kpi.label}
+            currentValue={formatValue(kpi.valueA, kpi.format)}
+            comparativeValue={formatValue(kpi.valueB, kpi.format)}
+            percentageChange={kpi.diffPercent}
+            icon={icon}
+            groupALabel={groupALabel}
+            groupBLabel={groupBLabel}
+            sparklineData={sparklineData}
+          />
         );
       })}
     </div>

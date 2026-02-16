@@ -210,6 +210,11 @@ export default function DatasetDashboard() {
               kpis={kpis}
               groupALabel={groupALabel}
               groupBLabel={groupBLabel}
+              data={filteredData}
+              dateField={dateField || ''}
+              groupField="_source_group"
+              groupAValue="groupA"
+              groupBValue="groupB"
             />
 
             {/* RFC-006 Trends View: Grid 2×2 de mini-charts temporales */}
