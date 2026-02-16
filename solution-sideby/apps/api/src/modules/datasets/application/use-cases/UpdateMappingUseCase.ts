@@ -270,7 +270,9 @@ export class UpdateMappingUseCase {
    * Valida label y color para un grupo específico.
    */
   private validateGroupConfig(
-    group: NonNullable<UpdateMappingInput["sourceConfig"]>["groupA"] | undefined,
+    group:
+      | NonNullable<UpdateMappingInput["sourceConfig"]>["groupA"]
+      | undefined,
     groupName: string,
   ): void {
     if (!group) return;
