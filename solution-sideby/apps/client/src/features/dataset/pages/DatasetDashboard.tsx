@@ -26,7 +26,6 @@ import { useDatasetDashboard } from '../hooks/useDatasetDashboard.js';
 import { TemplateSelector } from '../components/dashboard/TemplateSelector.js';
 import { DashboardFiltersBar } from '../components/dashboard/DashboardFiltersBar.js';
 import { KPIGrid } from '../components/dashboard/KPIGrid.js';
-import { ComparisonTable } from '../components/dashboard/ComparisonTable.js';
 import { TrendChart } from '../components/dashboard/TrendChart.js';
 import { AIInsights } from '../components/dashboard/AIInsights.js';
 import { TrendsGrid } from '../components/dashboard/TrendsGrid.js';
@@ -270,8 +269,8 @@ export default function DatasetDashboard() {
                 />
               </div>
             ) : (
-              /* Comparison Table - Solo en Executive y Trends */
-              <ComparisonTable
+              /* Summary Table - Tabla de totales en Executive y Trends */
+              <SummaryTable
                 kpis={kpis}
                 groupALabel={groupALabel}
                 groupBLabel={groupBLabel}
