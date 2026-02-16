@@ -29,6 +29,7 @@ import { KPIGrid } from '../components/dashboard/KPIGrid.js';
 import { TrendChart } from '../components/dashboard/TrendChart.js';
 import { AIInsights } from '../components/dashboard/AIInsights.js';
 import { TrendsGrid } from '../components/dashboard/TrendsGrid.js';
+import { DimensionGrid } from '../components/dashboard/DimensionGrid.js';
 import { SummaryTable } from '../components/dashboard/SummaryTable.js';
 import { GranularTable } from '../components/dashboard/GranularTable.js';
 import { CategoryChart } from '../components/dashboard/CategoryChart.js';
@@ -221,12 +222,12 @@ export default function DatasetDashboard() {
               />
             )}
 
-            {/* Trend Chart - Solo si hay dateField y datos*/}
-            {dateField && kpis.length > 0 && filteredData.length > 0 && selectedTemplate !== 'sideby_detailed' && selectedTemplate !== 'sideby_trends' && (
-              <TrendChart
-                data={filteredData}
-                dateField={dateField}
+            {/* RFC-006 Trends View: Grid 2×2 de mini-charts por dimensión */}
+            {selectedTemplate === 'sideby_trends' && categoricalFields.length > 0 && (
+              <DimensionGrid
                 kpis={kpis}
+                data={filteredData}
+                dimensions={categoricalFields}
                 groupALabel={groupALabel}
                 groupBLabel={groupBLabel}
                 groupAColor={groupAColor}
@@ -240,6 +241,19 @@ export default function DatasetDashboard() {
                 data={filteredData}
                 kpis={kpis}
                 dimensions={categoricalFields}
+                groupALabel={groupALabel}
+                groupBLabel={groupBLabel}
+                groupAColor={groupAColor}
+                groupBColor={groupBColor}
+              />
+            )}
+
+            {/* Trend Chart - Solo si hay dateField y datos (no en Detailed ni Trends)*/}
+            {dateField && kpis.length > 0 && filteredData.length > 0 && selectedTemplate !== 'sideby_detailed' && selectedTemplate !== 'sideby_trends' && (
+              <TrendChart
+                data={filteredData}
+                dateField={dateField}
+                kpis={kpis}
                 groupALabel={groupALabel}
                 groupBLabel={groupBLabel}
                 groupAColor={groupAColor}
