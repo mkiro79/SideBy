@@ -19,7 +19,7 @@ const menuItems = [
   { icon: Home, label: "Inicio", path: "/home" },
   // { icon: BarChart3, label: "Dashboards", path: "/dashboards" }, //TODO: Agregar sección de dashboards en el futuro  
   { icon: FileSpreadsheet, label: "Datasets", path: "/datasets" },
-  // { icon: Settings, label: "Configuración", path: "/settings" }, //TODO: Agregar sección de configuración en el futuro
+  { icon: Settings, label: "Configuración", path: "/settings" }, //TODO: Agregar sección de configuración en el futuro
 ];
 
 export function AppSidebar() {
