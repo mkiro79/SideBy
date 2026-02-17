@@ -1,7 +1,7 @@
 # RFC-009 - Refactor Step 3 del Wizard (Dataset SourceConfig)
 
 ## Estado
-- En Progreso (Backend Completo, Frontend Pendiente)
+- Completado (Backend y Frontend Completos)
 
 ## Contexto
 El Step 3 del wizard de carga de datasets solo permite editar nombre y descripcion. Falta exponer en UI y persistir en el guardado final los valores de configuracion de grupos A y B (labels y colores). Esto es necesario para alinear la visualizacion del dashboard con las preferencias del usuario.
@@ -47,7 +47,7 @@ Request body (parcial):
   "aiConfig": { ... },
   "sourceConfig": {
     "groupA": { "label": "...", "color": "#3b82f6" },
-    "groupB": { "label": "...", "color": "#f97316" }
+    "groupB": { "label": "...", "color": "#6366f1" }
   }
 }
 
@@ -75,11 +75,11 @@ Request body (parcial):
 - [x] Alinear DEFAULT_COLOR_GROUP_B con token CSS `data-comparative` (#6366f1) en `validation.rules.ts`
 - [x] Actualizar documentación Swagger en `datasets.swagger.ts` para endpoint PATCH
 
-### Frontend ⏳ (Pendiente)
-- [ ] Crear/actualizar UI en `ConfigurationStep.tsx` con inputs para label y color de Grupo A/B
-- [ ] Extender estado del wizard en `useWizardState.ts` con defaults desde tokens CSS
-- [ ] Actualizar `DataUploadWizard.tsx` para incluir `sourceConfig` en payload del PATCH
-- [ ] Agregar tests de integración para flujo completo del wizard con sourceConfig
+### Frontend ✅ (Completado 2026-02-17)
+- [x] Crear/actualizar UI en `ConfigurationStep.tsx` con inputs para label y color de Grupo A/B
+- [x] Extender estado del wizard en `useWizardState.ts` con defaults desde tokens CSS
+- [x] Actualizar `DataUploadWizard.tsx` para incluir `sourceConfig` en payload del PATCH
+- [x] Agregar tests de integración para flujo completo del wizard con sourceConfig
 
 ## Dependencias
 - DatasetRules (limites y validacion).

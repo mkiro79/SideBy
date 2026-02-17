@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { DatasetRules } from "@/modules/datasets/domain/validation.rules.js";
 
-const hexColorSchema = z
+export const hexColorSchema = z
   .string()
   .regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, "Color inválido");
 
@@ -80,6 +80,8 @@ export const UpdateMappingSchema = z.object({
         .object({
           label: z
             .string()
+            .trim()
+            .min(1, "El label no puede estar vacío")
             .max(
               DatasetRules.MAX_GROUP_LABEL_LENGTH,
               `Máximo ${DatasetRules.MAX_GROUP_LABEL_LENGTH} caracteres`,
@@ -92,6 +94,8 @@ export const UpdateMappingSchema = z.object({
         .object({
           label: z
             .string()
+            .trim()
+            .min(1, "El label no puede estar vacío")
             .max(
               DatasetRules.MAX_GROUP_LABEL_LENGTH,
               `Máximo ${DatasetRules.MAX_GROUP_LABEL_LENGTH} caracteres`,

@@ -396,6 +396,68 @@ describe("UpdateMappingUseCase", () => {
         }),
       ).rejects.toThrow(MappingValidationError);
     });
+
+    it("should throw error if group label is empty or whitespace-only", async () => {
+      repository.seed(createTestDataset());
+
+      // Test empty string
+      await expect(
+        useCase.execute({
+          datasetId: "dataset_123",
+          ownerId: "user_123",
+          meta: { name: "Test Dataset" },
+          schemaMapping: {
+            dimensionField: "fecha",
+            kpiFields: [
+              {
+                id: "kpi_1",
+                columnName: "ventas",
+                label: "Ventas",
+                format: "currency",
+              },
+            ],
+          },
+          dashboardLayout: {
+            templateId: "sideby_executive",
+            highlightedKpis: ["kpi_1"],
+          },
+          sourceConfig: {
+            groupA: {
+              label: "",
+            },
+          },
+        }),
+      ).rejects.toThrow(MappingValidationError);
+
+      // Test whitespace-only string
+      await expect(
+        useCase.execute({
+          datasetId: "dataset_123",
+          ownerId: "user_123",
+          meta: { name: "Test Dataset" },
+          schemaMapping: {
+            dimensionField: "fecha",
+            kpiFields: [
+              {
+                id: "kpi_1",
+                columnName: "ventas",
+                label: "Ventas",
+                format: "currency",
+              },
+            ],
+          },
+          dashboardLayout: {
+            templateId: "sideby_executive",
+            highlightedKpis: ["kpi_1"],
+          },
+          sourceConfig: {
+            groupB: {
+              label: "   ",
+            },
+          },
+        }),
+      ).rejects.toThrow(MappingValidationError);
+    });
   });
 
   // ========================================

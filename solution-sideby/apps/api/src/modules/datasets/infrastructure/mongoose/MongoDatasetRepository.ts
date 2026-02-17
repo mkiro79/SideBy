@@ -168,25 +168,9 @@ export class MongoDatasetRepository implements DatasetRepository {
         updatePayload.aiConfig = updates.aiConfig;
       }
 
-      // Manejar sourceConfig (solo label/color para evitar sobrescribir metadatos)
-      if (updates.sourceConfig?.groupA?.label !== undefined) {
-        updatePayload["sourceConfig.groupA.label"] =
-          updates.sourceConfig.groupA.label;
-      }
-      if (updates.sourceConfig?.groupA?.color !== undefined) {
-        updatePayload["sourceConfig.groupA.color"] =
-          updates.sourceConfig.groupA.color;
-      }
-      if (updates.sourceConfig?.groupB?.label !== undefined) {
-        updatePayload["sourceConfig.groupB.label"] =
-          updates.sourceConfig.groupB.label;
-      }
-      if (updates.sourceConfig?.groupB?.color !== undefined) {
-        updatePayload["sourceConfig.groupB.color"] =
-          updates.sourceConfig.groupB.color;
-      }
-
+      // Manejar sourceConfig como objeto completo (ya mergeado en el caso de uso)
       if (updates.sourceConfig) {
+        updatePayload.sourceConfig = updates.sourceConfig;
         logger.debug(
           {
             groupA: updates.sourceConfig.groupA,

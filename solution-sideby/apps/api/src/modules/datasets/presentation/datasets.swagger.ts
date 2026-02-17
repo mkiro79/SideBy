@@ -10,6 +10,7 @@
 import { registry } from "@/infrastructure/openapi/openapi.registry.js";
 import { z } from "zod";
 import { extendZodWithOpenApi } from "@asteasolutions/zod-to-openapi";
+import { hexColorSchema } from "./validators/datasets.schemas.js";
 
 // Extender Zod con capacidades OpenAPI
 extendZodWithOpenApi(z);
@@ -312,13 +313,13 @@ registry.registerPath({
                 groupA: z
                   .object({
                     label: z.string().max(50).optional(),
-                    color: z.string().optional(),
+                    color: hexColorSchema.optional(),
                   })
                   .optional(),
                 groupB: z
                   .object({
                     label: z.string().max(50).optional(),
-                    color: z.string().optional(),
+                    color: hexColorSchema.optional(),
                   })
                   .optional(),
               })
