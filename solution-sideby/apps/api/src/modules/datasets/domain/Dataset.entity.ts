@@ -137,7 +137,7 @@ export interface DatasetMetadata {
  *   },
  *   sourceConfig: {
  *     groupA: { label: "2024", color: "#3b82f6", originalFileName: "q1_2024.csv", rowCount: 1500 },
- *     groupB: { label: "2023", color: "#ef4444", originalFileName: "q1_2023.csv", rowCount: 1200 }
+ *     groupB: { label: "2023", color: "#6366f1", originalFileName: "q1_2023.csv", rowCount: 1200 }
  *   },
  *   data: [
  *     { _source_group: "groupA", fecha: "2024-01-01", ventas: 10000 },

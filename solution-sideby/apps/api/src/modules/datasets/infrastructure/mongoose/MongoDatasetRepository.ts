@@ -127,10 +127,15 @@ export class MongoDatasetRepository implements DatasetRepository {
       // Manejar schemaMapping - usar $set directo porque viene el objeto completo
       if (updates.schemaMapping) {
         // Validar que tenga los campos requeridos para evitar updates parciales inconsistentes
-        if (!updates.schemaMapping.dimensionField || !updates.schemaMapping.kpiFields) {
-          throw new Error("schemaMapping incompleto: se requiere dimensionField y kpiFields");
+        if (
+          !updates.schemaMapping.dimensionField ||
+          !updates.schemaMapping.kpiFields
+        ) {
+          throw new Error(
+            "schemaMapping incompleto: se requiere dimensionField y kpiFields",
+          );
         }
-        
+
         updatePayload.schemaMapping = updates.schemaMapping;
         logger.debug(
           {
@@ -147,7 +152,7 @@ export class MongoDatasetRepository implements DatasetRepository {
         if (!updates.dashboardLayout.templateId) {
           throw new Error("dashboardLayout incompleto: se requiere templateId");
         }
-        
+
         updatePayload.dashboardLayout = updates.dashboardLayout;
         logger.debug(
           {
@@ -161,6 +166,34 @@ export class MongoDatasetRepository implements DatasetRepository {
       // Manejar aiConfig
       if (updates.aiConfig !== undefined) {
         updatePayload.aiConfig = updates.aiConfig;
+      }
+
+      // Manejar sourceConfig (solo label/color para evitar sobrescribir metadatos)
+      if (updates.sourceConfig?.groupA?.label !== undefined) {
+        updatePayload["sourceConfig.groupA.label"] =
+          updates.sourceConfig.groupA.label;
+      }
+      if (updates.sourceConfig?.groupA?.color !== undefined) {
+        updatePayload["sourceConfig.groupA.color"] =
+          updates.sourceConfig.groupA.color;
+      }
+      if (updates.sourceConfig?.groupB?.label !== undefined) {
+        updatePayload["sourceConfig.groupB.label"] =
+          updates.sourceConfig.groupB.label;
+      }
+      if (updates.sourceConfig?.groupB?.color !== undefined) {
+        updatePayload["sourceConfig.groupB.color"] =
+          updates.sourceConfig.groupB.color;
+      }
+
+      if (updates.sourceConfig) {
+        logger.debug(
+          {
+            groupA: updates.sourceConfig.groupA,
+            groupB: updates.sourceConfig.groupB,
+          },
+          "Setting sourceConfig in update",
+        );
       }
 
       const doc = await DatasetModel.findByIdAndUpdate(

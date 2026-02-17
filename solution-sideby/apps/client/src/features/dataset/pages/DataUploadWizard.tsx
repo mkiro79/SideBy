@@ -40,6 +40,7 @@ export default function DataUploadWizard() {
     mapping,
     metadata,
     aiConfig,
+    sourceConfig,
     isLoading,
     nextStep,
     prevStep,
@@ -177,6 +178,16 @@ export default function DataUploadWizard() {
               userContext: aiConfig.userContext || undefined,
             }
           : undefined,
+        sourceConfig: {
+          groupA: {
+            label: sourceConfig.groupA.label,
+            color: sourceConfig.groupA.color,
+          },
+          groupB: {
+            label: sourceConfig.groupB.label,
+            color: sourceConfig.groupB.color,
+          },
+        },
       };
       
       await update(datasetId, payload);

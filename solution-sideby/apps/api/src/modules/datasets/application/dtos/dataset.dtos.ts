@@ -44,7 +44,7 @@ export interface CreateDatasetInput {
   /** Etiqueta personalizada para el Grupo B (opcional, default: "Grupo B") */
   groupBLabel?: string;
 
-  /** Color para el Grupo B (opcional, default: #ef4444) */
+  /** Color para el Grupo B (opcional, default: #6366f1) */
   groupBColor?: string;
 }
 
@@ -104,6 +104,18 @@ export interface UpdateMappingInput {
 
   /** Configuración de IA (opcional) */
   aiConfig?: AIConfig;
+
+  /** Configuración de grupos (opcional) */
+  sourceConfig?: {
+    groupA?: {
+      label?: string;
+      color?: string;
+    };
+    groupB?: {
+      label?: string;
+      color?: string;
+    };
+  };
 }
 
 /**

@@ -16,6 +16,7 @@ import type {
   FileGroup,
   ColumnMapping,
   KPIMappingField,
+  SourceConfigUpdate,
 } from "../types/wizard.types.js";
 
 // ============================================================================
@@ -34,6 +35,14 @@ const initialMapping: ColumnMapping = {
   kpiFields: [],
 };
 
+const getCssTokenColor = (tokenName: string, fallback: string): string => {
+  if (typeof window === "undefined") return fallback;
+  const value = getComputedStyle(document.documentElement)
+    .getPropertyValue(tokenName)
+    .trim();
+  return value || fallback;
+};
+
 const initialState: WizardState = {
   currentStep: 1,
   datasetId: null, // NEW: Store datasetId from Phase 1
@@ -47,6 +56,16 @@ const initialState: WizardState = {
   aiConfig: {
     enabled: false,
     userContext: "",
+  },
+  sourceConfig: {
+    groupA: {
+      label: "Grupo A",
+      color: getCssTokenColor("--color-data-primary", "#3b82f6"),
+    },
+    groupB: {
+      label: "Grupo B",
+      color: getCssTokenColor("--color-data-comparative", "#6366f1"),
+    },
   },
   isLoading: false,
   error: null,
@@ -78,6 +97,7 @@ interface WizardActions {
   // Configuration
   setMetadata: (metadata: Partial<WizardState["metadata"]>) => void;
   setAIConfig: (config: Partial<WizardState["aiConfig"]>) => void;
+  setSourceConfig: (config: SourceConfigUpdate) => void;
 
   // Global
   setLoading: (isLoading: boolean) => void;
@@ -197,6 +217,15 @@ export const useWizardState = create<WizardState & WizardActions>()(
         }));
       },
 
+      setSourceConfig: (config) => {
+        set((state) => ({
+          sourceConfig: {
+            groupA: { ...state.sourceConfig.groupA, ...config.groupA },
+            groupB: { ...state.sourceConfig.groupB, ...config.groupB },
+          },
+        }));
+      },
+
       // ============================================================================
       // GLOBAL ACTIONS
       // ============================================================================
@@ -260,6 +289,7 @@ export const useWizardState = create<WizardState & WizardActions>()(
         mapping: state.mapping,
         metadata: state.metadata,
         aiConfig: state.aiConfig,
+        sourceConfig: state.sourceConfig,
       }),
     },
   ),

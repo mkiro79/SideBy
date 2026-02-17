@@ -46,6 +46,16 @@ const createMockState = (overrides: Partial<WizardState> = {}): WizardState => (
     enabled: false,
     userContext: "",
   },
+  sourceConfig: {
+    groupA: {
+      label: "Grupo A",
+      color: "#3b82f6",
+    },
+    groupB: {
+      label: "Grupo B",
+      color: "#6366f1",
+    },
+  },
   isLoading: false,
   error: null,
   ...overrides,

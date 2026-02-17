@@ -33,7 +33,17 @@ function formatCellValue(value: unknown): string {
 }
 
 export function ConfigurationStep() {
-  const { metadata, aiConfig, setMetadata, setAIConfig, fileA, fileB, mapping } = useWizardState();
+  const {
+    metadata,
+    aiConfig,
+    sourceConfig,
+    setMetadata,
+    setAIConfig,
+    setSourceConfig,
+    fileA,
+    fileB,
+    mapping,
+  } = useWizardState();
   
   const sampleDataA = fileA.parsedData ? getSampleRows(fileA.parsedData, 3) : [];
   const sampleDataB = fileB.parsedData ? getSampleRows(fileB.parsedData, 3) : [];
@@ -58,46 +68,6 @@ export function ConfigurationStep() {
           Tus archivos han sido procesados y validados. Completa la configuración para crear el dataset.
         </p>
       </div>
-      
-      {/* Metadata Form */}
-      <Card className="p-6 space-y-6">
-        <div className="space-y-2">
-          <h3 className="text-lg font-semibold">Información del dataset</h3>
-        </div>
-        
-        {/* Nombre */}
-        <div className="space-y-2">
-          <Label htmlFor="dataset-name">
-            Nombre <span className="text-destructive">*</span>
-          </Label>
-          <Input
-            id="dataset-name"
-            value={metadata.name}
-            onChange={(e) => setMetadata({ name: e.target.value })}
-            placeholder="Ej: Ventas Q1 2024 vs Q1 2023"
-            maxLength={100}
-          />
-          <p className="text-xs text-muted-foreground">
-            {metadata.name.length}/100 caracteres
-          </p>
-        </div>
-        
-        {/* Descripción */}
-        <div className="space-y-2">
-          <Label htmlFor="dataset-description">Descripción (opcional)</Label>
-          <Textarea
-            id="dataset-description"
-            value={metadata.description}
-            onChange={(e) => setMetadata({ description: e.target.value })}
-            placeholder="Describe el contenido y propósito de este dataset..."
-            rows={4}
-            maxLength={500}
-          />
-          <p className="text-xs text-muted-foreground">
-            {metadata.description.length}/500 caracteres
-          </p>
-        </div>
-      </Card>
       
       {/* AI Configuration - Controlado por Feature Flag */}
       {FEATURES.AI_ENABLED && (
@@ -317,6 +287,29 @@ export function ConfigurationStep() {
             <p className="font-medium text-muted-foreground">KPIs configurados</p>
             <p>{(mapping.kpiFields || []).length} campo(s)</p>
           </div>
+
+          {/* Grupos */}
+          <div>
+            <p className="font-medium text-muted-foreground">Grupo A</p>
+            <div className="mt-1 flex items-center gap-2">
+              <span
+                className="h-3 w-3 rounded-full border"
+                style={{ backgroundColor: sourceConfig.groupA.color }}
+              />
+              <p>{sourceConfig.groupA.label}</p>
+            </div>
+          </div>
+
+          <div>
+            <p className="font-medium text-muted-foreground">Grupo B</p>
+            <div className="mt-1 flex items-center gap-2">
+              <span
+                className="h-3 w-3 rounded-full border"
+                style={{ backgroundColor: sourceConfig.groupB.color }}
+              />
+              <p>{sourceConfig.groupB.label}</p>
+            </div>
+          </div>
         </div>
         
         {/* Sample Data Preview */}
@@ -381,6 +374,142 @@ export function ConfigurationStep() {
                 })}
               </tbody>
             </table>
+          </div>
+        </div>
+      </Card>
+
+      {/* Información del dataset (antes de definición de grupos) */}
+      <Card className="p-6 space-y-6">
+        <div className="space-y-2">
+          <h3 className="text-lg font-semibold">Información del dataset</h3>
+        </div>
+        
+        {/* Nombre */}
+        <div className="space-y-2">
+          <Label htmlFor="dataset-name">
+            Nombre <span className="text-destructive">*</span>
+          </Label>
+          <Input
+            id="dataset-name"
+            value={metadata.name}
+            onChange={(e) => setMetadata({ name: e.target.value })}
+            placeholder="Ej: Ventas Q1 2024 vs Q1 2023"
+            maxLength={100}
+          />
+          <p className="text-xs text-muted-foreground">
+            {metadata.name.length}/100 caracteres
+          </p>
+        </div>
+        
+        {/* Descripción */}
+        <div className="space-y-2">
+          <Label htmlFor="dataset-description">Descripción (opcional)</Label>
+          <Textarea
+            id="dataset-description"
+            value={metadata.description}
+            onChange={(e) => setMetadata({ description: e.target.value })}
+            placeholder="Describe el contenido y propósito de este dataset..."
+            rows={4}
+            maxLength={500}
+          />
+          <p className="text-xs text-muted-foreground">
+            {metadata.description.length}/500 caracteres
+          </p>
+        </div>
+      </Card>
+
+      {/* Configuracion de grupos (al final de la pagina) */}
+      <Card className="p-6 space-y-6">
+        <div className="space-y-2">
+          <h3 className="text-lg font-semibold">Configuración de grupos</h3>
+          <p className="text-sm text-muted-foreground">
+            Personaliza etiquetas y colores para los grupos A y B.
+          </p>
+        </div>
+
+        <div className="grid gap-6 md:grid-cols-2">
+          <div className="space-y-4">
+            <h4 className="text-sm font-semibold text-data-primary">Grupo A</h4>
+            <div className="space-y-2">
+              <Label htmlFor="group-a-label">Etiqueta Grupo A</Label>
+              <Input
+                id="group-a-label"
+                value={sourceConfig.groupA.label}
+                onChange={(e) =>
+                  setSourceConfig({ groupA: { label: e.target.value } })
+                }
+                placeholder="Ej: Actual"
+                maxLength={50}
+              />
+              <p className="text-xs text-muted-foreground">
+                {sourceConfig.groupA.label.length}/50 caracteres
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="group-a-color">Color Grupo A</Label>
+              <div className="flex items-center gap-3">
+                <Input
+                  id="group-a-color"
+                  type="color"
+                  value={sourceConfig.groupA.color}
+                  onChange={(e) =>
+                    setSourceConfig({ groupA: { color: e.target.value } })
+                  }
+                  className="h-10 w-14 p-1"
+                />
+                <Input
+                  aria-label="Hex Grupo A"
+                  value={sourceConfig.groupA.color}
+                  onChange={(e) =>
+                    setSourceConfig({ groupA: { color: e.target.value } })
+                  }
+                  placeholder="#3b82f6"
+                  maxLength={7}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <h4 className="text-sm font-semibold text-data-comparative">Grupo B</h4>
+            <div className="space-y-2">
+              <Label htmlFor="group-b-label">Etiqueta Grupo B</Label>
+              <Input
+                id="group-b-label"
+                value={sourceConfig.groupB.label}
+                onChange={(e) =>
+                  setSourceConfig({ groupB: { label: e.target.value } })
+                }
+                placeholder="Ej: Comparativo"
+                maxLength={50}
+              />
+              <p className="text-xs text-muted-foreground">
+                {sourceConfig.groupB.label.length}/50 caracteres
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="group-b-color">Color Grupo B</Label>
+              <div className="flex items-center gap-3">
+                <Input
+                  id="group-b-color"
+                  type="color"
+                  value={sourceConfig.groupB.color}
+                  onChange={(e) =>
+                    setSourceConfig({ groupB: { color: e.target.value } })
+                  }
+                  className="h-10 w-14 p-1"
+                />
+                <Input
+                  aria-label="Hex Grupo B"
+                  value={sourceConfig.groupB.color}
+                  onChange={(e) =>
+                    setSourceConfig({ groupB: { color: e.target.value } })
+                  }
+                  placeholder="#6366f1"
+                  maxLength={7}
+                />
+              </div>
+            </div>
           </div>
         </div>
       </Card>

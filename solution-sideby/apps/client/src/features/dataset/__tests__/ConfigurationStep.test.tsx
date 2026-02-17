@@ -16,6 +16,7 @@ import * as featuresModule from '../../../config/features.js';
 
 const mockSetMetadata = vi.fn();
 const mockSetAIConfig = vi.fn();
+const mockSetSourceConfig = vi.fn();
 
 const baseMockState = {
   currentStep: 3,
@@ -59,6 +60,16 @@ const baseMockState = {
     enabled: false,
     userContext: '',
   },
+  sourceConfig: {
+    groupA: {
+      label: 'Grupo A',
+      color: '#3b82f6',
+    },
+    groupB: {
+      label: 'Grupo B',
+      color: '#6366f1',
+    },
+  },
   isLoading: false,
   error: null,
   setFileA: vi.fn(),
@@ -72,6 +83,7 @@ const baseMockState = {
   removeKPIField: vi.fn(),
   setMetadata: mockSetMetadata,
   setAIConfig: mockSetAIConfig,
+  setSourceConfig: mockSetSourceConfig,
   setLoading: vi.fn(),
   setError: vi.fn(),
   reset: vi.fn(),
@@ -322,6 +334,43 @@ describe('[TDD] ConfigurationStep Component', () => {
   // ==========================================================================
   // SUMMARY PREVIEW TESTS
   // ==========================================================================
+
+  describe('Group Configuration', () => {
+    it('[RED] should render group label and color inputs', () => {
+      render(<ConfigurationStep />);
+
+      expect(screen.getByLabelText(/etiqueta grupo a/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/color grupo a/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/etiqueta grupo b/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/color grupo b/i)).toBeInTheDocument();
+    });
+
+    it('[RED] should call setSourceConfig when group labels change', () => {
+      render(<ConfigurationStep />);
+
+      const labelAInput = screen.getByLabelText(/etiqueta grupo a/i);
+      fireEvent.change(labelAInput, { target: { value: 'Actual' } });
+
+      const labelBInput = screen.getByLabelText(/etiqueta grupo b/i);
+      fireEvent.change(labelBInput, { target: { value: 'Comparativo' } });
+
+      expect(mockSetSourceConfig).toHaveBeenCalledWith({ groupA: { label: 'Actual' } });
+      expect(mockSetSourceConfig).toHaveBeenCalledWith({ groupB: { label: 'Comparativo' } });
+    });
+
+    it('[RED] should call setSourceConfig when group colors change', () => {
+      render(<ConfigurationStep />);
+
+      const colorAInput = screen.getByLabelText(/color grupo a/i);
+      fireEvent.change(colorAInput, { target: { value: '#123456' } });
+
+      const colorBInput = screen.getByLabelText(/color grupo b/i);
+      fireEvent.change(colorBInput, { target: { value: '#654321' } });
+
+      expect(mockSetSourceConfig).toHaveBeenCalledWith({ groupA: { color: '#123456' } });
+      expect(mockSetSourceConfig).toHaveBeenCalledWith({ groupB: { color: '#654321' } });
+    });
+  });
 
   describe('Summary Preview', () => {
     it('[RED] should display File A information', () => {

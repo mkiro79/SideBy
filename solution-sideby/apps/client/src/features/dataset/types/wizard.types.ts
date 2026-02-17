@@ -84,6 +84,16 @@ export interface KPIMappingField {
 // WIZARD STATE
 // ============================================================================
 
+export interface GroupConfigDraft {
+  label: string;
+  color: string;
+}
+
+export interface SourceConfigUpdate {
+  groupA?: Partial<GroupConfigDraft>;
+  groupB?: Partial<GroupConfigDraft>;
+}
+
 export interface WizardState {
   currentStep: WizardStep;
 
@@ -108,6 +118,10 @@ export interface WizardState {
   aiConfig: {
     enabled: boolean;
     userContext: string;
+  };
+  sourceConfig: {
+    groupA: GroupConfigDraft;
+    groupB: GroupConfigDraft;
   };
 
   // Global state

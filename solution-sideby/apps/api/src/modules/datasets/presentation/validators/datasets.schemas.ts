@@ -1,6 +1,10 @@
 import { z } from "zod";
 import { DatasetRules } from "@/modules/datasets/domain/validation.rules.js";
 
+const hexColorSchema = z
+  .string()
+  .regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, "Color inválido");
+
 /**
  * Schema de validación para actualizar el mapping de un dataset.
  * Valida la estructura completa de configuración enviada por el frontend.
@@ -66,6 +70,35 @@ export const UpdateMappingSchema = z.object({
           DatasetRules.MAX_AI_CONTEXT_LENGTH,
           `Máximo ${DatasetRules.MAX_AI_CONTEXT_LENGTH} caracteres`,
         )
+        .optional(),
+    })
+    .optional(),
+
+  sourceConfig: z
+    .object({
+      groupA: z
+        .object({
+          label: z
+            .string()
+            .max(
+              DatasetRules.MAX_GROUP_LABEL_LENGTH,
+              `Máximo ${DatasetRules.MAX_GROUP_LABEL_LENGTH} caracteres`,
+            )
+            .optional(),
+          color: hexColorSchema.optional(),
+        })
+        .optional(),
+      groupB: z
+        .object({
+          label: z
+            .string()
+            .max(
+              DatasetRules.MAX_GROUP_LABEL_LENGTH,
+              `Máximo ${DatasetRules.MAX_GROUP_LABEL_LENGTH} caracteres`,
+            )
+            .optional(),
+          color: hexColorSchema.optional(),
+        })
         .optional(),
     })
     .optional(),
