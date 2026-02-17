@@ -32,6 +32,13 @@ function formatCellValue(value: unknown): string {
   return String(value as string | number | boolean | bigint);
 }
 
+/**
+ * Valida si un string es un color hexadecimal válido (#RGB o #RRGGBB)
+ */
+function isValidHexColor(color: string): boolean {
+  return /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(color);
+}
+
 export function ConfigurationStep() {
   const {
     metadata,
@@ -460,9 +467,13 @@ export function ConfigurationStep() {
                 <Input
                   aria-label="Hex Grupo A"
                   value={sourceConfig.groupA.color}
-                  onChange={(e) =>
-                    setSourceConfig({ groupA: { color: e.target.value } })
-                  }
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    // Solo actualizar si es vacío o un color hex válido
+                    if (value === '' || isValidHexColor(value)) {
+                      setSourceConfig({ groupA: { color: value } });
+                    }
+                  }}
                   placeholder="#3b82f6"
                   maxLength={7}
                 />
@@ -502,9 +513,13 @@ export function ConfigurationStep() {
                 <Input
                   aria-label="Hex Grupo B"
                   value={sourceConfig.groupB.color}
-                  onChange={(e) =>
-                    setSourceConfig({ groupB: { color: e.target.value } })
-                  }
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    // Solo actualizar si es vacío o un color hex válido
+                    if (value === '' || isValidHexColor(value)) {
+                      setSourceConfig({ groupB: { color: value } });
+                    }
+                  }}
                   placeholder="#6366f1"
                   maxLength={7}
                 />
