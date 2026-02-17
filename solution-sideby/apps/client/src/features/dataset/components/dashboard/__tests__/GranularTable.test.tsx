@@ -331,7 +331,7 @@ describe('GranularTable', () => {
     it('debe formatear números sin símbolo', () => {
       render(<GranularTable {...defaultProps} />);
       
-      // Units sold es formato number (aparece como "15 → 10" - A → B)
+      // Units sold es formato number (aparece como "15 → 10" - valueA 2023 → valueB 2024)
       const ballRow = screen.getByText('Balón').closest('tr');
       expect(within(ballRow!).getByText(/15\s*→\s*10/)).toBeInTheDocument();
     });
