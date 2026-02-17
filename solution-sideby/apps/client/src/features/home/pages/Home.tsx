@@ -5,6 +5,7 @@ import { Button } from "@/shared/components/ui/button";
 import { Badge } from "@/shared/components/ui/badge";
 import { FileSpreadsheet, BarChart3, Bot } from "lucide-react";
 import { useAuthStore } from "@/features/auth/store/auth.store.js";
+import { useNavigate } from "react-router-dom";
 
 const features = [
   { icon: FileSpreadsheet, title: "Sube tus Datasets", description: "Importa archivos CSV con tus datos actuales", id: "upload-datasets" },
@@ -14,7 +15,12 @@ const features = [
 
 const Home = () => {
   const { user } = useAuthStore();
+  const navigate = useNavigate();
   const userName = user?.name || user?.email?.split('@')[0] || "Usuario";
+
+  const goToDatasetUpload = () => {
+    navigate('/datasets/upload');
+  };
 
   return (
     <SidebarProvider defaultOpen={true}>
@@ -37,7 +43,20 @@ const Home = () => {
               <h2 className="text-xl font-semibold mb-4">¿Qué puedes crear?</h2>
               <div className="grid gap-4 md:grid-cols-3">
                 {features.map((feature) => (
-                  <Card key={feature.id} className="group hover:border-primary/50 transition-colors cursor-pointer">
+                  <Card
+                    key={feature.id}
+                    className="group hover:border-primary/50 transition-colors cursor-pointer"
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Ir a crear nueva comparación: ${feature.title}`}
+                    onClick={goToDatasetUpload}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        goToDatasetUpload();
+                      }
+                    }}
+                  >
                     <CardContent className="p-6">
                       <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary mb-4">
                         <feature.icon className="h-6 w-6" />
@@ -52,7 +71,11 @@ const Home = () => {
 
             {/* CTA Final */}
             <section className="text-center py-6">
-              <Button size="lg" className="gap-2">
+              <Button
+                size="lg"
+                className="gap-2"
+                onClick={goToDatasetUpload}
+              >
                 <FileSpreadsheet className="h-5 w-5" />
                 Crear Nueva Comparación
               </Button>
