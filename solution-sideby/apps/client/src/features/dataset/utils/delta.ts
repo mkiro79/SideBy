@@ -22,7 +22,11 @@ export function calculateDelta(
 ): DeltaResult {
   const deltaAbs = currentValue - referenceValue;
   const deltaPercent =
-    referenceValue !== 0 ? (deltaAbs / referenceValue) * 100 : Infinity;
+    referenceValue !== 0
+      ? (deltaAbs / referenceValue) * 100
+      : currentValue === 0
+        ? 0
+        : Infinity;
 
   const trend: DeltaTrend =
     !isFinite(deltaPercent) || Math.abs(deltaPercent) < 1
