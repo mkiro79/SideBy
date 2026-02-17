@@ -149,7 +149,7 @@ export function MiniTrendChart({
           <div>
             <h4 className="text-sm font-medium text-muted-foreground">{kpi.label}</h4>
             <p className="text-2xl font-bold mt-1">
-              {formatValue(kpi.valueB, kpi.format)}
+              {formatValue(kpi.valueA, kpi.format)}
             </p>
           </div>
           <Badge variant={getBadgeVariant()} className="gap-1">

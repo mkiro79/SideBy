@@ -11,6 +11,7 @@
 
 import { useMemo } from "react";
 import { useDataset } from "./useDataset.js";
+import { calculateDelta } from "@/features/dataset/utils/delta.js";
 import type {
   DashboardTemplateId,
   DashboardFilters,
@@ -156,25 +157,16 @@ export const useDatasetDashboard = ({
       const valueA = calculateAggregate(dataA, columnName);
       const valueB = calculateAggregate(dataB, columnName);
 
-      // Diferencia (B - A): Crecimiento desde Grupo A (base) hacia Grupo B (actual)
-      const diff = valueB - valueA;
-      const diffPercent = valueA !== 0 ? (diff / valueA) * 100 : Infinity;
-
-      // Tendencia (asumiendo que positivo es mejor por defecto)
-      const trend: "up" | "down" | "neutral" =
-        !isFinite(diffPercent) || Math.abs(diffPercent) < 1
-          ? "neutral"
-          : diffPercent > 0
-            ? "up"
-            : "down";
+      // Delta = actual (A) - referencia (B)
+      const { deltaAbs, deltaPercent, trend } = calculateDelta(valueA, valueB);
 
       return {
         name: columnName,
         label: label || columnName,
         valueA,
         valueB,
-        diff,
-        diffPercent,
+        diff: deltaAbs,
+        diffPercent: deltaPercent,
         format: format || "number",
         trend,
       };
