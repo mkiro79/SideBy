@@ -179,6 +179,7 @@ export interface DatasetSummary {
       rowCount: number;
     };
   };
+  kpis?: string[];
   totalRows: number;
 }
 
