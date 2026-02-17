@@ -62,7 +62,9 @@ export class ListDatasetsUseCase {
         updatedAt: dataset.meta.updatedAt,
       },
       sourceConfig: dataset.sourceConfig,
-      kpis: dataset.schemaMapping?.kpiFields.map((kpiField) => kpiField.label) ?? [],
+      kpis:
+        dataset.schemaMapping?.kpiFields.map((kpiField) => kpiField.label) ??
+        [],
       totalRows: dataset.data.length,
     }));
 

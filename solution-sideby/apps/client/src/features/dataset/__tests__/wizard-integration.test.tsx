@@ -391,5 +391,57 @@ describe('[INTEGRATION] Dataset Creation Wizard', () => {
         expect(mockNavigate).toHaveBeenCalledWith('/datasets');
       });
     });
+
+    it('[TEST] should show cancel confirmation dialog on step 2 and navigate only after confirm', async () => {
+      const user = userEvent.setup();
+
+      render(
+        <BrowserRouter>
+          <DataUploadWizard />
+        </BrowserRouter>
+      );
+
+      const fileInputA = screen.getAllByLabelText(/seleccionar archivo a/i)[0] as HTMLInputElement;
+      const fileA = createMockCSVFile('ventas_2024.csv');
+      await user.upload(fileInputA, fileA);
+
+      const fileInputB = screen.getAllByLabelText(/seleccionar archivo b/i)[0] as HTMLInputElement;
+      const fileB = createMockCSVFile('ventas_2023.csv', 'fecha,region,ventas\n2023-01,Norte,38000\n2023-02,Sur,32000');
+      await user.upload(fileInputB, fileB);
+
+      const uploadButton = screen.getByRole('button', { name: /subir archivos/i });
+      await waitFor(() => {
+        expect(uploadButton).not.toBeDisabled();
+      });
+      await user.click(uploadButton);
+
+      await waitFor(() => {
+        expect(screen.getAllByText(/mapeo de columnas/i)[0]).toBeInTheDocument();
+      });
+
+      const cancelButtons = screen.getAllByRole('button', { name: /cancelar/i });
+      await user.click(cancelButtons[0]);
+
+      expect(screen.getByText(/¿cancelar configuración\?/i)).toBeInTheDocument();
+      expect(mockNavigate).not.toHaveBeenCalledWith('/datasets');
+
+      const continueEditingButton = screen.getByRole('button', { name: /continuar editando/i });
+      await user.click(continueEditingButton);
+
+      await waitFor(() => {
+        expect(screen.queryByText(/¿cancelar configuración\?/i)).not.toBeInTheDocument();
+      });
+      expect(mockNavigate).not.toHaveBeenCalledWith('/datasets');
+
+      const cancelButtonsAgain = screen.getAllByRole('button', { name: /cancelar/i });
+      await user.click(cancelButtonsAgain[0]);
+
+      const confirmCancelButton = screen.getByRole('button', { name: /sí, cancelar/i });
+      await user.click(confirmCancelButton);
+
+      await waitFor(() => {
+        expect(mockNavigate).toHaveBeenCalledWith('/datasets');
+      });
+    });
   });
 });
