@@ -154,14 +154,14 @@ describe('MiniTrendChart', () => {
   describe('Formateo de Valores', () => {
     it('debe formatear currency con símbolo $', () => {
       render(<MiniTrendChart {...defaultProps} />);
-      expect(screen.getByText(/\$300/)).toBeInTheDocument();
+      expect(screen.getByText(/\$250/)).toBeInTheDocument();
     });
 
     it('debe formatear percentage con símbolo %', () => {
       const kpiPercentage: KPIResult = {
         ...mockKPI,
         format: 'percentage',
-        valueB: 45.5,
+        valueA: 45.5,
       };
 
       render(<MiniTrendChart {...defaultProps} kpi={kpiPercentage} />);
@@ -173,7 +173,7 @@ describe('MiniTrendChart', () => {
         ...mockKPI,
         label: 'Unidades',
         format: 'number',
-        valueB: 1234,
+        valueA: 1234,
       };
 
       render(<MiniTrendChart {...defaultProps} kpi={kpiNumber} />);
@@ -205,7 +205,7 @@ describe('MiniTrendChart', () => {
     it('debe manejar valores muy grandes con formato apropiado', () => {
       const kpiBig: KPIResult = {
         ...mockKPI,
-        valueB: 1234567,
+        valueA: 1234567,
       };
 
       render(<MiniTrendChart {...defaultProps} kpi={kpiBig} />);
