@@ -82,8 +82,8 @@ describe('GranularTable', () => {
     data: mockData,
     dimensions: ['product', 'region'],
     kpis: mockKPIs,
-    groupALabel: '2024',
-    groupBLabel: '2014',
+    groupALabel: '2023',
+    groupBLabel: '2024',
   };
 
   describe('Renderizado básico', () => {
@@ -331,9 +331,9 @@ describe('GranularTable', () => {
     it('debe formatear números sin símbolo', () => {
       render(<GranularTable {...defaultProps} />);
       
-      // Units sold es formato number (aparece como "10 → 15")
+      // Units sold es formato number (aparece como "15 → 10" - valueA 2023 → valueB 2024)
       const ballRow = screen.getByText('Balón').closest('tr');
-      expect(within(ballRow!).getByText(/10\s*→\s*15/)).toBeInTheDocument();
+      expect(within(ballRow!).getByText(/15\s*→\s*10/)).toBeInTheDocument();
     });
   });
 
