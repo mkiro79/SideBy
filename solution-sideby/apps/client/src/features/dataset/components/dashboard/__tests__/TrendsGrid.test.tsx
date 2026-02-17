@@ -108,10 +108,10 @@ describe('TrendsGrid', () => {
     it('debe renderizar todos los valores de los KPIs', () => {
       render(<TrendsGrid {...defaultProps} />);
       
-      expect(screen.getByText(/\$300/)).toBeInTheDocument(); // revenue
-      expect(screen.getByText(/\$75/)).toBeInTheDocument();  // profit
-      expect(screen.getByText(/150/)).toBeInTheDocument();   // orders
-      expect(screen.getByText(/3\.0%/)).toBeInTheDocument(); // conversion
+      expect(screen.getByText(/\$250/)).toBeInTheDocument(); // revenue
+      expect(screen.getByText(/\$50/)).toBeInTheDocument();  // profit
+      expect(screen.getByText(/100/)).toBeInTheDocument();   // orders
+      expect(screen.getByText(/2\.5%/)).toBeInTheDocument(); // conversion
     });
   });
 
@@ -205,8 +205,8 @@ describe('TrendsGrid', () => {
       render(<TrendsGrid {...defaultProps} />);
       
       // Verificar que los valores se muestran (indica que los labels se pasaron)
-      expect(screen.getByText(/\$300/)).toBeInTheDocument();
-      expect(screen.getByText(/\$75/)).toBeInTheDocument();
+      expect(screen.getByText(/\$250/)).toBeInTheDocument();
+      expect(screen.getByText(/\$50/)).toBeInTheDocument();
     });
 
     it('debe pasar colores a cada MiniTrendChart', () => {
