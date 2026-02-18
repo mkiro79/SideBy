@@ -263,7 +263,8 @@ export const useWizardState = create<WizardState & WizardActions>()(
       },
 
       canSubmit: () => {
-        const { metadata, sourceConfig, canProceedToStep2, canProceedToStep3 } = get();
+        const { metadata, sourceConfig, canProceedToStep2, canProceedToStep3 } =
+          get();
         return (
           canProceedToStep2() &&
           canProceedToStep3() &&
