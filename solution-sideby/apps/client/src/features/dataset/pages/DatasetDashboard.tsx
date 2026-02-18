@@ -58,6 +58,16 @@ export default function DatasetDashboard() {
   // State para granularidad temporal (usado en filtro de período)
   const [granularity, setGranularity] = useState<'days' | 'weeks' | 'months' | 'quarters'>('months');
 
+  // Handler para cambio de granularidad - limpia el filtro de período automáticamente
+  const handleGranularityChange = (newGranularity: 'days' | 'weeks' | 'months' | 'quarters') => {
+    setGranularity(newGranularity);
+    // Limpiar filtro de período cuando cambia granularidad para evitar valores inconsistentes
+    setFilters((prev) => ({
+      ...prev,
+      periodFilter: undefined,
+    }));
+  };
+
   // Handler para cambio de filtros multi-select (RFC-005)
   const handleFilterChange = (field: string, values: string[]) => {
     setFilters((prev) => ({
@@ -240,7 +250,7 @@ export default function DatasetDashboard() {
                 groupAColor={groupAColor}
                 groupBColor={groupBColor}
                 granularity={granularity}
-                onGranularityChange={setGranularity}
+                onGranularityChange={handleGranularityChange}
                 periodFilter={filters.periodFilter}
               />
             )}
