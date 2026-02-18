@@ -146,6 +146,7 @@ export interface Dataset {
   };
   aiConfig?: {
     enabled: boolean;
+    Enabled?: boolean;
     userContext?: string;
     lastAnalysis?: string;
   };
@@ -180,6 +181,11 @@ export interface DatasetSummary {
     };
   };
   kpis?: string[];
+  aiConfig?: {
+    enabled: boolean;
+    userContext?: string;
+    lastAnalysis?: string;
+  };
   totalRows: number;
 }
 

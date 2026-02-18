@@ -134,6 +134,40 @@ describe("DatasetCard", () => {
       expect(screen.getByText("Ventas")).toBeInTheDocument();
       expect(screen.getByText("ROI")).toBeInTheDocument();
     });
+
+    it("debe mostrar indicador de IA cuando aiConfig.enabled = true", () => {
+      const datasetWithAI = {
+        ...mockDataset,
+        aiConfig: { enabled: true },
+      };
+
+      render(
+        <DatasetCard
+          dataset={datasetWithAI}
+          onOpen={mockOnOpen}
+          onDelete={mockOnDelete}
+        />
+      );
+
+      expect(screen.getByText("IA")).toBeInTheDocument();
+    });
+
+    it("no debe mostrar indicador de IA cuando aiConfig.enabled = false", () => {
+      const datasetWithoutAI = {
+        ...mockDataset,
+        aiConfig: { enabled: false },
+      };
+
+      render(
+        <DatasetCard
+          dataset={datasetWithoutAI}
+          onOpen={mockOnOpen}
+          onDelete={mockOnDelete}
+        />
+      );
+
+      expect(screen.queryByText("IA")).not.toBeInTheDocument();
+    });
   });
 
   describe("Edit Button - Feature Flag", () => {

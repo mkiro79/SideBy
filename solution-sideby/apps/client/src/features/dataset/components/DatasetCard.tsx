@@ -27,7 +27,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/shared/components/ui/alert-dialog.js";
-import { FileSpreadsheet, Calendar, BarChart3, Trash2, Loader2, Edit2, LayoutDashboard } from "lucide-react";
+import { FileSpreadsheet, Calendar, BarChart3, Trash2, Loader2, Edit2, LayoutDashboard, Bot, Sparkles } from "lucide-react";
 import type { DatasetSummary } from "../types/api.types.js";
 import { FEATURES } from "@/config/features.js";
 
@@ -71,6 +71,8 @@ export const DatasetCard = ({
     error: { variant: "destructive" as const, label: "Error" },
   };
   const statusInfo = statusMap[dataset.status] || statusMap.ready;
+  const aiConfigLegacy = dataset.aiConfig as { enabled?: boolean; Enabled?: boolean } | undefined;
+  const isAIEnabled = aiConfigLegacy?.enabled === true || aiConfigLegacy?.Enabled === true;
 
   /**
    * Maneja la confirmación de eliminación
@@ -105,6 +107,13 @@ export const DatasetCard = ({
                 <Badge variant={statusInfo.variant} className="text-xs">
                   {statusInfo.label}
                 </Badge>
+                {isAIEnabled && (
+                  <Badge variant="secondary" className="text-xs gap-1 bg-violet-50 text-violet-700 border-violet-200">
+                    <Bot className="h-3 w-3" />
+                    IA
+                    <Sparkles className="h-3 w-3" />
+                  </Badge>
+                )}
               </div>
               
               {dataset.meta.description && (
