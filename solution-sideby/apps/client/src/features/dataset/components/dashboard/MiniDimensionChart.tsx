@@ -27,6 +27,7 @@ import type { KPIResult } from '../../types/dashboard.types.js';
 import type { DataRow } from '../../types/api.types.js';
 import type { ChartType } from './DimensionGrid.js';
 import { formatKpiValue } from '../../utils/numberFormat.js';
+import { UnifiedChartTooltip } from './UnifiedChartTooltip.js';
 
 interface MiniDimensionChartProps {
   /** Nombre de la dimensión a analizar (ej: "country", "channel") */
@@ -58,60 +59,6 @@ interface CategoryDataPoint {
   groupA: number;
   groupB: number;
 }
-
-interface TooltipProps {
-  active?: boolean;
-  payload?: Array<{
-    payload: CategoryDataPoint;
-  }>;
-}
-
-interface CustomTooltipInnerProps extends TooltipProps {
-  groupALabel: string;
-  groupBLabel: string;
-  groupAColor: string;
-  groupBColor: string;
-  formatValue: (value: number) => string;
-}
-
-/**
- * Tooltip personalizado para MiniDimensionChart
- */
-const CustomTooltip: React.FC<CustomTooltipInnerProps> = ({
-  active,
-  payload,
-  groupALabel,
-  groupBLabel,
-  groupAColor,
-  groupBColor,
-  formatValue,
-}) => {
-  if (!active || !payload || payload.length === 0) return null;
-
-  const data = payload[0].payload;
-  
-  return (
-    <div className="bg-surface border border-border rounded-lg shadow-lg p-3 text-sm">
-      <p className="font-medium mb-2">{data.category}</p>
-      <div className="space-y-1">
-        <div className="flex items-center justify-between gap-4">
-          <span className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full" style={{ backgroundColor: groupAColor }} />
-            {groupALabel}
-          </span>
-          <span className="font-medium">{formatValue(data.groupA)}</span>
-        </div>
-        <div className="flex items-center justify-between gap-4">
-          <span className="flex items-center gap-2">
-            <span className="h-2 w-2 rounded-full" style={{ backgroundColor: groupBColor }} />
-            {groupBLabel}
-          </span>
-          <span className="font-medium">{formatValue(data.groupB)}</span>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 export const MiniDimensionChart: React.FC<MiniDimensionChartProps> = ({
   dimension,
@@ -169,9 +116,6 @@ export const MiniDimensionChart: React.FC<MiniDimensionChartProps> = ({
   const formatValue = (value: number): string =>
     formatKpiValue(value, kpi.format, { compact: true });
 
-  const formatTooltipValue = (value: number): string =>
-    formatKpiValue(value, kpi.format, { compact: false, percentageDecimals: 2 });
-
   if (chartData.length === 0) {
     return (
       <Card>
@@ -210,18 +154,10 @@ export const MiniDimensionChart: React.FC<MiniDimensionChartProps> = ({
                 tickFormatter={formatValue}
               />
               <Tooltip
-                content={
-                  <CustomTooltip
-                    groupALabel={groupALabel}
-                    groupBLabel={groupBLabel}
-                    groupAColor={groupAColor}
-                    groupBColor={groupBColor}
-                    formatValue={formatTooltipValue}
-                  />
-                }
+                content={<UnifiedChartTooltip valueFormat={kpi.format} percentageDecimals={2} />}
               />
-              <Bar dataKey="groupA" fill={groupAColor} radius={[4, 4, 0, 0]} />
-              <Bar dataKey="groupB" fill={groupBColor} radius={[4, 4, 0, 0]} />
+              <Bar dataKey="groupA" name={groupALabel} fill={groupAColor} radius={[4, 4, 0, 0]} />
+              <Bar dataKey="groupB" name={groupBLabel} fill={groupBColor} radius={[4, 4, 0, 0]} />
             </BarChart>
           )}
 
@@ -243,19 +179,12 @@ export const MiniDimensionChart: React.FC<MiniDimensionChartProps> = ({
                 tickFormatter={formatValue}
               />
               <Tooltip
-                content={
-                  <CustomTooltip
-                    groupALabel={groupALabel}
-                    groupBLabel={groupBLabel}
-                    groupAColor={groupAColor}
-                    groupBColor={groupBColor}
-                    formatValue={formatTooltipValue}
-                  />
-                }
+                content={<UnifiedChartTooltip valueFormat={kpi.format} percentageDecimals={2} />}
               />
               <Line
                 type="monotone"
                 dataKey="groupA"
+                name={groupALabel}
                 stroke={groupAColor}
                 strokeWidth={2}
                 dot={{ r: 3 }}
@@ -264,6 +193,7 @@ export const MiniDimensionChart: React.FC<MiniDimensionChartProps> = ({
               <Line
                 type="monotone"
                 dataKey="groupB"
+                name={groupBLabel}
                 stroke={groupBColor}
                 strokeWidth={2}
                 dot={{ r: 3 }}
@@ -290,19 +220,12 @@ export const MiniDimensionChart: React.FC<MiniDimensionChartProps> = ({
                 tickFormatter={formatValue}
               />
               <Tooltip
-                content={
-                  <CustomTooltip
-                    groupALabel={groupALabel}
-                    groupBLabel={groupBLabel}
-                    groupAColor={groupAColor}
-                    groupBColor={groupBColor}
-                    formatValue={formatTooltipValue}
-                  />
-                }
+                content={<UnifiedChartTooltip valueFormat={kpi.format} percentageDecimals={2} />}
               />
               <Area
                 type="monotone"
                 dataKey="groupA"
+                name={groupALabel}
                 stroke={groupAColor}
                 fill={groupAColor}
                 fillOpacity={0.3}
@@ -311,6 +234,7 @@ export const MiniDimensionChart: React.FC<MiniDimensionChartProps> = ({
               <Area
                 type="monotone"
                 dataKey="groupB"
+                name={groupBLabel}
                 stroke={groupBColor}
                 fill={groupBColor}
                 fillOpacity={0.3}

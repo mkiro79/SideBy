@@ -28,6 +28,7 @@ import { createDateUmbrella, type DateGranularity } from '../../utils/dateUmbrel
 import type { DataRow } from '../../types/api.types.js';
 import type { KPIResult } from '../../types/dashboard.types.js';
 import { formatKpiValue } from '../../utils/numberFormat.js';
+import { UnifiedChartTooltip } from './UnifiedChartTooltip.js';
 
 interface TrendChartProps {
   data: DataRow[];
@@ -116,9 +117,6 @@ export const TrendChart: React.FC<TrendChartProps> = ({
 
   const formatValue = (value: number): string =>
     formatKpiValue(value, format, { compact: true });
-
-  const formatTooltipValue = (value: number): string =>
-    formatKpiValue(value, format, { compact: false, percentageDecimals: 2 });
 
   if (chartData.length === 0) {
     return (
@@ -236,16 +234,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({
               {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
               {/* @ts-ignore - Recharts 2.x has type compatibility issues with React 18 */}
               <Tooltip
-                contentStyle={{
-                  backgroundColor: 'hsl(var(--popover))',
-                  borderColor: 'hsl(var(--border))',
-                  borderRadius: '8px',
-                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
-                  padding: '6px 8px',
-                  fontSize: '12px',
-                }}
-                labelStyle={{ color: 'hsl(var(--foreground))' }}
-                formatter={(value: number, name: string) => [formatTooltipValue(value), name]}
+                {...({ content: <UnifiedChartTooltip valueFormat={format} percentageDecimals={2} /> } as Record<string, unknown>)}
               />
               {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
               {/* @ts-ignore - Recharts 2.x has type compatibility issues with React 18 */}

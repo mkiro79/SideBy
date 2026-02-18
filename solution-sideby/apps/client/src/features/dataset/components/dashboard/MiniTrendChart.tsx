@@ -32,6 +32,7 @@ import { createDateUmbrella, type DateGranularity } from '../../utils/dateUmbrel
 import type { DataRow } from '../../types/api.types.js';
 import type { KPIResult } from '../../types/dashboard.types.js';
 import { formatKpiValue } from '../../utils/numberFormat.js';
+import { UnifiedChartTooltip } from './UnifiedChartTooltip.js';
 
 interface MiniTrendChartProps {
   /** KPI a mostrar */
@@ -61,9 +62,6 @@ interface MiniTrendChartProps {
 
 const formatValue = (value: number, format: KPIResult['format']): string =>
   formatKpiValue(value, format, { compact: true });
-
-const formatTooltipValue = (value: number, format: KPIResult['format']): string =>
-  formatKpiValue(value, format, { compact: false, percentageDecimals: 2 });
 
 export function MiniTrendChart({
   kpi,
@@ -183,16 +181,12 @@ export function MiniTrendChart({
             <XAxis dataKey="date" tick={{ fontSize: 10 }} />
             <YAxis tick={{ fontSize: 10 }} tickFormatter={(value: number) => formatValue(value, kpi.format)} />
             <Tooltip
-              contentStyle={{
-                backgroundColor: 'hsl(var(--popover))',
-                borderColor: 'hsl(var(--border))',
-                borderRadius: '8px',
-                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
-                padding: '6px 8px',
-                fontSize: '12px',
-              }}
-              labelStyle={{ color: 'hsl(var(--foreground))' }}
-              formatter={(value: number) => formatTooltipValue(value, kpi.format)}
+              content={
+                <UnifiedChartTooltip
+                  valueFormat={kpi.format}
+                  percentageDecimals={2}
+                />
+              }
             />
             <Line
               type="monotone"
