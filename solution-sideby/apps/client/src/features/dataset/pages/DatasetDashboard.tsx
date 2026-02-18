@@ -24,6 +24,7 @@ import { Button } from '@/shared/components/ui/button.js';
 import { Badge } from '@/shared/components/ui/badge.js';
 import { Separator } from '@/shared/components/ui/Separator.js';
 import { useDatasetDashboard } from '../hooks/useDatasetDashboard.js';
+import { calculateDelta } from '@/features/dataset/utils/delta.js';
 import { TemplateSelector } from '../components/dashboard/TemplateSelector.js';
 import { DashboardFiltersBar } from '../components/dashboard/DashboardFiltersBar.js';
 import { KPIGrid } from '../components/dashboard/KPIGrid.js';
@@ -34,7 +35,8 @@ import { DimensionGrid } from '../components/dashboard/DimensionGrid.js';
 import { SummaryTable } from '../components/dashboard/SummaryTable.js';
 import { GranularTable } from '../components/dashboard/GranularTable.js';
 import { CategoryChart } from '../components/dashboard/CategoryChart.js';
-import type { DashboardTemplateId, DashboardFilters } from '../types/dashboard.types.js';
+import type { DashboardTemplateId, DashboardFilters, KPIResult } from '../types/dashboard.types.js';
+import type { DataRow } from '../types/api.types.js';
 
 
 // ============================================================================
@@ -152,6 +154,30 @@ export default function DatasetDashboard() {
       return true;
     });
   }, [filteredData, filters.periodFilter, granularity, dataset?.schemaMapping?.dateField]);
+
+  const kpisWithPeriodFilter = React.useMemo<KPIResult[]>(() => {
+    if (kpis.length === 0) {
+      return [];
+    }
+
+    const dataA = dataWithPeriodFilter.filter((row) => row._source_group === 'groupA');
+    const dataB = dataWithPeriodFilter.filter((row) => row._source_group === 'groupB');
+
+    return kpis.map((kpi) => {
+      const valueA = calculateAggregate(dataA, kpi.name);
+      const valueB = calculateAggregate(dataB, kpi.name);
+      const { deltaAbs, deltaPercent, trend } = calculateDelta(valueA, valueB);
+
+      return {
+        ...kpi,
+        valueA,
+        valueB,
+        diff: deltaAbs,
+        diffPercent: deltaPercent,
+        trend,
+      };
+    });
+  }, [kpis, dataWithPeriodFilter]);
 
   // Helper: Mapea de API KPI fields a formato wizard KPIField
   const mappedKpiFields = dataset?.schemaMapping?.kpiFields.map(kpi => ({
@@ -298,12 +324,12 @@ export default function DatasetDashboard() {
             />
 
             {/* KPI Grid */}
-            <KPIGrid kpis={kpis} />
+            <KPIGrid kpis={kpisWithPeriodFilter} />
 
             {/* RFC-006 Trends View: Grid 2×2 de mini-charts temporales */}
             {selectedTemplate === 'sideby_trends' && dateField && dataWithPeriodFilter.length > 0 && (
               <TrendsGrid
-                kpis={kpis}
+                kpis={kpisWithPeriodFilter}
                 data={dataWithPeriodFilter}
                 dateField={dateField}
                 groupALabel={groupALabel}
@@ -312,14 +338,13 @@ export default function DatasetDashboard() {
                 groupBColor={groupBColor}
                 granularity={granularity}
                 onGranularityChange={handleGranularityChange}
-                periodFilter={filters.periodFilter}
               />
             )}
 
             {/* RFC-006 Trends View: Grid 2×2 de mini-charts por dimensión */}
             {selectedTemplate === 'sideby_trends' && categoricalFields.length > 0 && (
               <DimensionGrid
-                kpis={kpis}
+                kpis={kpisWithPeriodFilter}
                 data={dataWithPeriodFilter}
                 dimensions={categoricalFields}
                 groupALabel={groupALabel}
@@ -332,8 +357,8 @@ export default function DatasetDashboard() {
             {/* RFC-006 CategoryChart - Análisis por dimensión categórica (Solo Executive) */}
             {selectedTemplate === 'sideby_executive' && categoricalFields.length > 0 && (
               <CategoryChart
-                data={filteredData}
-                kpis={kpis}
+                data={dataWithPeriodFilter}
+                kpis={kpisWithPeriodFilter}
                 dimensions={categoricalFields}
                 groupALabel={groupALabel}
                 groupBLabel={groupBLabel}
@@ -343,16 +368,15 @@ export default function DatasetDashboard() {
             )}
 
             {/* Trend Chart - Solo si hay dateField y datos (no en Detailed ni Trends)*/}
-            {dateField && kpis.length > 0 && dataWithPeriodFilter.length > 0 && selectedTemplate !== 'sideby_detailed' && selectedTemplate !== 'sideby_trends' && (
+            {dateField && kpisWithPeriodFilter.length > 0 && dataWithPeriodFilter.length > 0 && selectedTemplate !== 'sideby_detailed' && selectedTemplate !== 'sideby_trends' && (
               <TrendChart
                 data={dataWithPeriodFilter}
                 dateField={dateField}
-                kpis={kpis}
+                kpis={kpisWithPeriodFilter}
                 groupALabel={groupALabel}
                 groupBLabel={groupBLabel}
                 groupAColor={groupAColor}
                 groupBColor={groupBColor}
-                periodFilter={filters.periodFilter}
               />
             )}
 
@@ -360,7 +384,7 @@ export default function DatasetDashboard() {
             {selectedTemplate === 'sideby_detailed' ? (
               <div className="space-y-6">
                 <SummaryTable
-                  kpis={kpis}
+                  kpis={kpisWithPeriodFilter}
                   groupALabel={groupALabel}
                   groupBLabel={groupBLabel}
                   groupAColor={groupAColor}
@@ -380,7 +404,7 @@ export default function DatasetDashboard() {
             ) : (
               /* Summary Table - Tabla de totales en Executive y Trends */
               <SummaryTable
-                kpis={kpis}
+                kpis={kpisWithPeriodFilter}
                 groupALabel={groupALabel}
                 groupBLabel={groupBLabel}
                 groupAColor={groupAColor}
@@ -416,4 +440,14 @@ export default function DatasetDashboard() {
       </div>
     </SidebarProvider>
   );
+}
+
+function calculateAggregate(data: DataRow[], field: string): number {
+  if (data.length === 0) return 0;
+
+  const values = data.map((row) => Number(row[field])).filter((v) => !Number.isNaN(v));
+
+  if (values.length === 0) return 0;
+
+  return values.reduce((acc, v) => acc + v, 0);
 }

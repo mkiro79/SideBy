@@ -37,9 +37,6 @@ interface TrendChartProps {
   groupBLabel: string;
   groupAColor: string;
   groupBColor: string;
-  
-  /** Filtro de período relativo (opcional) */
-  periodFilter?: { from?: number; to?: number };
 }
 
 export const TrendChart: React.FC<TrendChartProps> = ({
@@ -50,7 +47,6 @@ export const TrendChart: React.FC<TrendChartProps> = ({
   groupBLabel,
   groupAColor,
   groupBColor,
-  periodFilter,
 }) => {
   // Estado para granularidad seleccionada
   const [granularity, setGranularity] = useState<DateGranularity>('months');
@@ -108,7 +104,6 @@ export const TrendChart: React.FC<TrendChartProps> = ({
       selectedKpi.name, // KPI seleccionado
       granularity, // Usar granularidad seleccionada
       true,  // Omitir gaps para no renderizar periodos sin datos
-      periodFilter,  // Aplicar filtro de período
     );
 
     // Transformar UmbrellaDatePoint[] a formato compatible con Recharts
@@ -117,7 +112,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({
       groupA: point.groupA?.value ?? 0,
       groupB: point.groupB?.value ?? 0,
     }));
-  }, [data, dateField, selectedKpi.name, granularity, periodFilter]);
+  }, [data, dateField, selectedKpi.name, granularity]);
 
   const formatValue = (value: number): string =>
     formatKpiValue(value, format, { compact: true });

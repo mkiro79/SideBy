@@ -30,7 +30,7 @@ export interface DashboardFilters {
   /** Filtros categóricos multi-select (ej: { "region": ["Norte", "Sur"], "category": ["A"] }) */
   categorical: Record<string, string[]>;
 
-  /** 
+  /**
    * Filtro de período relativo (aplica a AMBOS grupos por comparabilidad)
    * Índices basados en granularidad actual:
    * - days: 1-365 (día del año)

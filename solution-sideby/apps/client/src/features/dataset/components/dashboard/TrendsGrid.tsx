@@ -46,9 +46,6 @@ interface TrendsGridProps {
   
   /** Callback para cambio de granularidad */
   onGranularityChange?: (granularity: DateGranularity) => void;
-  
-  /** Filtro de período relativo (opcional) */
-  periodFilter?: { from?: number; to?: number };
 }
 
 export function TrendsGrid({
@@ -61,7 +58,6 @@ export function TrendsGrid({
   groupBColor,
   granularity: externalGranularity,
   onGranularityChange,
-  periodFilter,
 }: Readonly<TrendsGridProps>) {
   // Estado para granularidad seleccionada (interno si no es controlado)
   const [internalGranularity, setInternalGranularity] = React.useState<DateGranularity>('months');
@@ -139,7 +135,6 @@ export function TrendsGrid({
                 groupBLabel={groupBLabel}
                 groupAColor={groupAColor}
                 groupBColor={groupBColor}
-                periodFilter={periodFilter}
               />
             ))}
           </div>

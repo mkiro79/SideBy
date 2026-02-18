@@ -148,10 +148,15 @@ export function createDateUmbrella(
   }
 
   // 5. Aplicar filtro de período relativo (opcional)
-  if (periodFilter && (periodFilter.from !== undefined || periodFilter.to !== undefined)) {
-    const fromIndex = periodFilter.from !== undefined ? periodFilter.from - 1 : 0; // Convertir a 0-based
-    const toIndex = periodFilter.to !== undefined ? periodFilter.to : umbrellaPoints.length;
-    
+  if (
+    periodFilter &&
+    (periodFilter.from !== undefined || periodFilter.to !== undefined)
+  ) {
+    const fromIndex =
+      periodFilter.from !== undefined ? periodFilter.from - 1 : 0; // Convertir a 0-based
+    const toIndex =
+      periodFilter.to !== undefined ? periodFilter.to : umbrellaPoints.length;
+
     return umbrellaPoints.slice(fromIndex, toIndex);
   }
 
