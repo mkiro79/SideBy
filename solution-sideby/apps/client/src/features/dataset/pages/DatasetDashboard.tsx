@@ -276,6 +276,8 @@ export default function DatasetDashboard() {
                   kpis={kpis}
                   groupALabel={groupALabel}
                   groupBLabel={groupBLabel}
+                  groupAColor={groupAColor}
+                  groupBColor={groupBColor}
                 />
                 
                 <GranularTable
@@ -284,6 +286,8 @@ export default function DatasetDashboard() {
                   kpis={mappedKpiFields}
                   groupALabel={groupALabel}
                   groupBLabel={groupBLabel}
+                  groupAColor={groupAColor}
+                  groupBColor={groupBColor}
                 />
               </div>
             ) : (
@@ -292,6 +296,8 @@ export default function DatasetDashboard() {
                 kpis={kpis}
                 groupALabel={groupALabel}
                 groupBLabel={groupBLabel}
+                groupAColor={groupAColor}
+                groupBColor={groupBColor}
               />
             )}
 

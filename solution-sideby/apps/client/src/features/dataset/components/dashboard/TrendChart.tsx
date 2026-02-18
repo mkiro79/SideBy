@@ -27,6 +27,7 @@ import {
 import { createDateUmbrella, type DateGranularity } from '../../utils/dateUmbrella.js';
 import type { DataRow } from '../../types/api.types.js';
 import type { KPIResult } from '../../types/dashboard.types.js';
+import { formatKpiValue } from '../../utils/numberFormat.js';
 
 interface TrendChartProps {
   data: DataRow[];
@@ -86,29 +87,11 @@ export const TrendChart: React.FC<TrendChartProps> = ({
     }));
   }, [data, dateField, selectedKpi.name, granularity]);
 
-  const formatValue = (value: number): string => {
-    switch (format) {
-      case 'currency':
-        return `€${(value / 1000).toFixed(0)}k`;
-      case 'percentage':
-        return `${value.toFixed(1)}%`;
-      case 'number':
-        return value >= 1000 ? `${(value / 1000).toFixed(1)}k` : value.toFixed(0);
-      default:
-        return value.toLocaleString();
-    }
-  };
+  const formatValue = (value: number): string =>
+    formatKpiValue(value, format, { compact: true });
 
-  const formatTooltipValue = (value: number): string => {
-    switch (format) {
-      case 'currency':
-        return `€${value.toLocaleString()}`;
-      case 'percentage':
-        return `${value.toFixed(2)}%`;
-      default:
-        return value.toLocaleString();
-    }
-  };
+  const formatTooltipValue = (value: number): string =>
+    formatKpiValue(value, format, { compact: false, percentageDecimals: 2 });
 
   if (chartData.length === 0) {
     return (

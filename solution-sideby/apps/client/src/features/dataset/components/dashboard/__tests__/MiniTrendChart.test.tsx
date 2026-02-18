@@ -79,7 +79,7 @@ describe('MiniTrendChart', () => {
     it('debe renderizar el valor principal formateado', () => {
       render(<MiniTrendChart {...defaultProps} />);
       // Value A formateado como currency
-      expect(screen.getByText(/\$250/)).toBeInTheDocument();
+      expect(screen.getByText(/250\s*€/)).toBeInTheDocument();
     });
 
     it('debe renderizar badge con delta porcentual', () => {
@@ -154,7 +154,7 @@ describe('MiniTrendChart', () => {
   describe('Formateo de Valores', () => {
     it('debe formatear currency con símbolo $', () => {
       render(<MiniTrendChart {...defaultProps} />);
-      expect(screen.getByText(/\$250/)).toBeInTheDocument();
+      expect(screen.getByText(/250\s*€/)).toBeInTheDocument();
     });
 
     it('debe formatear percentage con símbolo %', () => {
@@ -177,7 +177,7 @@ describe('MiniTrendChart', () => {
       };
 
       render(<MiniTrendChart {...defaultProps} kpi={kpiNumber} />);
-      expect(screen.getByText(/1,234/)).toBeInTheDocument();
+      expect(screen.getByText(/1\.2K/)).toBeInTheDocument();
     });
   });
 
@@ -209,7 +209,7 @@ describe('MiniTrendChart', () => {
       };
 
       render(<MiniTrendChart {...defaultProps} kpi={kpiBig} />);
-      expect(screen.getByText(/\$1,234,567/)).toBeInTheDocument();
+      expect(screen.getByText(/1\.2M\s*€/)).toBeInTheDocument();
     });
 
     it('debe manejar campo de fecha faltante', () => {

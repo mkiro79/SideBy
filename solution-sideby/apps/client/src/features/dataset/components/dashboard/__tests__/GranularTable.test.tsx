@@ -132,12 +132,12 @@ describe('GranularTable', () => {
       render(<GranularTable {...defaultProps} />);
       
       // Balón:  700 - 500 = +200
-      // El formato es "+$200 (40.0%)" para currency
+      // El formato es "+200 € (40.0%)" para currency
       const ballRow = screen.getByText('Balón').closest('tr');
       expect(ballRow).toBeInTheDocument();
       
       // Buscar el delta formateado con currency
-      expect(within(ballRow!).getByText(/\+\$200/)).toBeInTheDocument();
+      expect(within(ballRow!).getByText(/\+\s*200\s*€/)).toBeInTheDocument();
     });
 
     it('debe calcular y mostrar delta porcentual correcto', () => {
@@ -157,7 +157,7 @@ describe('GranularTable', () => {
       render(<GranularTable {...defaultProps} data={dataWithNegative} />);
       
       // Delta: 800 - 1000 = -200
-      expect(screen.getByText(/-200/)).toBeInTheDocument();
+      expect(screen.getByText(/-\s*200\s*€/)).toBeInTheDocument();
     });
 
     it('debe aplicar color verde a deltas positivos', () => {
@@ -321,11 +321,11 @@ describe('GranularTable', () => {
   });
 
   describe('Formateo de Valores', () => {
-    it('debe formatear currency con símbolo $', () => {
+    it('debe formatear currency con símbolo €', () => {
       render(<GranularTable {...defaultProps} />);
       
       // Buscar valores de revenue (formato currency)
-      expect(screen.getByText(/\$500/)).toBeInTheDocument();
+      expect(screen.getByText(/500\s*€/)).toBeInTheDocument();
     });
 
     it('debe formatear números sin símbolo', () => {

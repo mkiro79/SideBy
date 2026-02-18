@@ -31,6 +31,7 @@ import {
 import { createDateUmbrella, type DateGranularity } from '../../utils/dateUmbrella.js';
 import type { DataRow } from '../../types/api.types.js';
 import type { KPIResult } from '../../types/dashboard.types.js';
+import { formatKpiValue } from '../../utils/numberFormat.js';
 
 interface MiniTrendChartProps {
   /** KPI a mostrar */
@@ -58,29 +59,11 @@ interface MiniTrendChartProps {
   groupBColor: string;
 }
 
-/**
- * Formatea un valor según su tipo
- */
-function formatValue(value: number, format: 'currency' | 'percentage' | 'number' | 'text'): string {
-  if (Number.isNaN(value) || !Number.isFinite(value)) {
-    return '—';
-  }
+const formatValue = (value: number, format: KPIResult['format']): string =>
+  formatKpiValue(value, format, { compact: true });
 
-  switch (format) {
-    case 'currency':
-      return `$${value.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
-    
-    case 'percentage':
-      return `${value.toFixed(1)}%`;
-    
-    case 'text':
-      return value.toString();
-    
-    case 'number':
-    default:
-      return value.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-  }
-}
+const formatTooltipValue = (value: number, format: KPIResult['format']): string =>
+  formatKpiValue(value, format, { compact: false, percentageDecimals: 2 });
 
 export function MiniTrendChart({
   kpi,
@@ -171,7 +154,7 @@ export function MiniTrendChart({
           <LineChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
             <XAxis dataKey="date" tick={{ fontSize: 10 }} />
-            <YAxis tick={{ fontSize: 10 }} />
+            <YAxis tick={{ fontSize: 10 }} tickFormatter={(value: number) => formatValue(value, kpi.format)} />
             <Tooltip
               contentStyle={{
                 backgroundColor: 'hsl(var(--popover))',
@@ -180,6 +163,7 @@ export function MiniTrendChart({
                 boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
               }}
               labelStyle={{ color: 'hsl(var(--foreground))' }}
+              formatter={(value: number) => formatTooltipValue(value, kpi.format)}
             />
             <Line
               type="monotone"

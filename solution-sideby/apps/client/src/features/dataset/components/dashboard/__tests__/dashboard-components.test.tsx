@@ -55,8 +55,8 @@ describe("Dashboard Components - PR Review Fixes", () => {
         />
       );
 
-      // Números >= 10000 deben mostrarse como "25K"
-      expect(screen.getByText("25K")).toBeInTheDocument();
+      // Números >= 1000 deben mostrarse como "25.0K"
+      expect(screen.getByText("25.0K")).toBeInTheDocument();
     });
 
     it("NO formatea números < 10000 con K", () => {
@@ -71,8 +71,8 @@ describe("Dashboard Components - PR Review Fixes", () => {
         />
       );
 
-      // Números < 10000 deben mostrarse completos (sin separador de miles en este caso)
-      expect(screen.getByText("9999")).toBeInTheDocument();
+      // Números >= 1000 deben mostrarse con K
+      expect(screen.getByText("10.0K")).toBeInTheDocument();
     });
   });
 

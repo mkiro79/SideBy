@@ -26,6 +26,7 @@ import {
 import type { KPIResult } from '../../types/dashboard.types.js';
 import type { DataRow } from '../../types/api.types.js';
 import type { ChartType } from './DimensionGrid.js';
+import { formatKpiValue } from '../../utils/numberFormat.js';
 
 interface MiniDimensionChartProps {
   /** Nombre de la dimensión a analizar (ej: "country", "channel") */
@@ -165,24 +166,11 @@ export const MiniDimensionChart: React.FC<MiniDimensionChartProps> = ({
   /**
    * Formatea valores según el formato del KPI
    */
-  const formatValue = (value: number): string => {
-    switch (kpi.format) {
-      case 'currency':
-        if (value >= 1000) {
-          return `${(value / 1000).toFixed(0)}K`;
-        }
-        return `${Math.round(value)}`;
-      case 'percentage':
-        return `${value.toFixed(0)}%`;
-      case 'number':
-        if (value >= 10000) {
-          return `${(value / 1000).toFixed(0)}K`;
-        }
-        return Math.round(value).toLocaleString('es-ES');
-      default:
-        return String(Math.round(value));
-    }
-  };
+  const formatValue = (value: number): string =>
+    formatKpiValue(value, kpi.format, { compact: true });
+
+  const formatTooltipValue = (value: number): string =>
+    formatKpiValue(value, kpi.format, { compact: false, percentageDecimals: 2 });
 
   if (chartData.length === 0) {
     return (
@@ -228,7 +216,7 @@ export const MiniDimensionChart: React.FC<MiniDimensionChartProps> = ({
                     groupBLabel={groupBLabel}
                     groupAColor={groupAColor}
                     groupBColor={groupBColor}
-                    formatValue={formatValue}
+                    formatValue={formatTooltipValue}
                   />
                 }
               />
@@ -261,7 +249,7 @@ export const MiniDimensionChart: React.FC<MiniDimensionChartProps> = ({
                     groupBLabel={groupBLabel}
                     groupAColor={groupAColor}
                     groupBColor={groupBColor}
-                    formatValue={formatValue}
+                    formatValue={formatTooltipValue}
                   />
                 }
               />
@@ -308,7 +296,7 @@ export const MiniDimensionChart: React.FC<MiniDimensionChartProps> = ({
                     groupBLabel={groupBLabel}
                     groupAColor={groupAColor}
                     groupBColor={groupBColor}
-                    formatValue={formatValue}
+                    formatValue={formatTooltipValue}
                   />
                 }
               />

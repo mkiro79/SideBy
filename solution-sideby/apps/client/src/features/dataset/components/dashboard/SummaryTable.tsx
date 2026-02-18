@@ -16,6 +16,7 @@ import {
 } from '@/shared/components/ui/table.js';
 import { TrendingUp, TrendingDown } from 'lucide-react';
 import type { KPIResult } from '../../types/dashboard.types.js';
+import { formatKpiValue } from '../../utils/numberFormat.js';
 
 
 interface SummaryTableProps {
@@ -24,39 +25,29 @@ interface SummaryTableProps {
   
   /** Label del grupo A (ej: "2024") */
   groupALabel: string;
+
+  /** Color del grupo A */
+  groupAColor?: string;
   
   /** Label del grupo B (ej: "2023") */
   groupBLabel: string;
+
+  /** Color del grupo B */
+  groupBColor?: string;
 }
 
 export const SummaryTable: React.FC<SummaryTableProps> = ({
   kpis,
   groupALabel,
   groupBLabel,
+  groupAColor,
+  groupBColor,
 }) => {
-  /**
-   * Formatea un valor según su tipo
-   */
-  const formatValue = (value: number, format: string): string => {
-    switch (format) {
-      case 'currency':
-        return new Intl.NumberFormat('es-ES', {
-          style: 'currency',
-          currency: 'EUR',
-          minimumFractionDigits: 0,
-          maximumFractionDigits: 0,
-        }).format(value);
-      
-      case 'percentage':
-        return `${value.toFixed(1)}%`;
-      
-      case 'number':
-        return new Intl.NumberFormat('es-ES').format(value);
-      
-      default:
-        return String(value);
-    }
-  };
+  const formatValue = (value: number, format: KPIResult["format"]): string =>
+    formatKpiValue(value, format, { compact: true });
+
+  const resolvedGroupAColor = groupAColor ?? 'hsl(var(--primary))';
+  const resolvedGroupBColor = groupBColor ?? 'hsl(var(--secondary))';
 
   return (
     <Card className="sticky top-20 z-10 shadow-md">
@@ -68,8 +59,12 @@ export const SummaryTable: React.FC<SummaryTableProps> = ({
           <TableHeader>
             <TableRow>
               <TableHead className="font-semibold">KPI</TableHead>
-              <TableHead className="text-right font-semibold">{groupALabel}</TableHead>
-              <TableHead className="text-right font-semibold">{groupBLabel}</TableHead>
+              <TableHead className="text-right font-semibold">
+                <span style={{ color: resolvedGroupAColor }}>{groupALabel}</span>
+              </TableHead>
+              <TableHead className="text-right font-semibold">
+                <span style={{ color: resolvedGroupBColor }}>{groupBLabel}</span>
+              </TableHead>
               <TableHead className="text-right font-semibold">Delta Abs</TableHead>
               <TableHead className="text-right font-semibold">Delta %</TableHead>
             </TableRow>
@@ -86,7 +81,7 @@ export const SummaryTable: React.FC<SummaryTableProps> = ({
                 const deltaAbs = kpi.diff;
                 const deltaPercent = kpi.diffPercent;
                 const isPositive = deltaPercent > 0;
-                const isInfinite = !isFinite(deltaPercent);
+                const isInfinite = !Number.isFinite(deltaPercent);
 
                 return (
                   <TableRow key={kpi.name}>

@@ -29,6 +29,7 @@ import { ChevronRight, ChevronDown, Download, ChevronLeft, ChevronsLeft, Chevron
 import type { DataRow } from '../../types/api.types.js';
 import type { KPIField, KPIFormat } from '../../types/wizard.types.js';
 import { calculateDelta } from '@/features/dataset/utils/delta.js';
+import { formatKpiValue } from '../../utils/numberFormat.js';
 
 interface GranularTableProps {
   /** Array de datos crudos */
@@ -45,6 +46,12 @@ interface GranularTableProps {
   
   /** Label del grupo B (ej: "2024") */
   groupBLabel: string;
+
+  /** Color del grupo A */
+  groupAColor?: string;
+
+  /** Color del grupo B */
+  groupBColor?: string;
 }
 
 interface GranularRow {
@@ -68,21 +75,7 @@ function formatValue(value: number, format?: KPIFormat): string {
     return '—';
   }
 
-  switch (format) {
-    case 'currency':
-      return `$${value.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
-    
-    case 'percentage':
-      return `${value.toFixed(1)}%`;
-    
-    case 'date':
-    case 'string':
-      return value.toString();
-    
-    case 'number':
-    default:
-      return value.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-  }
+  return formatKpiValue(value, format ?? 'number', { compact: true });
 }
 
 /**
@@ -126,7 +119,7 @@ function processGranularData(
     const sampleRow = groupData.groupA[0] || groupData.groupB[0];
     dimensions.forEach((dim) => {
       const value = sampleRow?.[dim];
-      dimensionValues[dim] = value != null ? String(value) : 'N/A';
+      dimensionValues[dim] = value == null ? 'N/A' : String(value);
     });
 
     // Calcular KPIs
@@ -236,7 +229,11 @@ export function GranularTable({
   kpis,
   groupALabel,
   groupBLabel,
+  groupAColor,
+  groupBColor,
 }: Readonly<GranularTableProps>) {
+  const resolvedGroupAColor = groupAColor ?? 'hsl(var(--primary))';
+  const resolvedGroupBColor = groupBColor ?? 'hsl(var(--secondary))';
   const [searchTerm, setSearchTerm] = React.useState('');
   const [sortColumn, setSortColumn] = React.useState<string | null>(null);
   const [sortDirection, setSortDirection] = React.useState<'asc' | 'desc'>('asc');
@@ -260,7 +257,7 @@ export function GranularTable({
       text
         .toLowerCase()
         .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '');
+        .replaceAll(/[\u0300-\u036f]/g, '');
     
     const normalizedSearch = normalizeText(searchTerm);
     
@@ -396,7 +393,16 @@ export function GranularTable({
                 {/* KPI headers */}
                 {kpis.map((kpi) => (
                   <React.Fragment key={kpi.id}>
-                    <TableHead className="text-right text-xs">{kpi.label} A/B</TableHead>
+                    <TableHead className="text-right">
+                      <div className="flex flex-col items-end leading-tight">
+                        <span className="text-xs font-medium">{kpi.label}</span>
+                        <span className="text-[10px] text-muted-foreground">
+                          <span style={{ color: resolvedGroupAColor }}>{groupALabel}</span>
+                          <span> / </span>
+                          <span style={{ color: resolvedGroupBColor }}>{groupBLabel}</span>
+                        </span>
+                      </div>
+                    </TableHead>
                     <TableHead className="text-right">Δ {kpi.label}</TableHead>
                   </React.Fragment>
                 ))}
@@ -481,10 +487,16 @@ export function GranularTable({
                                     <div key={kpi.id} className="space-y-1">
                                       <p className="font-medium">{kpi.label}</p>
                                       <p className="text-muted-foreground">
-                                        {groupALabel}: {formatValue(kpiData.groupA, kpi.format)}
+                                        <span style={{ color: resolvedGroupAColor }}>
+                                          {groupALabel}:
+                                        </span>{' '}
+                                        {formatValue(kpiData.groupA, kpi.format)}
                                       </p>
                                       <p className="text-muted-foreground">
-                                        {groupBLabel}: {formatValue(kpiData.groupB, kpi.format)}
+                                        <span style={{ color: resolvedGroupBColor }}>
+                                          {groupBLabel}:
+                                        </span>{' '}
+                                        {formatValue(kpiData.groupB, kpi.format)}
                                       </p>
                                       <p className={kpiData.deltaPercent > 0 ? 'text-green-600' : 'text-red-600'}>
                                         Delta: {kpiData.deltaPercent > 0 ? '+' : ''}

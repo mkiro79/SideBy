@@ -9,6 +9,7 @@ import { TrendingUp, DollarSign, Users, Activity } from 'lucide-react';
 import type { KPIResult } from '../../types/dashboard.types.js';
 import type { LucideIcon } from 'lucide-react';
 import { KPICard } from '../KPICard.js';
+import { formatKpiValue } from '../../utils/numberFormat.js';
 
 interface KPIGridProps {
   kpis: KPIResult[];
@@ -31,29 +32,8 @@ const getKPIIcon = (kpiName: string): LucideIcon => {
   return Activity;
 };
 
-/**
- * Formatea valor según su tipo
- */
-const formatValue = (value: number, format: string): string => {
-  switch (format) {
-    case 'currency':
-      return new Intl.NumberFormat('es-ES', {
-        style: 'currency',
-        currency: 'EUR',
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-      }).format(value);
-    case 'percentage':
-      return `${value.toFixed(1)}%`;
-    case 'number':
-      if (value >= 10000) {
-        return `${(value / 1000).toFixed(0)}K`;
-      }
-      return new Intl.NumberFormat('es-ES').format(value);
-    default:
-      return String(value);
-  }
-};
+const formatValue = (value: number, format: KPIResult['format']): string =>
+  formatKpiValue(value, format, { compact: true });
 
 export const KPIGrid: React.FC<KPIGridProps> = ({ kpis }) => {
   if (kpis.length === 0) {
