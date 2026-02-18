@@ -78,6 +78,32 @@ export function MiniTrendChart({
   const isPositive = kpi.diffPercent > 0;
   const isNegative = kpi.diffPercent < 0;
 
+  // Helper para convertir hsl a rgba con opacidad
+  const hslToRgba = (hslColor: string, opacity: number): string => {
+    // Si ya es rgba, devolver tal cual
+    if (hslColor.startsWith('rgba')) return hslColor;
+    
+    // Crear elemento temporal para obtener color computado
+    const temp = document.createElement('div');
+    temp.style.color = hslColor;
+    document.body.appendChild(temp);
+    const computed = getComputedStyle(temp).color;
+    document.body.removeChild(temp);
+    
+    // Extraer rgb values y agregar alpha
+    const match = computed.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+    if (match) {
+      return `rgba(${match[1]}, ${match[2]}, ${match[3]}, ${opacity})`;
+    }
+    
+    return hslColor; // Fallback
+  };
+
+  const groupBColorFaded = React.useMemo(
+    () => hslToRgba(groupBColor, 0.45),
+    [groupBColor]
+  );
+
   /**
    * Retorna el ícono de tendencia basado en el cambio porcentual
    */
@@ -114,7 +140,7 @@ export function MiniTrendChart({
       dateField,
       kpi.name, // KPI de este mini-chart
       granularity, // Usar granularidad seleccionada
-      false,  // No omitir gaps - mostrar TODOS los períodos
+      true,  // Omitir gaps para no renderizar periodos sin datos
     );
 
     // Transformar UmbrellaDatePoint[] a formato compatible con Recharts
@@ -160,7 +186,9 @@ export function MiniTrendChart({
                 backgroundColor: 'hsl(var(--popover))',
                 borderColor: 'hsl(var(--border))',
                 borderRadius: '8px',
-                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+                padding: '6px 8px',
+                fontSize: '12px',
               }}
               labelStyle={{ color: 'hsl(var(--foreground))' }}
               formatter={(value: number) => formatTooltipValue(value, kpi.format)}
@@ -169,14 +197,14 @@ export function MiniTrendChart({
               type="monotone"
               dataKey={groupALabel}
               stroke={groupAColor}
-              strokeWidth={2}
+              strokeWidth={2.25}
               dot={false}
             />
             <Line
               type="monotone"
               dataKey={groupBLabel}
-              stroke={groupBColor}
-              strokeWidth={2}
+              stroke={groupBColorFaded}
+              strokeWidth={1.75}
               dot={false}
             />
           </LineChart>

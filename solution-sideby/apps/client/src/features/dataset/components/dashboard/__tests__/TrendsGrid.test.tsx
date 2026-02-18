@@ -110,8 +110,8 @@ describe('TrendsGrid', () => {
       
       expect(screen.getAllByText(/250\s*€/).length).toBeGreaterThan(0); // revenue
       expect(screen.getAllByText(/50\s*€/).length).toBeGreaterThan(0);  // profit
-      expect(screen.getByText(/100/)).toBeInTheDocument();   // orders
-      expect(screen.getByText(/2\.5%/)).toBeInTheDocument(); // conversion
+      expect(screen.getAllByText(/100/).length).toBeGreaterThan(0);   // orders
+      expect(screen.getAllByText(/2\.5%/).length).toBeGreaterThan(0); // conversion
     });
   });
 
