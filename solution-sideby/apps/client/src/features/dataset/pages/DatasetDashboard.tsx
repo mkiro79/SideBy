@@ -15,6 +15,7 @@
  */
 
 import { useState } from 'react';
+import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Loader2, RefreshCw } from 'lucide-react';
 import { SidebarProvider } from '@/shared/components/ui/sidebar.js';
@@ -91,6 +92,66 @@ export default function DatasetDashboard() {
   const handleClearFilters = () => {
     setFilters({ categorical: {}, periodFilter: undefined });
   };
+
+  // Helper: Aplicar filtro de período a los datos filtrados
+  const dataWithPeriodFilter = React.useMemo(() => {
+    // Si no hay filtro de período, retornar datos sin cambios
+    if (!filters.periodFilter?.from && !filters.periodFilter?.to) {
+      return filteredData;
+    }
+
+    // Si no hay campo de fecha, no podemos aplicar filtro temporal
+    const dateField = dataset?.schemaMapping?.dateField;
+    if (!dateField || !filteredData.length) {
+      return filteredData;
+    }
+
+    // Filtrar datos basados en el período seleccionado
+    // El filtro de período trabaja con índices (1-12 para meses, 1-52 para semanas, etc.)
+    return filteredData.filter((row) => {
+      const dateValue = row[dateField];
+      if (!dateValue) return false;
+
+      const date = new Date(dateValue as string);
+      if (isNaN(date.getTime())) return false;
+
+      // Calcular el índice según la granularidad
+      let periodIndex: number;
+      switch (granularity) {
+        case 'days': {
+          // Día del año (1-365)
+          const startOfYear = new Date(date.getFullYear(), 0, 1);
+          const diff = date.getTime() - startOfYear.getTime();
+          periodIndex = Math.floor(diff / (1000 * 60 * 60 * 24)) + 1;
+          break;
+        }
+        case 'weeks': {
+          // Semana del año (1-52)
+          const firstDay = new Date(date.getFullYear(), 0, 1);
+          const daysDiff = Math.floor((date.getTime() - firstDay.getTime()) / (1000 * 60 * 60 * 24));
+          periodIndex = Math.floor(daysDiff / 7) + 1;
+          break;
+        }
+        case 'months':
+          // Mes (1-12)
+          periodIndex = date.getMonth() + 1;
+          break;
+        case 'quarters':
+          // Trimestre (1-4)
+          periodIndex = Math.floor(date.getMonth() / 3) + 1;
+          break;
+        default:
+          return true;
+      }
+
+      // Verificar si el índice está dentro del rango
+      const from = filters.periodFilter?.from;
+      const to = filters.periodFilter?.to;
+      if (from !== undefined && periodIndex < from) return false;
+      if (to !== undefined && periodIndex > to) return false;
+      return true;
+    });
+  }, [filteredData, filters.periodFilter, granularity, dataset?.schemaMapping?.dateField]);
 
   // Helper: Mapea de API KPI fields a formato wizard KPIField
   const mappedKpiFields = dataset?.schemaMapping?.kpiFields.map(kpi => ({
@@ -240,10 +301,10 @@ export default function DatasetDashboard() {
             <KPIGrid kpis={kpis} />
 
             {/* RFC-006 Trends View: Grid 2×2 de mini-charts temporales */}
-            {selectedTemplate === 'sideby_trends' && dateField && filteredData.length > 0 && (
+            {selectedTemplate === 'sideby_trends' && dateField && dataWithPeriodFilter.length > 0 && (
               <TrendsGrid
                 kpis={kpis}
-                data={filteredData}
+                data={dataWithPeriodFilter}
                 dateField={dateField}
                 groupALabel={groupALabel}
                 groupBLabel={groupBLabel}
@@ -259,7 +320,7 @@ export default function DatasetDashboard() {
             {selectedTemplate === 'sideby_trends' && categoricalFields.length > 0 && (
               <DimensionGrid
                 kpis={kpis}
-                data={filteredData}
+                data={dataWithPeriodFilter}
                 dimensions={categoricalFields}
                 groupALabel={groupALabel}
                 groupBLabel={groupBLabel}
@@ -282,9 +343,9 @@ export default function DatasetDashboard() {
             )}
 
             {/* Trend Chart - Solo si hay dateField y datos (no en Detailed ni Trends)*/}
-            {dateField && kpis.length > 0 && filteredData.length > 0 && selectedTemplate !== 'sideby_detailed' && selectedTemplate !== 'sideby_trends' && (
+            {dateField && kpis.length > 0 && dataWithPeriodFilter.length > 0 && selectedTemplate !== 'sideby_detailed' && selectedTemplate !== 'sideby_trends' && (
               <TrendChart
-                data={filteredData}
+                data={dataWithPeriodFilter}
                 dateField={dateField}
                 kpis={kpis}
                 groupALabel={groupALabel}
@@ -307,7 +368,7 @@ export default function DatasetDashboard() {
                 />
                 
                 <GranularTable
-                  data={filteredData}
+                  data={dataWithPeriodFilter}
                   dimensions={categoricalFields}
                   kpis={mappedKpiFields}
                   groupALabel={groupALabel}
@@ -343,7 +404,7 @@ export default function DatasetDashboard() {
               </span>
               <span>•</span>
               <span>
-                <strong>Filas filtradas:</strong> {filteredData.length}
+                <strong>Filas filtradas:</strong> {dataWithPeriodFilter.length}
               </span>
               <span>•</span>
               <span>
