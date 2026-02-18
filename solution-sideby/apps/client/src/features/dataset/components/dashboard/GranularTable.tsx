@@ -25,6 +25,12 @@ import {
 } from '@/shared/components/ui/table.js';
 import { Input } from '@/shared/components/ui/Input.js';
 import { Button } from '@/shared/components/ui/button.js';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/shared/components/ui/popover.js';
+import { Checkbox } from '@/shared/components/ui/checkbox.js';
 import { ChevronRight, ChevronDown, Download, ChevronLeft, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import type { DataRow } from '../../types/api.types.js';
 import type { KPIField, KPIFormat } from '../../types/wizard.types.js';
@@ -234,6 +240,8 @@ export function GranularTable({
 }: Readonly<GranularTableProps>) {
   const resolvedGroupAColor = groupAColor ?? 'hsl(var(--primary))';
   const resolvedGroupBColor = groupBColor ?? 'hsl(var(--secondary))';
+  const [visibleDimensions, setVisibleDimensions] = React.useState<string[]>(dimensions);
+  const [isDimensionsOpen, setIsDimensionsOpen] = React.useState(false);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [sortColumn, setSortColumn] = React.useState<string | null>(null);
   const [sortDirection, setSortDirection] = React.useState<'asc' | 'desc'>('asc');
@@ -245,8 +253,18 @@ export function GranularTable({
 
   // Procesar datos en estructura granular
   const granularRows = React.useMemo(() => {
-    return processGranularData(data, dimensions, kpis);
-  }, [data, dimensions, kpis]);
+    return processGranularData(data, visibleDimensions, kpis);
+  }, [data, visibleDimensions, kpis]);
+
+  React.useEffect(() => {
+    setVisibleDimensions((prev) => {
+      const stillAvailable = prev.filter((dim) => dimensions.includes(dim));
+      if (stillAvailable.length > 0 || dimensions.length === 0) {
+        return stillAvailable;
+      }
+      return [...dimensions];
+    });
+  }, [dimensions]);
 
   // Filtrar por búsqueda
   const filteredRows = React.useMemo(() => {
@@ -277,7 +295,7 @@ export function GranularTable({
       let bVal: string | number = '';
 
       // Ordenar por dimensión
-      if (dimensions.includes(sortColumn)) {
+      if (visibleDimensions.includes(sortColumn)) {
         aVal = a.dimensionValues[sortColumn] || '';
         bVal = b.dimensionValues[sortColumn] || '';
       }
@@ -301,7 +319,7 @@ export function GranularTable({
           : (bVal as number) - (aVal as number);
       }
     });
-  }, [filteredRows, sortColumn, sortDirection, dimensions, kpis]);
+  }, [filteredRows, sortColumn, sortDirection, visibleDimensions, kpis]);
 
   // Calcular paginación
   const totalRows = sortedRows.length;
@@ -314,6 +332,26 @@ export function GranularTable({
   React.useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, sortColumn, sortDirection]);
+
+  React.useEffect(() => {
+    setExpandedRows(new Set());
+  }, [visibleDimensions]);
+
+  React.useEffect(() => {
+    if (sortColumn && !visibleDimensions.includes(sortColumn) && !kpis.some((kpi) => kpi.id === sortColumn)) {
+      setSortColumn(null);
+      setSortDirection('asc');
+    }
+  }, [sortColumn, visibleDimensions, kpis]);
+
+  const toggleDimension = (dimension: string) => {
+    setVisibleDimensions((prev) => {
+      if (prev.includes(dimension)) {
+        return prev.filter((dim) => dim !== dimension);
+      }
+      return [...prev, dimension];
+    });
+  };
 
   /**
    * Maneja el click en un header para ordenar
@@ -347,7 +385,7 @@ export function GranularTable({
    * Exporta datos a CSV
    */
   const handleExportCSV = () => {
-    exportToCSV(sortedRows, dimensions, kpis, groupALabel, groupBLabel);
+    exportToCSV(sortedRows, visibleDimensions, kpis, groupALabel, groupBLabel);
   };
 
   return (
@@ -357,6 +395,36 @@ export function GranularTable({
           <h3 className="text-lg font-semibold">📋 Detalle por Dimensiones</h3>
 
           <div className="flex items-center gap-2">
+            <Popover open={isDimensionsOpen} onOpenChange={setIsDimensionsOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm">
+                  Agrupar por ({visibleDimensions.length})
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[240px]" align="end">
+                <div className="space-y-3">
+                  <p className="text-xs text-muted-foreground">
+                    Selecciona las dimensiones para mostrar y agrupar.
+                  </p>
+                  <div className="space-y-2">
+                    {dimensions.map((dimension) => {
+                      const checked = visibleDimensions.includes(dimension);
+                      return (
+                        <label key={dimension} className="flex items-center gap-2 text-sm cursor-pointer">
+                          <Checkbox
+                            checked={checked}
+                            onCheckedChange={() => toggleDimension(dimension)}
+                            aria-label={`Mostrar dimensión ${dimension}`}
+                          />
+                          <span>{dimension}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+
             {/* Search */}
             <Input
               placeholder="Buscar..."
@@ -381,7 +449,7 @@ export function GranularTable({
               <TableRow>
                 <TableHead className="w-[40px]"></TableHead>
                 {/* Dimension headers */}
-                {dimensions.map((dim) => (
+                {visibleDimensions.map((dim) => (
                   <TableHead
                     key={dim}
                     className="cursor-pointer hover:bg-muted/50"
@@ -411,7 +479,7 @@ export function GranularTable({
             <TableBody>
               {paginatedRows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={2 + dimensions.length + (kpis.length * 2)} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={2 + visibleDimensions.length + (kpis.length * 2)} className="text-center py-8 text-muted-foreground">
                     No hay datos para mostrar
                   </TableCell>
                 </TableRow>
@@ -443,7 +511,7 @@ export function GranularTable({
                         </TableCell>
 
                         {/* Dimensiones */}
-                        {dimensions.map((dim) => (
+                        {visibleDimensions.map((dim) => (
                           <TableCell key={dim} className="font-medium">
                             {row.dimensionValues[dim]}
                           </TableCell>
@@ -475,7 +543,7 @@ export function GranularTable({
                       {isExpanded && (
                         <TableRow>
                           <TableCell
-                            colSpan={2 + dimensions.length + (kpis.length * 2)}
+                            colSpan={2 + visibleDimensions.length + (kpis.length * 2)}
                             className="bg-muted/30 p-4"
                           >
                             <div className="space-y-2">

@@ -102,10 +102,17 @@ describe('GranularTable', () => {
       render(<GranularTable {...defaultProps} />);
       
       // Buscar headers específicos (incluyendo A/B y Delta)
-      expect(screen.getByText('Ingresos A/B')).toBeInTheDocument();
+      expect(screen.getByText('Ingresos')).toBeInTheDocument();
+      expect(screen.getAllByText('2023').length).toBeGreaterThan(0);
+      expect(screen.getAllByText('2024').length).toBeGreaterThan(0);
       expect(screen.getByText('Δ Ingresos')).toBeInTheDocument();
-      expect(screen.getByText('Unidades A/B')).toBeInTheDocument();
+      expect(screen.getByText('Unidades')).toBeInTheDocument();
       expect(screen.getByText('Δ Unidades')).toBeInTheDocument();
+    });
+
+    it('debe mostrar botón de agrupación por dimensiones', () => {
+      render(<GranularTable {...defaultProps} />);
+      expect(screen.getByRole('button', { name: /Agrupar por/i })).toBeInTheDocument();
     });
 
     it('debe renderizar filas agrupadas por dimensión', () => {
