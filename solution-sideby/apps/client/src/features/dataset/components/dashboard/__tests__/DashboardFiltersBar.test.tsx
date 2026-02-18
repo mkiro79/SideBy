@@ -61,6 +61,7 @@ const mockDataset: Dataset = {
 describe('[RFC-005] DashboardFiltersBar', () => {
   const onFilterChange = vi.fn();
   const onClearFilters = vi.fn();
+  const onPeriodFilterChange = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -74,6 +75,8 @@ describe('[RFC-005] DashboardFiltersBar', () => {
         onFilterChange={onFilterChange}
         onClearFilters={onClearFilters}
         dataset={mockDataset}
+        onPeriodFilterChange={onPeriodFilterChange}
+        granularity="months"
       />
     );
 
@@ -90,6 +93,8 @@ describe('[RFC-005] DashboardFiltersBar', () => {
         onFilterChange={onFilterChange}
         onClearFilters={onClearFilters}
         dataset={mockDataset}
+        onPeriodFilterChange={onPeriodFilterChange}
+        granularity="months"
       />
     );
 
@@ -105,6 +110,8 @@ describe('[RFC-005] DashboardFiltersBar', () => {
         onFilterChange={onFilterChange}
         onClearFilters={onClearFilters}
         dataset={mockDataset}
+        onPeriodFilterChange={onPeriodFilterChange}
+        granularity="months"
       />
     );
 
@@ -123,6 +130,8 @@ describe('[RFC-005] DashboardFiltersBar', () => {
         onFilterChange={onFilterChange}
         onClearFilters={onClearFilters}
         dataset={mockDataset}
+        onPeriodFilterChange={onPeriodFilterChange}
+        granularity="months"
       />
     );
 
@@ -146,6 +155,8 @@ describe('[RFC-005] DashboardFiltersBar', () => {
         onFilterChange={onFilterChange}
         onClearFilters={onClearFilters}
         dataset={mockDataset}
+        onPeriodFilterChange={onPeriodFilterChange}
+        granularity="months"
       />
     );
 
@@ -163,6 +174,8 @@ describe('[RFC-005] DashboardFiltersBar', () => {
         onFilterChange={onFilterChange}
         onClearFilters={onClearFilters}
         dataset={mockDataset}
+        onPeriodFilterChange={onPeriodFilterChange}
+        granularity="months"
       />
     );
 
@@ -179,6 +192,8 @@ describe('[RFC-005] DashboardFiltersBar', () => {
         onFilterChange={onFilterChange}
         onClearFilters={onClearFilters}
         dataset={mockDataset}
+        onPeriodFilterChange={onPeriodFilterChange}
+        granularity="months"
       />
     );
 
@@ -206,6 +221,8 @@ describe('[RFC-005] DashboardFiltersBar', () => {
         onFilterChange={onFilterChange}
         onClearFilters={onClearFilters}
         dataset={mockDataset}
+        onPeriodFilterChange={onPeriodFilterChange}
+        granularity="months"
       />
     );
 
@@ -245,6 +262,8 @@ describe('[RFC-005] DashboardFiltersBar', () => {
           onFilterChange={handleFilterChange}
           onClearFilters={() => setFilters({})}
           dataset={mockDataset}
+          onPeriodFilterChange={onPeriodFilterChange}
+          granularity="months"
         />
       );
     };
@@ -281,6 +300,8 @@ describe('[RFC-005] DashboardFiltersBar', () => {
         onFilterChange={onFilterChange}
         onClearFilters={onClearFilters}
         dataset={mockDataset}
+        onPeriodFilterChange={onPeriodFilterChange}
+        granularity="months"
       />
     );
 
@@ -305,6 +326,8 @@ describe('[RFC-005] DashboardFiltersBar', () => {
         onFilterChange={onFilterChange}
         onClearFilters={onClearFilters}
         dataset={mockDataset}
+        onPeriodFilterChange={onPeriodFilterChange}
+        granularity="months"
       />
     );
 
@@ -330,6 +353,8 @@ describe('[RFC-005] DashboardFiltersBar', () => {
         onFilterChange={onFilterChange}
         onClearFilters={onClearFilters}
         dataset={mockDataset}
+        onPeriodFilterChange={onPeriodFilterChange}
+        granularity="months"
       />
     );
 
@@ -353,6 +378,8 @@ describe('[RFC-005] DashboardFiltersBar', () => {
         onFilterChange={onFilterChange}
         onClearFilters={onClearFilters}
         dataset={mockDataset}
+        onPeriodFilterChange={onPeriodFilterChange}
+        granularity="months"
       />
     );
 

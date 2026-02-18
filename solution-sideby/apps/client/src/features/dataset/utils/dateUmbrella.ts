@@ -86,6 +86,7 @@ interface GroupedData {
  * @param valueField - Nombre del campo de valor (KPI) a comparar
  * @param granularity - Nivel de agrupación (days, weeks, months, quarters)
  * @param omitGaps - Si true, omite períodos donde faltan datos de ambos grupos
+ * @param periodFilter - Rango de períodos relativos (índices 1-based según granularidad)
  * @returns Array de puntos alineados para el gráfico
  */
 export function createDateUmbrella(
@@ -95,6 +96,7 @@ export function createDateUmbrella(
   valueField: string,
   granularity: DateGranularity = "months",
   omitGaps: boolean = true,
+  periodFilter?: { from?: number; to?: number },
 ): UmbrellaDatePoint[] {
   // 1. Parsear y agrupar datos por granularidad
   const groupAByKey = groupDataByGranularity(
@@ -143,6 +145,14 @@ export function createDateUmbrella(
       groupA: pointA,
       groupB: pointB,
     });
+  }
+
+  // 5. Aplicar filtro de período relativo (opcional)
+  if (periodFilter && (periodFilter.from !== undefined || periodFilter.to !== undefined)) {
+    const fromIndex = periodFilter.from !== undefined ? periodFilter.from - 1 : 0; // Convertir a 0-based
+    const toIndex = periodFilter.to !== undefined ? periodFilter.to : umbrellaPoints.length;
+    
+    return umbrellaPoints.slice(fromIndex, toIndex);
   }
 
   return umbrellaPoints;

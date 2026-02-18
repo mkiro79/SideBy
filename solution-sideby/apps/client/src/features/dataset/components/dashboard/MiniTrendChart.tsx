@@ -57,6 +57,9 @@ interface MiniTrendChartProps {
   
   /** Color de la línea del grupo B */
   groupBColor: string;
+  
+  /** Filtro de período relativo (opcional) */
+  periodFilter?: { from?: number; to?: number };
 }
 
 const formatValue = (value: number, format: KPIResult['format']): string =>
@@ -74,6 +77,7 @@ export function MiniTrendChart({
   groupBLabel,
   groupAColor,
   groupBColor,
+  periodFilter,
 }: Readonly<MiniTrendChartProps>) {
   const isPositive = kpi.diffPercent > 0;
   const isNegative = kpi.diffPercent < 0;
@@ -88,10 +92,11 @@ export function MiniTrendChart({
     temp.style.color = hslColor;
     document.body.appendChild(temp);
     const computed = getComputedStyle(temp).color;
-    document.body.removeChild(temp);
+    temp.remove();
     
     // Extraer rgb values y agregar alpha
-    const match = computed.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+    const rgbRegex = /rgb\((\d+),\s*(\d+),\s*(\d+)\)/;
+    const match = rgbRegex.exec(computed);
     if (match) {
       return `rgba(${match[1]}, ${match[2]}, ${match[3]}, ${opacity})`;
     }
@@ -141,6 +146,7 @@ export function MiniTrendChart({
       kpi.name, // KPI de este mini-chart
       granularity, // Usar granularidad seleccionada
       true,  // Omitir gaps para no renderizar periodos sin datos
+      periodFilter,  // Aplicar filtro de período
     );
 
     // Transformar UmbrellaDatePoint[] a formato compatible con Recharts
@@ -149,7 +155,7 @@ export function MiniTrendChart({
       [groupALabel]: point.groupA?.value || 0,
       [groupBLabel]: point.groupB?.value || 0,
     }));
-  }, [data, dateField, kpi.name, granularity, groupALabel, groupBLabel]);
+  }, [data, dateField, kpi.name, granularity, groupALabel, groupBLabel, periodFilter]);
 
   return (
     <Card>

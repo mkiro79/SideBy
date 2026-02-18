@@ -55,6 +55,9 @@ export default function DatasetDashboard() {
     filters,
   });
   
+  // State para granularidad temporal (usado en filtro de período)
+  const [granularity, setGranularity] = useState<'days' | 'weeks' | 'months' | 'quarters'>('months');
+
   // Handler para cambio de filtros multi-select (RFC-005)
   const handleFilterChange = (field: string, values: string[]) => {
     setFilters((prev) => ({
@@ -66,9 +69,17 @@ export default function DatasetDashboard() {
     }));
   };
 
+  // Handler para cambio de filtro de período
+  const handlePeriodFilterChange = (periodFilter?: { from?: number; to?: number }) => {
+    setFilters((prev) => ({
+      ...prev,
+      periodFilter,
+    }));
+  };
+
   // Handler para limpiar todos los filtros (RFC-005)
   const handleClearFilters = () => {
-    setFilters({ categorical: {} });
+    setFilters({ categorical: {}, periodFilter: undefined });
   };
 
   // Helper: Mapea de API KPI fields a formato wizard KPIField
@@ -204,15 +215,16 @@ export default function DatasetDashboard() {
             </div>
 
             {/* Filters Bar */}
-            {categoricalFields.length > 0 && (
-              <DashboardFiltersBar
-                categoricalFields={categoricalFields}
-                filters={filters.categorical}
-                onFilterChange={handleFilterChange}
-                onClearFilters={handleClearFilters}
-                dataset={dataset}
-              />
-            )}
+            <DashboardFiltersBar
+              categoricalFields={categoricalFields}
+              filters={filters.categorical}
+              onFilterChange={handleFilterChange}
+              onClearFilters={handleClearFilters}
+              dataset={dataset}
+              periodFilter={filters.periodFilter}
+              onPeriodFilterChange={handlePeriodFilterChange}
+              granularity={granularity}
+            />
 
             {/* KPI Grid */}
             <KPIGrid kpis={kpis} />
@@ -227,6 +239,9 @@ export default function DatasetDashboard() {
                 groupBLabel={groupBLabel}
                 groupAColor={groupAColor}
                 groupBColor={groupBColor}
+                granularity={granularity}
+                onGranularityChange={setGranularity}
+                periodFilter={filters.periodFilter}
               />
             )}
 
@@ -266,6 +281,7 @@ export default function DatasetDashboard() {
                 groupBLabel={groupBLabel}
                 groupAColor={groupAColor}
                 groupBColor={groupBColor}
+                periodFilter={filters.periodFilter}
               />
             )}
 

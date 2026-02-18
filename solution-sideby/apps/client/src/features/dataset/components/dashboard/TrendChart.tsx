@@ -37,6 +37,9 @@ interface TrendChartProps {
   groupBLabel: string;
   groupAColor: string;
   groupBColor: string;
+  
+  /** Filtro de período relativo (opcional) */
+  periodFilter?: { from?: number; to?: number };
 }
 
 export const TrendChart: React.FC<TrendChartProps> = ({
@@ -47,6 +50,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({
   groupBLabel,
   groupAColor,
   groupBColor,
+  periodFilter,
 }) => {
   // Estado para granularidad seleccionada
   const [granularity, setGranularity] = useState<DateGranularity>('months');
@@ -68,12 +72,13 @@ export const TrendChart: React.FC<TrendChartProps> = ({
     temp.style.color = hslColor;
     document.body.appendChild(temp);
     const computed = getComputedStyle(temp).color;
-    document.body.removeChild(temp);
+    temp.remove();
     
     // Extraer rgb values y agregar alpha
-    const match = computed.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+    const rgbRegex = /rgb\((\d+),\s*(\d+),\s*(\d+)\)/;
+    const match = rgbRegex.exec(computed);
     if (match) {
-      return `rgba(${match[1]}, ${match[2]}, ${match[3]}, ${opacity})`;
+      return `rgba(${ match[1]}, ${match[2]}, ${match[3]}, ${opacity})`;
     }
     
     return hslColor; // Fallback
@@ -103,6 +108,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({
       selectedKpi.name, // KPI seleccionado
       granularity, // Usar granularidad seleccionada
       true,  // Omitir gaps para no renderizar periodos sin datos
+      periodFilter,  // Aplicar filtro de período
     );
 
     // Transformar UmbrellaDatePoint[] a formato compatible con Recharts
@@ -111,7 +117,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({
       groupA: point.groupA?.value ?? 0,
       groupB: point.groupB?.value ?? 0,
     }));
-  }, [data, dateField, selectedKpi.name, granularity]);
+  }, [data, dateField, selectedKpi.name, granularity, periodFilter]);
 
   const formatValue = (value: number): string =>
     formatKpiValue(value, format, { compact: true });
