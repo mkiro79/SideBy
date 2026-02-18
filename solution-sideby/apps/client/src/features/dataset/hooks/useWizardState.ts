@@ -281,12 +281,16 @@ export const useWizardState = create<WizardState & WizardActions>()(
         currentStep: state.currentStep,
         datasetId: state.datasetId, // NEW: Persist datasetId
         fileA: {
-          ...state.fileA,
           file: null, // No persistir el objeto File
+          parsedData: null, // No persistir datos parseados (evita exceder cuota)
+          error: state.fileA.error,
+          isValid: state.fileA.isValid,
         },
         fileB: {
-          ...state.fileB,
           file: null, // No persistir el objeto File
+          parsedData: null, // No persistir datos parseados (evita exceder cuota)
+          error: state.fileB.error,
+          isValid: state.fileB.isValid,
         },
         mapping: state.mapping,
         metadata: state.metadata,
