@@ -1,0 +1,17 @@
+import { Router } from "express";
+import { authMiddleware } from "@/middleware/auth.middleware.js";
+import { generalRateLimiter } from "@/middleware/rate-limit.middleware.js";
+import { InsightsController } from "@/modules/insights/presentation/insights.controller.js";
+
+const router = Router();
+const controller = new InsightsController();
+
+router.use(authMiddleware);
+
+router.get(
+  "/:id/insights",
+  generalRateLimiter,
+  controller.getDatasetInsights.bind(controller),
+);
+
+export default router;
