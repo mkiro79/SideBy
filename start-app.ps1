@@ -54,6 +54,7 @@ Write-Host "   - MongoDB en puerto 27017" -ForegroundColor Cyan
 Write-Host "   - Mongo Express en puerto 8081" -ForegroundColor Cyan
 Write-Host "   - API en puerto 3000" -ForegroundColor Cyan
 Write-Host "   - Cliente en puerto 5173" -ForegroundColor Cyan
+Write-Host "   - Ollama en puerto 11434" -ForegroundColor Cyan
 Write-Host ""
 
 docker compose up -d
@@ -97,6 +98,7 @@ Write-Host "URLs disponibles:" -ForegroundColor Cyan
 Write-Host "   Cliente:        http://localhost:5173" -ForegroundColor Green
 Write-Host "   API:            http://localhost:3000" -ForegroundColor Green
 Write-Host "   Mongo Express:  http://localhost:8081" -ForegroundColor Green
+Write-Host "   Ollama:         http://localhost:11434" -ForegroundColor Green
 Write-Host "     * Credenciales configuradas en .env (ME_BASICAUTH_USERNAME / ME_BASICAUTH_PASSWORD)" -ForegroundColor Gray
 Write-Host ""
 Write-Host "Comandos utiles:" -ForegroundColor Cyan

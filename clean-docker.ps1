@@ -35,8 +35,8 @@ Write-Host ""
 # Warning
 Write-Host "=====================================================================" -ForegroundColor Red
 Write-Host "[!] WARNING: This script will remove:" -ForegroundColor Yellow
-Write-Host "   1. All project containers (api, client, mongo, mongo-express)" -ForegroundColor Yellow
-Write-Host "   2. All volumes (mongo_data, api_node_modules, client_node_modules)" -ForegroundColor Yellow
+Write-Host "   1. All project containers (api, client, mongo, mongo-express, ollama)" -ForegroundColor Yellow
+Write-Host "   2. All volumes (mongo_data, api_node_modules, client_node_modules, ollama_data)" -ForegroundColor Yellow
 Write-Host "   3. All built images (sideby-api, sideby-client)" -ForegroundColor Yellow
 Write-Host "=====================================================================" -ForegroundColor Red
 Write-Host ""
