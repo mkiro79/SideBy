@@ -32,6 +32,8 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - Filtro de ruido en anomalías: se descartan comparativas dimensionales con `groupA=0` o `groupB=0`
 - Prompt del narrador LLM reforzado para salida menos genérica y enfocada en la vista 3/3
 - `businessNarrative` ahora incluye `model` para identificar el LLM que respondió (ej. `gemma2:9b`)
+- Modelo por defecto de insights actualizado a `gemma2:9b` en compose/env/scripts/docs
+- Ajuste de sensibilidad del Rule Engine: `global=20%`, `dimensional=15%`, `max anomalies=10`
 - Nuevos/actualizados tests unitarios en `RuleEngineAdapter` y `LLMNarratorAdapter`
 
 ### [RFC-009] Wizard Step 3 - SourceConfig (2026-02-16)

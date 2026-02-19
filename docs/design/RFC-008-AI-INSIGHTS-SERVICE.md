@@ -722,7 +722,7 @@ INSIGHTS_LLM_API_KEY=ollama
 
 ```bash
 docker run -d --name sideby-ollama -p 11434:11434 ollama/ollama
-docker exec -it sideby-ollama ollama pull qwen2.5:7b-instruct
+docker exec -it sideby-ollama ollama pull gemma2:9b
 ```
 
 **Comportamiento esperado en runtime:**
