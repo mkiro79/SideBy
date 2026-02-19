@@ -1,12 +1,12 @@
 import type {
+  CachedInsightsPayload,
   DashboardFilters,
-  DatasetInsight,
 } from "@/modules/insights/domain/DatasetInsight.js";
 import type { InsightsCacheRepository } from "@/modules/insights/application/ports/InsightsCacheRepository.js";
 
 interface CachedEntry {
   expiresAt: number;
-  insights: DatasetInsight[];
+  payload: CachedInsightsPayload;
 }
 
 export class InMemoryInsightsCacheRepository implements InsightsCacheRepository {
@@ -17,7 +17,7 @@ export class InMemoryInsightsCacheRepository implements InsightsCacheRepository 
   async findCached(
     datasetId: string,
     filters: DashboardFilters,
-  ): Promise<DatasetInsight[] | null> {
+  ): Promise<CachedInsightsPayload | null> {
     const key = this.generateCacheKey(datasetId, filters);
     const cached = this.cache.get(key);
 
@@ -30,18 +30,18 @@ export class InMemoryInsightsCacheRepository implements InsightsCacheRepository 
       return null;
     }
 
-    return cached.insights;
+    return cached.payload;
   }
 
   async saveToCache(
     datasetId: string,
     filters: DashboardFilters,
-    insights: DatasetInsight[],
+    payload: CachedInsightsPayload,
   ): Promise<void> {
     const key = this.generateCacheKey(datasetId, filters);
 
     this.cache.set(key, {
-      insights,
+      payload,
       expiresAt: Date.now() + this.ttlSeconds * 1000,
     });
   }

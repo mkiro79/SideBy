@@ -21,11 +21,19 @@ interface DimensionalOutlier {
   dimension: string;
   dimensionValue: string;
   kpi: string;
+  groupA: number;
+  groupB: number;
   value: number;
+  dominantGroup: "groupA" | "groupB";
   change: number;
 }
 
 export class RuleEngineAdapter implements InsightsGenerator {
+  private static readonly GLOBAL_CHANGE_THRESHOLD = 30;
+  private static readonly DIMENSION_CHANGE_THRESHOLD = 40;
+  private static readonly MAX_DIMENSION_INSIGHTS = 20;
+  private static readonly TOP_ITEMS_LIMIT = 3;
+
   async generateInsights(
     dataset: Dataset,
     filters: DashboardFilters,
@@ -39,10 +47,9 @@ export class RuleEngineAdapter implements InsightsGenerator {
     const insights: DatasetInsight[] = [];
 
     for (const kpi of kpis) {
-      const changePercent =
-        kpi.groupA !== 0 ? ((kpi.groupB - kpi.groupA) / kpi.groupA) * 100 : 0;
+      const changePercent = this.calculatePercentChange(kpi.groupA, kpi.groupB);
 
-      if (Math.abs(changePercent) > 30) {
+      if (Math.abs(changePercent) > RuleEngineAdapter.GLOBAL_CHANGE_THRESHOLD) {
         const isPositive = changePercent > 0;
 
         insights.push({
@@ -51,8 +58,10 @@ export class RuleEngineAdapter implements InsightsGenerator {
           type: isPositive ? "trend" : "warning",
           severity: Math.abs(changePercent) > 50 ? 4 : 3,
           icon: isPositive ? "📈" : "📉",
-          title: `${kpi.label}: Cambio significativo`,
-          message: `${kpi.label} ${isPositive ? "aumentó" : "disminuyó"} un ${Math.abs(changePercent).toFixed(1)}% respecto al período anterior.`,
+          title: isPositive
+            ? `${kpi.label}: avance relevante`
+            : `${kpi.label}: señal de alerta`,
+          message: `${kpi.label} ${isPositive ? "mejora" : "cae"} ${Math.abs(changePercent).toFixed(1)}% (${dataset.sourceConfig.groupA.label}: ${this.formatNumber(kpi.groupA)} vs ${dataset.sourceConfig.groupB.label}: ${this.formatNumber(kpi.groupB)}).`,
           metadata: {
             kpi: kpi.name,
             change: changePercent,
@@ -64,21 +73,29 @@ export class RuleEngineAdapter implements InsightsGenerator {
       }
     }
 
-    const dimensionalOutliers = this.detectDimensionalOutliers(
+    const dimensionalComparisons = this.detectDimensionalComparisons(
       filteredData,
       dataset.schemaMapping?.categoricalFields ?? [],
       kpiFields,
     );
 
-    for (const outlier of dimensionalOutliers) {
+    for (const outlier of dimensionalComparisons.slice(
+      0,
+      RuleEngineAdapter.MAX_DIMENSION_INSIGHTS,
+    )) {
+      const dominantLabel =
+        outlier.dominantGroup === "groupA"
+          ? dataset.sourceConfig.groupA.label
+          : dataset.sourceConfig.groupB.label;
+
       insights.push({
         id: randomUUID(),
         datasetId: dataset.id,
         type: "anomaly",
         severity: 4,
         icon: "🚨",
-        title: `Anomalía detectada en ${outlier.dimension}`,
-        message: `${outlier.dimensionValue} muestra un comportamiento atípico en ${outlier.kpi} (${outlier.change > 0 ? "+" : ""}${outlier.change.toFixed(1)}%).`,
+        title: `Brecha relevante en ${outlier.kpi}`,
+        message: `${this.formatDimensionContext(outlier.dimension, outlier.dimensionValue)}: ${dataset.sourceConfig.groupA.label} ${this.formatNumber(outlier.groupA)} vs ${dataset.sourceConfig.groupB.label} ${this.formatNumber(outlier.groupB)} (${outlier.change > 0 ? "+" : ""}${outlier.change.toFixed(1)}%, domina ${dominantLabel}).`,
         metadata: {
           dimension: outlier.dimension,
           kpi: outlier.kpi,
@@ -91,30 +108,20 @@ export class RuleEngineAdapter implements InsightsGenerator {
       });
     }
 
-    const topPerformer = this.findTopPerformer(
-      filteredData,
-      dataset.schemaMapping?.categoricalFields ?? [],
-      kpiFields,
+    const topCountriesInsight = this.buildTopCountriesInsight(
+      dataset,
+      dimensionalComparisons,
     );
+    if (topCountriesInsight) {
+      insights.push(topCountriesInsight);
+    }
 
-    if (topPerformer) {
-      insights.push({
-        id: randomUUID(),
-        datasetId: dataset.id,
-        type: "suggestion",
-        severity: 2,
-        icon: "✨",
-        title: `Mejor rendimiento: ${topPerformer.dimensionValue}`,
-        message: `${topPerformer.dimension} "${topPerformer.dimensionValue}" lidera con ${topPerformer.value.toFixed(0)} en ${topPerformer.kpi}.`,
-        metadata: {
-          dimension: topPerformer.dimension,
-          kpi: topPerformer.kpi,
-          value: topPerformer.value,
-        },
-        generatedBy: "rule-engine",
-        confidence: 1,
-        generatedAt: new Date(),
-      });
+    const improvementInsight = this.buildImprovementMetricsInsight(
+      dataset,
+      kpis,
+    );
+    if (improvementInsight) {
+      insights.push(improvementInsight);
     }
 
     const overallChange = this.calculateOverallChange(kpis);
@@ -175,111 +182,179 @@ export class RuleEngineAdapter implements InsightsGenerator {
     });
   }
 
-  private detectDimensionalOutliers(
+  private detectDimensionalComparisons(
     data: DataRow[],
     dimensions: string[],
     kpiFields: KPIField[],
   ): DimensionalOutlier[] {
-    const outliers: DimensionalOutlier[] = [];
+    const expandedDimensions = this.expandDimensions(dimensions);
+    const aggregates = new Map<
+      string,
+      {
+        dimension: string;
+        dimensionValue: string;
+        kpi: string;
+        groupA: number;
+        groupB: number;
+      }
+    >();
 
-    for (const dimension of dimensions) {
-      for (const kpi of kpiFields) {
-        const grouped = this.groupByDimension(data, dimension, kpi.columnName);
-        const values = Object.values(grouped);
+    for (const row of data) {
+      const sourceGroup = row._source_group === "groupB" ? "groupB" : "groupA";
 
-        if (values.length < 2) {
-          continue;
-        }
+      for (const dimension of expandedDimensions) {
+        const dimensionValue = this.resolveDimensionValue(
+          row,
+          dimension,
+          dimensions,
+        );
 
-        const mean = this.calculateMean(values);
-        const stdDev = this.calculateStdDev(values, mean);
+        for (const kpi of kpiFields) {
+          const value = this.toNumber(row[kpi.columnName]);
+          const key = `${dimension}::${dimensionValue}::${kpi.columnName}`;
+          const current = aggregates.get(key) ?? {
+            dimension,
+            dimensionValue,
+            kpi: kpi.columnName,
+            groupA: 0,
+            groupB: 0,
+          };
 
-        if (stdDev === 0 || mean === 0) {
-          continue;
-        }
-
-        for (const [dimensionValue, value] of Object.entries(grouped)) {
-          const zScore = Math.abs((value - mean) / stdDev);
-
-          if (zScore > 2) {
-            outliers.push({
-              dimension,
-              dimensionValue,
-              kpi: kpi.columnName,
-              value,
-              change: ((value - mean) / mean) * 100,
-            });
+          if (sourceGroup === "groupA") {
+            current.groupA += value;
+          } else {
+            current.groupB += value;
           }
+
+          aggregates.set(key, current);
         }
       }
     }
 
-    return outliers;
+    return [...aggregates.values()]
+      .filter((aggregate) => aggregate.groupA > 0 && aggregate.groupB > 0)
+      .map((aggregate) => {
+        const change = this.calculatePercentChange(
+          aggregate.groupA,
+          aggregate.groupB,
+        );
+        const dominantGroup =
+          aggregate.groupB >= aggregate.groupA ? "groupB" : "groupA";
+
+        return {
+          dimension: aggregate.dimension,
+          dimensionValue: aggregate.dimensionValue,
+          kpi: aggregate.kpi,
+          groupA: aggregate.groupA,
+          groupB: aggregate.groupB,
+          value:
+            dominantGroup === "groupA" ? aggregate.groupA : aggregate.groupB,
+          dominantGroup: dominantGroup as "groupA" | "groupB",
+          change,
+        };
+      })
+      .filter(
+        (comparison) =>
+          Math.abs(comparison.change) >=
+          RuleEngineAdapter.DIMENSION_CHANGE_THRESHOLD,
+      )
+      .sort((a, b) => Math.abs(b.change) - Math.abs(a.change));
   }
 
-  private findTopPerformer(
-    data: DataRow[],
-    dimensions: string[],
-    kpiFields: KPIField[],
-  ): DimensionalOutlier | null {
-    const dimension = dimensions[0];
-    const kpi = kpiFields[0]?.columnName;
+  private buildTopCountriesInsight(
+    dataset: Dataset,
+    comparisons: DimensionalOutlier[],
+  ): DatasetInsight | null {
+    const countryComparisons = comparisons.filter(
+      (comparison) =>
+        comparison.dimension === "country" && comparison.change > 0,
+    );
 
-    if (!dimension || !kpi) {
+    if (countryComparisons.length === 0) {
       return null;
     }
 
-    const grouped = this.groupByDimension(data, dimension, kpi);
-
-    let bestEntry: [string, number] | null = null;
-
-    for (const entry of Object.entries(grouped)) {
-      if (!bestEntry || entry[1] > bestEntry[1]) {
-        bestEntry = entry;
+    const strongestByCountry = new Map<string, DimensionalOutlier>();
+    for (const comparison of countryComparisons) {
+      const current = strongestByCountry.get(comparison.dimensionValue);
+      if (!current || comparison.change > current.change) {
+        strongestByCountry.set(comparison.dimensionValue, comparison);
       }
     }
 
-    if (!bestEntry) {
+    const topCountries = [...strongestByCountry.values()]
+      .sort((a, b) => b.change - a.change)
+      .slice(0, RuleEngineAdapter.TOP_ITEMS_LIMIT);
+
+    if (topCountries.length === 0) {
       return null;
     }
 
+    const highlights = topCountries
+      .map(
+        (item) =>
+          `${item.dimensionValue} (${item.kpi} ${item.change > 0 ? "+" : ""}${item.change.toFixed(1)}%)`,
+      )
+      .join(", ");
+
     return {
-      dimension,
-      dimensionValue: bestEntry[0],
-      kpi,
-      value: bestEntry[1],
-      change: 0,
+      id: randomUUID(),
+      datasetId: dataset.id,
+      type: "suggestion",
+      severity: 2,
+      icon: "✅",
+      title: "Top países con mejor desempeño",
+      message: `Países que más destacan: ${highlights}.`,
+      metadata: {
+        dimension: "country",
+      },
+      generatedBy: "rule-engine",
+      confidence: 0.9,
+      generatedAt: new Date(),
     };
   }
 
-  private groupByDimension(
-    data: DataRow[],
-    dimension: string,
-    kpi: string,
-  ): Record<string, number> {
-    const grouped: Record<string, number> = {};
+  private buildImprovementMetricsInsight(
+    dataset: Dataset,
+    kpis: KpiSummary[],
+  ): DatasetInsight | null {
+    const weakestKpis = kpis
+      .map((kpi) => ({
+        name: kpi.name,
+        label: kpi.label,
+        change: this.calculatePercentChange(kpi.groupA, kpi.groupB),
+      }))
+      .filter((kpi) => kpi.change < 0)
+      .sort((a, b) => a.change - b.change)
+      .slice(0, RuleEngineAdapter.TOP_ITEMS_LIMIT);
 
-    for (const row of data) {
-      const key = String(row[dimension] ?? "N/A");
-      if (!grouped[key]) {
-        grouped[key] = 0;
-      }
-      grouped[key] += this.toNumber(row[kpi]);
+    if (weakestKpis.length === 0) {
+      return null;
     }
 
-    return grouped;
-  }
+    const summary = weakestKpis
+      .map(
+        (item) =>
+          `${item.label} (${item.change > 0 ? "+" : ""}${item.change.toFixed(1)}%)`,
+      )
+      .join(", ");
 
-  private calculateMean(values: number[]): number {
-    return values.reduce((sum, value) => sum + value, 0) / values.length;
-  }
-
-  private calculateStdDev(values: number[], mean: number): number {
-    const variance =
-      values.reduce((sum, value) => sum + (value - mean) ** 2, 0) /
-      values.length;
-
-    return Math.sqrt(variance);
+    return {
+      id: randomUUID(),
+      datasetId: dataset.id,
+      type: "warning",
+      severity: 3,
+      icon: "⚠️",
+      title: "Top métricas a mejorar",
+      message: `Priorizar estas métricas en caída: ${summary}.`,
+      metadata: {
+        kpi: weakestKpis[0]?.name,
+        change: weakestKpis[0]?.change,
+      },
+      generatedBy: "rule-engine",
+      confidence: 0.9,
+      generatedAt: new Date(),
+    };
   }
 
   private calculateOverallChange(kpis: KpiSummary[]): number {
@@ -288,7 +363,7 @@ export class RuleEngineAdapter implements InsightsGenerator {
     }
 
     const changes = kpis.map((kpi) =>
-      kpi.groupA !== 0 ? ((kpi.groupB - kpi.groupA) / kpi.groupA) * 100 : 0,
+      this.calculatePercentChange(kpi.groupA, kpi.groupB),
     );
 
     return changes.reduce((sum, value) => sum + value, 0) / changes.length;
@@ -297,5 +372,66 @@ export class RuleEngineAdapter implements InsightsGenerator {
   private toNumber(value: unknown): number {
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : 0;
+  }
+
+  private calculatePercentChange(
+    baseValue: number,
+    comparedValue: number,
+  ): number {
+    if (baseValue > 0) {
+      return ((comparedValue - baseValue) / baseValue) * 100;
+    }
+
+    if (comparedValue > 0) {
+      return 100;
+    }
+
+    return 0;
+  }
+
+  private expandDimensions(dimensions: string[]): string[] {
+    if (dimensions.length <= 1) {
+      return dimensions;
+    }
+
+    return [...dimensions, "__combined__"];
+  }
+
+  private resolveDimensionValue(
+    row: DataRow,
+    dimension: string,
+    baseDimensions: string[],
+  ): string {
+    if (dimension !== "__combined__") {
+      return String(row[dimension] ?? "N/A");
+    }
+
+    return baseDimensions
+      .map(
+        (currentDimension) =>
+          `${currentDimension}=${String(row[currentDimension] ?? "N/A")}`,
+      )
+      .join(" | ");
+  }
+
+  private formatNumber(value: number): string {
+    return value.toLocaleString("es-ES", {
+      maximumFractionDigits: 0,
+    });
+  }
+
+  private formatDimensionContext(
+    dimension: string,
+    dimensionValue: string,
+  ): string {
+    if (dimension === "__combined__") {
+      return `Combinación ${dimensionValue}`;
+    }
+
+    if (dimension === "country") {
+      return `País ${dimensionValue}`;
+    }
+
+    return `${dimension} ${dimensionValue}`;
   }
 }

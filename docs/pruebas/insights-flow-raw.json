@@ -1,0 +1,1269 @@
+﻿{
+  "startedAtIso": "2026-02-19T21:52:28.629Z",
+  "firstCall": {
+    "request": {
+      "url": "http://localhost:3000/api/v1/datasets/699741786feb40f109c7e121/insights?filters=%7B%22categorical%22%3A%7B%7D%7D&forceRefresh=true",
+      "method": "GET",
+      "forceRefresh": true,
+      "filters": {
+        "categorical": {}
+      }
+    },
+    "response": {
+      "status": 200,
+      "elapsedMs": 15465,
+      "meta": {
+        "total": 26,
+        "generatedAt": "2026-02-19T21:52:44.089Z",
+        "cacheStatus": "miss",
+        "generationSource": "rule-engine",
+        "narrativeStatus": "generated",
+        "generationTimeMs": 15428
+      },
+      "insightsCount": 26,
+      "hasBusinessNarrative": true
+    },
+    "body": {
+      "insights": [
+        {
+          "id": "9698259d-4c0b-4c37-845c-5c7705a98c6c",
+          "datasetId": "699741786feb40f109c7e121",
+          "type": "anomaly",
+          "severity": 4,
+          "icon": "­ƒÜ¿",
+          "title": "Anomal├¡a detectada en country",
+          "message": "CO muestra un comportamiento at├¡pico en total_sends (+521.7%).",
+          "metadata": {
+            "dimension": "country",
+            "kpi": "total_sends",
+            "value": 2232709007,
+            "change": 521.6765297949719
+          },
+          "generatedBy": "rule-engine",
+          "confidence": 0.85,
+          "generatedAt": "2026-02-19T21:52:28.932Z"
+        },
+        {
+          "id": "3c88d5f8-eecb-493a-8d24-40050fbfde18",
+          "datasetId": "699741786feb40f109c7e121",
+          "type": "anomaly",
+          "severity": 4,
+          "icon": "­ƒÜ¿",
+          "title": "Anomal├¡a detectada en country",
+          "message": "MX muestra un comportamiento at├¡pico en total_sends (+402.3%).",
+          "metadata": {
+            "dimension": "country",
+            "kpi": "total_sends",
+            "value": 1803909212,
+            "change": 402.28131631366784
+          },
+          "generatedBy": "rule-engine",
+          "confidence": 0.85,
+          "generatedAt": "2026-02-19T21:52:28.932Z"
+        },
+        {
+          "id": "b817e6ed-b4dc-4f4c-abe8-0e0fea0cb122",
+          "datasetId": "699741786feb40f109c7e121",
+          "type": "anomaly",
+          "severity": 4,
+          "icon": "­ƒÜ¿",
+          "title": "Anomal├¡a detectada en country",
+          "message": "CO muestra un comportamiento at├¡pico en total_opens (+448.2%).",
+          "metadata": {
+            "dimension": "country",
+            "kpi": "total_opens",
+            "value": 253806704,
+            "change": 448.2218600967121
+          },
+          "generatedBy": "rule-engine",
+          "confidence": 0.85,
+          "generatedAt": "2026-02-19T21:52:28.932Z"
+        },
+        {
+          "id": "53bd3eba-e8ec-44d7-b72a-6fe811b0ea7f",
+          "datasetId": "699741786feb40f109c7e121",
+          "type": "anomaly",
+          "severity": 4,
+          "icon": "­ƒÜ¿",
+          "title": "Anomal├¡a detectada en country",
+          "message": "MX muestra un comportamiento at├¡pico en total_opens (+472.3%).",
+          "metadata": {
+            "dimension": "country",
+            "kpi": "total_opens",
+            "value": 264953695,
+            "change": 472.29933340293854
+          },
+          "generatedBy": "rule-engine",
+          "confidence": 0.85,
+          "generatedAt": "2026-02-19T21:52:28.932Z"
+        },
+        {
+          "id": "d8ddc52e-2660-4e59-af9a-986bb0fad310",
+          "datasetId": "699741786feb40f109c7e121",
+          "type": "anomaly",
+          "severity": 4,
+          "icon": "­ƒÜ¿",
+          "title": "Anomal├¡a detectada en country",
+          "message": "CO muestra un comportamiento at├¡pico en total_clicks (+544.5%).",
+          "metadata": {
+            "dimension": "country",
+            "kpi": "total_clicks",
+            "value": 18410278,
+            "change": 544.4621479245482
+          },
+          "generatedBy": "rule-engine",
+          "confidence": 0.85,
+          "generatedAt": "2026-02-19T21:52:28.932Z"
+        },
+        {
+          "id": "3306133e-401d-4860-8240-5efa67f9f16b",
+          "datasetId": "699741786feb40f109c7e121",
+          "type": "anomaly",
+          "severity": 4,
+          "icon": "­ƒÜ¿",
+          "title": "Anomal├¡a detectada en country",
+          "message": "MX muestra un comportamiento at├¡pico en total_clicks (+429.6%).",
+          "metadata": {
+            "dimension": "country",
+            "kpi": "total_clicks",
+            "value": 15129261,
+            "change": 429.6083003510918
+          },
+          "generatedBy": "rule-engine",
+          "confidence": 0.85,
+          "generatedAt": "2026-02-19T21:52:28.932Z"
+        },
+        {
+          "id": "cbad3bdf-886a-4cb7-837c-3994bc5dfb2d",
+          "datasetId": "699741786feb40f109c7e121",
+          "type": "anomaly",
+          "severity": 4,
+          "icon": "­ƒÜ¿",
+          "title": "Anomal├¡a detectada en country",
+          "message": "CO muestra un comportamiento at├¡pico en total_applies (+694.8%).",
+          "metadata": {
+            "dimension": "country",
+            "kpi": "total_applies",
+            "value": 10529804,
+            "change": 694.7528129338956
+          },
+          "generatedBy": "rule-engine",
+          "confidence": 0.85,
+          "generatedAt": "2026-02-19T21:52:28.932Z"
+        },
+        {
+          "id": "aa2d41b6-1bca-4db2-a508-243334ac512d",
+          "datasetId": "699741786feb40f109c7e121",
+          "type": "anomaly",
+          "severity": 4,
+          "icon": "­ƒÜ¿",
+          "title": "Anomal├¡a detectada en source",
+          "message": "Notification/App/LatestSearch muestra un comportamiento at├¡pico en total_sends (+1558.9%).",
+          "metadata": {
+            "dimension": "source",
+            "kpi": "total_sends",
+            "value": 1134853884,
+            "change": 1558.9435150940358
+          },
+          "generatedBy": "rule-engine",
+          "confidence": 0.85,
+          "generatedAt": "2026-02-19T21:52:28.932Z"
+        },
+        {
+          "id": "00baa625-5038-4e87-b020-624e514de34f",
+          "datasetId": "699741786feb40f109c7e121",
+          "type": "anomaly",
+          "severity": 4,
+          "icon": "­ƒÜ¿",
+          "title": "Anomal├¡a detectada en source",
+          "message": "Notification/App/AlertImpact muestra un comportamiento at├¡pico en total_sends (+1814.3%).",
+          "metadata": {
+            "dimension": "source",
+            "kpi": "total_sends",
+            "value": 1309508514,
+            "change": 1814.2558243742392
+          },
+          "generatedBy": "rule-engine",
+          "confidence": 0.85,
+          "generatedAt": "2026-02-19T21:52:28.932Z"
+        },
+        {
+          "id": "a31aedf0-cc54-41ee-9dc2-4da124207111",
+          "datasetId": "699741786feb40f109c7e121",
+          "type": "anomaly",
+          "severity": 4,
+          "icon": "­ƒÜ¿",
+          "title": "Anomal├¡a detectada en source",
+          "message": "Notification/Mail/AlertImpact muestra un comportamiento at├¡pico en total_sends (+5182.8%).",
+          "metadata": {
+            "dimension": "source",
+            "kpi": "total_sends",
+            "value": 3613845393,
+            "change": 5182.764119499464
+          },
+          "generatedBy": "rule-engine",
+          "confidence": 0.85,
+          "generatedAt": "2026-02-19T21:52:28.932Z"
+        },
+        {
+          "id": "f7445849-c70e-43c7-a238-6b905ea03276",
+          "datasetId": "699741786feb40f109c7e121",
+          "type": "anomaly",
+          "severity": 4,
+          "icon": "­ƒÜ¿",
+          "title": "Anomal├¡a detectada en source",
+          "message": "Notification/Mail/AlertImpact muestra un comportamiento at├¡pico en total_opens (+8095.0%).",
+          "metadata": {
+            "dimension": "source",
+            "kpi": "total_opens",
+            "value": 722668346,
+            "change": 8095.049767499268
+          },
+          "generatedBy": "rule-engine",
+          "confidence": 0.85,
+          "generatedAt": "2026-02-19T21:52:28.932Z"
+        },
+        {
+          "id": "a9749aa5-4920-4f13-b38a-09aac425b30e",
+          "datasetId": "699741786feb40f109c7e121",
+          "type": "anomaly",
+          "severity": 4,
+          "icon": "­ƒÜ¿",
+          "title": "Anomal├¡a detectada en source",
+          "message": "Notification/Mail/MailHanVistoTuCV muestra un comportamiento at├¡pico en total_clicks (+1218.5%).",
+          "metadata": {
+            "dimension": "source",
+            "kpi": "total_clicks",
+            "value": 7174459,
+            "change": 1218.5163798730896
+          },
+          "generatedBy": "rule-engine",
+          "confidence": 0.85,
+          "generatedAt": "2026-02-19T21:52:28.932Z"
+        },
+        {
+          "id": "7e084404-b9c0-4bbb-a8e7-6e100f7ccdbb",
+          "datasetId": "699741786feb40f109c7e121",
+          "type": "anomaly",
+          "severity": 4,
+          "icon": "­ƒÜ¿",
+          "title": "Anomal├¡a detectada en source",
+          "message": "Notification/Mail/AlertImpact muestra un comportamiento at├¡pico en total_clicks (+5520.2%).",
+          "metadata": {
+            "dimension": "source",
+            "kpi": "total_clicks",
+            "value": 30581413,
+            "change": 5520.227805352827
+          },
+          "generatedBy": "rule-engine",
+          "confidence": 0.85,
+          "generatedAt": "2026-02-19T21:52:28.932Z"
+        },
+        {
+          "id": "60353972-1091-49e3-8eed-83edb16b4091",
+          "datasetId": "699741786feb40f109c7e121",
+          "type": "anomaly",
+          "severity": 4,
+          "icon": "­ƒÜ¿",
+          "title": "Anomal├¡a detectada en source",
+          "message": "Notification/Mail/AlertImpact muestra un comportamiento at├¡pico en total_applies (+5022.2%).",
+          "metadata": {
+            "dimension": "source",
+            "kpi": "total_applies",
+            "value": 12926727,
+            "change": 5022.236974943914
+          },
+          "generatedBy": "rule-engine",
+          "confidence": 0.85,
+          "generatedAt": "2026-02-19T21:52:28.932Z"
+        },
+        {
+          "id": "d88c1a96-e670-4da7-9916-6b88f7978158",
+          "datasetId": "699741786feb40f109c7e121",
+          "type": "anomaly",
+          "severity": 4,
+          "icon": "­ƒÜ¿",
+          "title": "Anomal├¡a detectada en source",
+          "message": "Notification/Mail/Apply muestra un comportamiento at├¡pico en total_applies (+1162.3%).",
+          "metadata": {
+            "dimension": "source",
+            "kpi": "total_applies",
+            "value": 3185640,
+            "change": 1162.3151240728089
+          },
+          "generatedBy": "rule-engine",
+          "confidence": 0.85,
+          "generatedAt": "2026-02-19T21:52:28.932Z"
+        },
+        {
+          "id": "95e9b1d7-fcea-44ad-a6e2-debaffab149d",
+          "datasetId": "699741786feb40f109c7e121",
+          "type": "anomaly",
+          "severity": 4,
+          "icon": "­ƒÜ¿",
+          "title": "Anomal├¡a detectada en source_detail",
+          "message": "Push Email muestra un comportamiento at├¡pico en total_sends (+304.8%).",
+          "metadata": {
+            "dimension": "source_detail",
+            "kpi": "total_sends",
+            "value": 4153456309,
+            "change": 304.7716042970902
+          },
+          "generatedBy": "rule-engine",
+          "confidence": 0.85,
+          "generatedAt": "2026-02-19T21:52:28.932Z"
+        },
+        {
+          "id": "a13e8eaf-06ca-409e-ade6-a5f1a654613d",
+          "datasetId": "699741786feb40f109c7e121",
+          "type": "anomaly",
+          "severity": 4,
+          "icon": "­ƒÜ¿",
+          "title": "Anomal├¡a detectada en source_detail",
+          "message": "Push Email muestra un comportamiento at├¡pico en total_opens (+490.0%).",
+          "metadata": {
+            "dimension": "source_detail",
+            "kpi": "total_opens",
+            "value": 780408399,
+            "change": 489.9880818246904
+          },
+          "generatedBy": "rule-engine",
+          "confidence": 0.85,
+          "generatedAt": "2026-02-19T21:52:28.932Z"
+        },
+        {
+          "id": "0b76a621-550d-439c-8bd2-261e8896d53d",
+          "datasetId": "699741786feb40f109c7e121",
+          "type": "anomaly",
+          "severity": 4,
+          "icon": "­ƒÜ¿",
+          "title": "Anomal├¡a detectada en source_detail",
+          "message": "Push Email muestra un comportamiento at├¡pico en total_applies (+289.1%).",
+          "metadata": {
+            "dimension": "source_detail",
+            "kpi": "total_applies",
+            "value": 14729502,
+            "change": 289.10597022180133
+          },
+          "generatedBy": "rule-engine",
+          "confidence": 0.85,
+          "generatedAt": "2026-02-19T21:52:28.932Z"
+        },
+        {
+          "id": "07050284-3c83-449a-8d7d-559fae559203",
+          "datasetId": "699741786feb40f109c7e121",
+          "type": "anomaly",
+          "severity": 4,
+          "icon": "­ƒÜ¿",
+          "title": "Anomal├¡a detectada en page",
+          "message": "LatestSearches muestra un comportamiento at├¡pico en total_sends (+1290.4%).",
+          "metadata": {
+            "dimension": "page",
+            "kpi": "total_sends",
+            "value": 1134853884,
+            "change": 1290.3526602692868
+          },
+          "generatedBy": "rule-engine",
+          "confidence": 0.85,
+          "generatedAt": "2026-02-19T21:52:28.932Z"
+        },
+        {
+          "id": "64e3fc85-662a-48ce-860c-b8ce51e634d7",
+          "datasetId": "699741786feb40f109c7e121",
+          "type": "anomaly",
+          "severity": 4,
+          "icon": "­ƒÜ¿",
+          "title": "Anomal├¡a detectada en page",
+          "message": "PushCargo muestra un comportamiento at├¡pico en total_sends (+5540.4%).",
+          "metadata": {
+            "dimension": "page",
+            "kpi": "total_sends",
+            "value": 4603904446,
+            "change": 5540.418457713715
+          },
+          "generatedBy": "rule-engine",
+          "confidence": 0.85,
+          "generatedAt": "2026-02-19T21:52:28.932Z"
+        },
+        {
+          "id": "81f99469-2cba-44be-ab5e-443264d9266e",
+          "datasetId": "699741786feb40f109c7e121",
+          "type": "anomaly",
+          "severity": 4,
+          "icon": "­ƒÜ¿",
+          "title": "Anomal├¡a detectada en page",
+          "message": "PushCargo muestra un comportamiento at├¡pico en total_opens (+6190.9%).",
+          "metadata": {
+            "dimension": "page",
+            "kpi": "total_opens",
+            "value": 661924996,
+            "change": 6190.928041156732
+          },
+          "generatedBy": "rule-engine",
+          "confidence": 0.85,
+          "generatedAt": "2026-02-19T21:52:28.932Z"
+        },
+        {
+          "id": "dc8172a0-d8fb-402d-bbd6-e4abc3102deb",
+          "datasetId": "699741786feb40f109c7e121",
+          "type": "anomaly",
+          "severity": 4,
+          "icon": "­ƒÜ¿",
+          "title": "Anomal├¡a detectada en page",
+          "message": "CVVisto muestra un comportamiento at├¡pico en total_clicks (+1005.0%).",
+          "metadata": {
+            "dimension": "page",
+            "kpi": "total_clicks",
+            "value": 7174459,
+            "change": 1005.0422993222081
+          },
+          "generatedBy": "rule-engine",
+          "confidence": 0.85,
+          "generatedAt": "2026-02-19T21:52:28.932Z"
+        },
+        {
+          "id": "51f4f301-ef8e-48ed-b023-863b968710b8",
+          "datasetId": "699741786feb40f109c7e121",
+          "type": "anomaly",
+          "severity": 4,
+          "icon": "­ƒÜ¿",
+          "title": "Anomal├¡a detectada en page",
+          "message": "PushCargo muestra un comportamiento at├¡pico en total_clicks (+4287.6%).",
+          "metadata": {
+            "dimension": "page",
+            "kpi": "total_clicks",
+            "value": 28486157,
+            "change": 4287.565449901298
+          },
+          "generatedBy": "rule-engine",
+          "confidence": 0.85,
+          "generatedAt": "2026-02-19T21:52:28.932Z"
+        },
+        {
+          "id": "8e122590-3d85-415b-9c95-97df92fad03b",
+          "datasetId": "699741786feb40f109c7e121",
+          "type": "anomaly",
+          "severity": 4,
+          "icon": "­ƒÜ¿",
+          "title": "Anomal├¡a detectada en page",
+          "message": "PushCargo muestra un comportamiento at├¡pico en total_applies (+4531.3%).",
+          "metadata": {
+            "dimension": "page",
+            "kpi": "total_applies",
+            "value": 13945546,
+            "change": 4531.268769120085
+          },
+          "generatedBy": "rule-engine",
+          "confidence": 0.85,
+          "generatedAt": "2026-02-19T21:52:28.932Z"
+        },
+        {
+          "id": "a5945a4f-5dfc-4714-a206-08b4b92aecf8",
+          "datasetId": "699741786feb40f109c7e121",
+          "type": "suggestion",
+          "severity": 2,
+          "icon": "Ô£¿",
+          "title": "Mejor rendimiento: CO",
+          "message": "country \"CO\" lidera con 2232709007 en total_sends.",
+          "metadata": {
+            "dimension": "country",
+            "kpi": "total_sends",
+            "value": 2232709007
+          },
+          "generatedBy": "rule-engine",
+          "confidence": 1,
+          "generatedAt": "2026-02-19T21:52:28.937Z"
+        },
+        {
+          "id": "fbb3668e-8b3b-4625-8dc4-ec2fe8dae65f",
+          "datasetId": "699741786feb40f109c7e121",
+          "type": "summary",
+          "severity": 1,
+          "icon": "­ƒÆí",
+          "title": "Resumen general",
+          "message": "En promedio, los KPIs mejoraron un 1.6% respecto al per├¡odo anterior.",
+          "metadata": {
+            "change": 1.6283440082477894
+          },
+          "generatedBy": "rule-engine",
+          "confidence": 1,
+          "generatedAt": "2026-02-19T21:52:28.937Z"
+        }
+      ],
+      "businessNarrative": {
+        "summary": "Los datos muestran un comportamiento at├¡pico en Colombia y M├®xico, con incrementos significativos en env├¡os (CO +521.7%, MX +402.3%), aperturas (CO +448.2%, MX +472.3%), clics (CO +544.5%, MX +429.6%) y aplicaciones (CO +694.8%). Tambi├®n se observa un aumento excesivo en el env├¡o a trav├®s de Notification/App/LatestSearch (+1558.9%). Estos resultados sugieren posibles problemas t├®cnicos o cambios significativos en la estrategia.",
+        "recommendedActions": [
+          "Investigar las causas del incremento at├¡pico en Colombia y M├®xico para asegurar que no haya errores t├®cnicos o fraudes.",
+          "Revisar la estrategia de env├¡o a Notification/App/LatestSearch, ya que el aumento es extremadamente alto y podr├¡a ser ineficiente o innecesario.",
+          "Realizar un an├ílisis comparativo con la tendencia media del mercado para identificar si estos resultados son consistentes o si hay una anomalia general en los datos.",
+          "Implementar monitoreo adicional de las campa├▒as para detectar cualquier comportamiento at├¡pico temprano y ajustar estrategias seg├║n sea necesario.",
+          "Realizar un an├ílisis detallado del contenido y la segmentaci├│n de audiencia para estos pa├¡ses, ya que el aumento en aperturas y clics podr├¡a indicar una mejora significativa en la relevancia del contenido."
+        ],
+        "language": "es",
+        "generatedBy": "ai-model",
+        "confidence": 0.8,
+        "generatedAt": "2026-02-19T21:52:44.089Z"
+      },
+      "meta": {
+        "total": 26,
+        "generatedAt": "2026-02-19T21:52:44.089Z",
+        "cacheStatus": "miss",
+        "generationSource": "rule-engine",
+        "narrativeStatus": "generated",
+        "generationTimeMs": 15428
+      }
+    }
+  },
+  "secondCall": {
+    "request": {
+      "url": "http://localhost:3000/api/v1/datasets/699741786feb40f109c7e121/insights?filters=%7B%22categorical%22%3A%7B%7D%7D",
+      "method": "GET",
+      "forceRefresh": false,
+      "filters": {
+        "categorical": {}
+      }
+    },
+    "response": {
+      "status": 200,
+      "elapsedMs": 105,
+      "meta": {
+        "total": 26,
+        "generatedAt": "2026-02-19T21:52:44.201Z",
+        "cacheStatus": "hit",
+        "generationSource": "rule-engine",
+        "narrativeStatus": "generated",
+        "generationTimeMs": 100
+      },
+      "insightsCount": 26,
+      "hasBusinessNarrative": true
+    },
+    "body": {
+      "insights": [
+        {
+          "id": "9698259d-4c0b-4c37-845c-5c7705a98c6c",
+          "datasetId": "699741786feb40f109c7e121",
+          "type": "anomaly",
+          "severity": 4,
+          "icon": "­ƒÜ¿",
+          "title": "Anomal├¡a detectada en country",
+          "message": "CO muestra un comportamiento at├¡pico en total_sends (+521.7%).",
+          "metadata": {
+            "dimension": "country",
+            "kpi": "total_sends",
+            "value": 2232709007,
+            "change": 521.6765297949719
+          },
+          "generatedBy": "rule-engine",
+          "confidence": 0.85,
+          "generatedAt": "2026-02-19T21:52:28.932Z"
+        },
+        {
+          "id": "3c88d5f8-eecb-493a-8d24-40050fbfde18",
+          "datasetId": "699741786feb40f109c7e121",
+          "type": "anomaly",
+          "severity": 4,
+          "icon": "­ƒÜ¿",
+          "title": "Anomal├¡a detectada en country",
+          "message": "MX muestra un comportamiento at├¡pico en total_sends (+402.3%).",
+          "metadata": {
+            "dimension": "country",
+            "kpi": "total_sends",
+            "value": 1803909212,
+            "change": 402.28131631366784
+          },
+          "generatedBy": "rule-engine",
+          "confidence": 0.85,
+          "generatedAt": "2026-02-19T21:52:28.932Z"
+        },
+        {
+          "id": "b817e6ed-b4dc-4f4c-abe8-0e0fea0cb122",
+          "datasetId": "699741786feb40f109c7e121",
+          "type": "anomaly",
+          "severity": 4,
+          "icon": "­ƒÜ¿",
+          "title": "Anomal├¡a detectada en country",
+          "message": "CO muestra un comportamiento at├¡pico en total_opens (+448.2%).",
+          "metadata": {
+            "dimension": "country",
+            "kpi": "total_opens",
+            "value": 253806704,
+            "change": 448.2218600967121
+          },
+          "generatedBy": "rule-engine",
+          "confidence": 0.85,
+          "generatedAt": "2026-02-19T21:52:28.932Z"
+        },
+        {
+          "id": "53bd3eba-e8ec-44d7-b72a-6fe811b0ea7f",
+          "datasetId": "699741786feb40f109c7e121",
+          "type": "anomaly",
+          "severity": 4,
+          "icon": "­ƒÜ¿",
+          "title": "Anomal├¡a detectada en country",
+          "message": "MX muestra un comportamiento at├¡pico en total_opens (+472.3%).",
+          "metadata": {
+            "dimension": "country",
+            "kpi": "total_opens",
+            "value": 264953695,
+            "change": 472.29933340293854
+          },
+          "generatedBy": "rule-engine",
+          "confidence": 0.85,
+          "generatedAt": "2026-02-19T21:52:28.932Z"
+        },
+        {
+          "id": "d8ddc52e-2660-4e59-af9a-986bb0fad310",
+          "datasetId": "699741786feb40f109c7e121",
+          "type": "anomaly",
+          "severity": 4,
+          "icon": "­ƒÜ¿",
+          "title": "Anomal├¡a detectada en country",
+          "message": "CO muestra un comportamiento at├¡pico en total_clicks (+544.5%).",
+          "metadata": {
+            "dimension": "country",
+            "kpi": "total_clicks",
+            "value": 18410278,
+            "change": 544.4621479245482
+          },
+          "generatedBy": "rule-engine",
+          "confidence": 0.85,
+          "generatedAt": "2026-02-19T21:52:28.932Z"
+        },
+        {
+          "id": "3306133e-401d-4860-8240-5efa67f9f16b",
+          "datasetId": "699741786feb40f109c7e121",
+          "type": "anomaly",
+          "severity": 4,
+          "icon": "­ƒÜ¿",
+          "title": "Anomal├¡a detectada en country",
+          "message": "MX muestra un comportamiento at├¡pico en total_clicks (+429.6%).",
+          "metadata": {
+            "dimension": "country",
+            "kpi": "total_clicks",
+            "value": 15129261,
+            "change": 429.6083003510918
+          },
+          "generatedBy": "rule-engine",
+          "confidence": 0.85,
+          "generatedAt": "2026-02-19T21:52:28.932Z"
+        },
+        {
+          "id": "cbad3bdf-886a-4cb7-837c-3994bc5dfb2d",
+          "datasetId": "699741786feb40f109c7e121",
+          "type": "anomaly",
+          "severity": 4,
+          "icon": "­ƒÜ¿",
+          "title": "Anomal├¡a detectada en country",
+          "message": "CO muestra un comportamiento at├¡pico en total_applies (+694.8%).",
+          "metadata": {
+            "dimension": "country",
+            "kpi": "total_applies",
+            "value": 10529804,
+            "change": 694.7528129338956
+          },
+          "generatedBy": "rule-engine",
+          "confidence": 0.85,
+          "generatedAt": "2026-02-19T21:52:28.932Z"
+        },
+        {
+          "id": "aa2d41b6-1bca-4db2-a508-243334ac512d",
+          "datasetId": "699741786feb40f109c7e121",
+          "type": "anomaly",
+          "severity": 4,
+          "icon": "­ƒÜ¿",
+          "title": "Anomal├¡a detectada en source",
+          "message": "Notification/App/LatestSearch muestra un comportamiento at├¡pico en total_sends (+1558.9%).",
+          "metadata": {
+            "dimension": "source",
+            "kpi": "total_sends",
+            "value": 1134853884,
+            "change": 1558.9435150940358
+          },
+          "generatedBy": "rule-engine",
+          "confidence": 0.85,
+          "generatedAt": "2026-02-19T21:52:28.932Z"
+        },
+        {
+          "id": "00baa625-5038-4e87-b020-624e514de34f",
+          "datasetId": "699741786feb40f109c7e121",
+          "type": "anomaly",
+          "severity": 4,
+          "icon": "­ƒÜ¿",
+          "title": "Anomal├¡a detectada en source",
+          "message": "Notification/App/AlertImpact muestra un comportamiento at├¡pico en total_sends (+1814.3%).",
+          "metadata": {
+            "dimension": "source",
+            "kpi": "total_sends",
+            "value": 1309508514,
+            "change": 1814.2558243742392
+          },
+          "generatedBy": "rule-engine",
+          "confidence": 0.85,
+          "generatedAt": "2026-02-19T21:52:28.932Z"
+        },
+        {
+          "id": "a31aedf0-cc54-41ee-9dc2-4da124207111",
+          "datasetId": "699741786feb40f109c7e121",
+          "type": "anomaly",
+          "severity": 4,
+          "icon": "­ƒÜ¿",
+          "title": "Anomal├¡a detectada en source",
+          "message": "Notification/Mail/AlertImpact muestra un comportamiento at├¡pico en total_sends (+5182.8%).",
+          "metadata": {
+            "dimension": "source",
+            "kpi": "total_sends",
+            "value": 3613845393,
+            "change": 5182.764119499464
+          },
+          "generatedBy": "rule-engine",
+          "confidence": 0.85,
+          "generatedAt": "2026-02-19T21:52:28.932Z"
+        },
+        {
+          "id": "f7445849-c70e-43c7-a238-6b905ea03276",
+          "datasetId": "699741786feb40f109c7e121",
+          "type": "anomaly",
+          "severity": 4,
+          "icon": "­ƒÜ¿",
+          "title": "Anomal├¡a detectada en source",
+          "message": "Notification/Mail/AlertImpact muestra un comportamiento at├¡pico en total_opens (+8095.0%).",
+          "metadata": {
+            "dimension": "source",
+            "kpi": "total_opens",
+            "value": 722668346,
+            "change": 8095.049767499268
+          },
+          "generatedBy": "rule-engine",
+          "confidence": 0.85,
+          "generatedAt": "2026-02-19T21:52:28.932Z"
+        },
+        {
+          "id": "a9749aa5-4920-4f13-b38a-09aac425b30e",
+          "datasetId": "699741786feb40f109c7e121",
+          "type": "anomaly",
+          "severity": 4,
+          "icon": "­ƒÜ¿",
+          "title": "Anomal├¡a detectada en source",
+          "message": "Notification/Mail/MailHanVistoTuCV muestra un comportamiento at├¡pico en total_clicks (+1218.5%).",
+          "metadata": {
+            "dimension": "source",
+            "kpi": "total_clicks",
+            "value": 7174459,
+            "change": 1218.5163798730896
+          },
+          "generatedBy": "rule-engine",
+          "confidence": 0.85,
+          "generatedAt": "2026-02-19T21:52:28.932Z"
+        },
+        {
+          "id": "7e084404-b9c0-4bbb-a8e7-6e100f7ccdbb",
+          "datasetId": "699741786feb40f109c7e121",
+          "type": "anomaly",
+          "severity": 4,
+          "icon": "­ƒÜ¿",
+          "title": "Anomal├¡a detectada en source",
+          "message": "Notification/Mail/AlertImpact muestra un comportamiento at├¡pico en total_clicks (+5520.2%).",
+          "metadata": {
+            "dimension": "source",
+            "kpi": "total_clicks",
+            "value": 30581413,
+            "change": 5520.227805352827
+          },
+          "generatedBy": "rule-engine",
+          "confidence": 0.85,
+          "generatedAt": "2026-02-19T21:52:28.932Z"
+        },
+        {
+          "id": "60353972-1091-49e3-8eed-83edb16b4091",
+          "datasetId": "699741786feb40f109c7e121",
+          "type": "anomaly",
+          "severity": 4,
+          "icon": "­ƒÜ¿",
+          "title": "Anomal├¡a detectada en source",
+          "message": "Notification/Mail/AlertImpact muestra un comportamiento at├¡pico en total_applies (+5022.2%).",
+          "metadata": {
+            "dimension": "source",
+            "kpi": "total_applies",
+            "value": 12926727,
+            "change": 5022.236974943914
+          },
+          "generatedBy": "rule-engine",
+          "confidence": 0.85,
+          "generatedAt": "2026-02-19T21:52:28.932Z"
+        },
+        {
+          "id": "d88c1a96-e670-4da7-9916-6b88f7978158",
+          "datasetId": "699741786feb40f109c7e121",
+          "type": "anomaly",
+          "severity": 4,
+          "icon": "­ƒÜ¿",
+          "title": "Anomal├¡a detectada en source",
+          "message": "Notification/Mail/Apply muestra un comportamiento at├¡pico en total_applies (+1162.3%).",
+          "metadata": {
+            "dimension": "source",
+            "kpi": "total_applies",
+            "value": 3185640,
+            "change": 1162.3151240728089
+          },
+          "generatedBy": "rule-engine",
+          "confidence": 0.85,
+          "generatedAt": "2026-02-19T21:52:28.932Z"
+        },
+        {
+          "id": "95e9b1d7-fcea-44ad-a6e2-debaffab149d",
+          "datasetId": "699741786feb40f109c7e121",
+          "type": "anomaly",
+          "severity": 4,
+          "icon": "­ƒÜ¿",
+          "title": "Anomal├¡a detectada en source_detail",
+          "message": "Push Email muestra un comportamiento at├¡pico en total_sends (+304.8%).",
+          "metadata": {
+            "dimension": "source_detail",
+            "kpi": "total_sends",
+            "value": 4153456309,
+            "change": 304.7716042970902
+          },
+          "generatedBy": "rule-engine",
+          "confidence": 0.85,
+          "generatedAt": "2026-02-19T21:52:28.932Z"
+        },
+        {
+          "id": "a13e8eaf-06ca-409e-ade6-a5f1a654613d",
+          "datasetId": "699741786feb40f109c7e121",
+          "type": "anomaly",
+          "severity": 4,
+          "icon": "­ƒÜ¿",
+          "title": "Anomal├¡a detectada en source_detail",
+          "message": "Push Email muestra un comportamiento at├¡pico en total_opens (+490.0%).",
+          "metadata": {
+            "dimension": "source_detail",
+            "kpi": "total_opens",
+            "value": 780408399,
+            "change": 489.9880818246904
+          },
+          "generatedBy": "rule-engine",
+          "confidence": 0.85,
+          "generatedAt": "2026-02-19T21:52:28.932Z"
+        },
+        {
+          "id": "0b76a621-550d-439c-8bd2-261e8896d53d",
+          "datasetId": "699741786feb40f109c7e121",
+          "type": "anomaly",
+          "severity": 4,
+          "icon": "­ƒÜ¿",
+          "title": "Anomal├¡a detectada en source_detail",
+          "message": "Push Email muestra un comportamiento at├¡pico en total_applies (+289.1%).",
+          "metadata": {
+            "dimension": "source_detail",
+            "kpi": "total_applies",
+            "value": 14729502,
+            "change": 289.10597022180133
+          },
+          "generatedBy": "rule-engine",
+          "confidence": 0.85,
+          "generatedAt": "2026-02-19T21:52:28.932Z"
+        },
+        {
+          "id": "07050284-3c83-449a-8d7d-559fae559203",
+          "datasetId": "699741786feb40f109c7e121",
+          "type": "anomaly",
+          "severity": 4,
+          "icon": "­ƒÜ¿",
+          "title": "Anomal├¡a detectada en page",
+          "message": "LatestSearches muestra un comportamiento at├¡pico en total_sends (+1290.4%).",
+          "metadata": {
+            "dimension": "page",
+            "kpi": "total_sends",
+            "value": 1134853884,
+            "change": 1290.3526602692868
+          },
+          "generatedBy": "rule-engine",
+          "confidence": 0.85,
+          "generatedAt": "2026-02-19T21:52:28.932Z"
+        },
+        {
+          "id": "64e3fc85-662a-48ce-860c-b8ce51e634d7",
+          "datasetId": "699741786feb40f109c7e121",
+          "type": "anomaly",
+          "severity": 4,
+          "icon": "­ƒÜ¿",
+          "title": "Anomal├¡a detectada en page",
+          "message": "PushCargo muestra un comportamiento at├¡pico en total_sends (+5540.4%).",
+          "metadata": {
+            "dimension": "page",
+            "kpi": "total_sends",
+            "value": 4603904446,
+            "change": 5540.418457713715
+          },
+          "generatedBy": "rule-engine",
+          "confidence": 0.85,
+          "generatedAt": "2026-02-19T21:52:28.932Z"
+        },
+        {
+          "id": "81f99469-2cba-44be-ab5e-443264d9266e",
+          "datasetId": "699741786feb40f109c7e121",
+          "type": "anomaly",
+          "severity": 4,
+          "icon": "­ƒÜ¿",
+          "title": "Anomal├¡a detectada en page",
+          "message": "PushCargo muestra un comportamiento at├¡pico en total_opens (+6190.9%).",
+          "metadata": {
+            "dimension": "page",
+            "kpi": "total_opens",
+            "value": 661924996,
+            "change": 6190.928041156732
+          },
+          "generatedBy": "rule-engine",
+          "confidence": 0.85,
+          "generatedAt": "2026-02-19T21:52:28.932Z"
+        },
+        {
+          "id": "dc8172a0-d8fb-402d-bbd6-e4abc3102deb",
+          "datasetId": "699741786feb40f109c7e121",
+          "type": "anomaly",
+          "severity": 4,
+          "icon": "­ƒÜ¿",
+          "title": "Anomal├¡a detectada en page",
+          "message": "CVVisto muestra un comportamiento at├¡pico en total_clicks (+1005.0%).",
+          "metadata": {
+            "dimension": "page",
+            "kpi": "total_clicks",
+            "value": 7174459,
+            "change": 1005.0422993222081
+          },
+          "generatedBy": "rule-engine",
+          "confidence": 0.85,
+          "generatedAt": "2026-02-19T21:52:28.932Z"
+        },
+        {
+          "id": "51f4f301-ef8e-48ed-b023-863b968710b8",
+          "datasetId": "699741786feb40f109c7e121",
+          "type": "anomaly",
+          "severity": 4,
+          "icon": "­ƒÜ¿",
+          "title": "Anomal├¡a detectada en page",
+          "message": "PushCargo muestra un comportamiento at├¡pico en total_clicks (+4287.6%).",
+          "metadata": {
+            "dimension": "page",
+            "kpi": "total_clicks",
+            "value": 28486157,
+            "change": 4287.565449901298
+          },
+          "generatedBy": "rule-engine",
+          "confidence": 0.85,
+          "generatedAt": "2026-02-19T21:52:28.932Z"
+        },
+        {
+          "id": "8e122590-3d85-415b-9c95-97df92fad03b",
+          "datasetId": "699741786feb40f109c7e121",
+          "type": "anomaly",
+          "severity": 4,
+          "icon": "­ƒÜ¿",
+          "title": "Anomal├¡a detectada en page",
+          "message": "PushCargo muestra un comportamiento at├¡pico en total_applies (+4531.3%).",
+          "metadata": {
+            "dimension": "page",
+            "kpi": "total_applies",
+            "value": 13945546,
+            "change": 4531.268769120085
+          },
+          "generatedBy": "rule-engine",
+          "confidence": 0.85,
+          "generatedAt": "2026-02-19T21:52:28.932Z"
+        },
+        {
+          "id": "a5945a4f-5dfc-4714-a206-08b4b92aecf8",
+          "datasetId": "699741786feb40f109c7e121",
+          "type": "suggestion",
+          "severity": 2,
+          "icon": "Ô£¿",
+          "title": "Mejor rendimiento: CO",
+          "message": "country \"CO\" lidera con 2232709007 en total_sends.",
+          "metadata": {
+            "dimension": "country",
+            "kpi": "total_sends",
+            "value": 2232709007
+          },
+          "generatedBy": "rule-engine",
+          "confidence": 1,
+          "generatedAt": "2026-02-19T21:52:28.937Z"
+        },
+        {
+          "id": "fbb3668e-8b3b-4625-8dc4-ec2fe8dae65f",
+          "datasetId": "699741786feb40f109c7e121",
+          "type": "summary",
+          "severity": 1,
+          "icon": "­ƒÆí",
+          "title": "Resumen general",
+          "message": "En promedio, los KPIs mejoraron un 1.6% respecto al per├¡odo anterior.",
+          "metadata": {
+            "change": 1.6283440082477894
+          },
+          "generatedBy": "rule-engine",
+          "confidence": 1,
+          "generatedAt": "2026-02-19T21:52:28.937Z"
+        }
+      ],
+      "businessNarrative": {
+        "summary": "Los datos muestran un comportamiento at├¡pico en Colombia y M├®xico, con incrementos significativos en env├¡os (CO +521.7%, MX +402.3%), aperturas (CO +448.2%, MX +472.3%), clics (CO +544.5%, MX +429.6%) y aplicaciones (CO +694.8%). Tambi├®n se observa un aumento excesivo en el env├¡o a trav├®s de Notification/App/LatestSearch (+1558.9%). Estos resultados sugieren posibles problemas t├®cnicos o cambios significativos en la estrategia.",
+        "recommendedActions": [
+          "Investigar las causas del incremento at├¡pico en Colombia y M├®xico para asegurar que no haya errores t├®cnicos o fraudes.",
+          "Revisar la estrategia de env├¡o a Notification/App/LatestSearch, ya que el aumento es extremadamente alto y podr├¡a ser ineficiente o innecesario.",
+          "Realizar un an├ílisis comparativo con la tendencia media del mercado para identificar si estos resultados son consistentes o si hay una anomalia general en los datos.",
+          "Implementar monitoreo adicional de las campa├▒as para detectar cualquier comportamiento at├¡pico temprano y ajustar estrategias seg├║n sea necesario.",
+          "Realizar un an├ílisis detallado del contenido y la segmentaci├│n de audiencia para estos pa├¡ses, ya que el aumento en aperturas y clics podr├¡a indicar una mejora significativa en la relevancia del contenido."
+        ],
+        "language": "es",
+        "generatedBy": "ai-model",
+        "confidence": 0.8,
+        "generatedAt": "2026-02-19T21:52:44.089Z"
+      },
+      "meta": {
+        "total": 26,
+        "generatedAt": "2026-02-19T21:52:44.201Z",
+        "cacheStatus": "hit",
+        "generationSource": "rule-engine",
+        "narrativeStatus": "generated",
+        "generationTimeMs": 100
+      }
+    }
+  },
+  "datasetSnapshot": {
+    "id": "699741786feb40f109c7e121",
+    "ownerId": "08c28852-a4fd-41fb-a8f9-c8dd9a9b89e8",
+    "status": "ready",
+    "aiConfig": {
+      "enabled": true,
+      "userContext": "Eres un Product Manager en Comunicaciones de mailing en un portal de empleo. Tienes experiencia en insights. Analiza la informaci├│n del dashboard y se claro y conciso con las partes de mejora y as├¡ como la tendencia media del mercado versus los datos que se muestran en el dashboard."
+    },
+    "meta": {
+      "name": "Notis By Newsletter 2026 vs 2025 Enero",
+      "createdAt": "2026-02-19T16:59:36.220Z",
+      "updatedAt": "2026-02-19T17:01:06.169Z",
+      "description": "Notis By Newsletter 2026 vs 2025 Enero"
+    },
+    "sourceConfig": {
+      "groupA": {
+        "label": "En 2026 A",
+        "color": "#2570e9",
+        "originalFileName": "CN_ByNewsletter_January_2026.csv",
+        "rowCount": 10228
+      },
+      "groupB": {
+        "label": "En 2025 B",
+        "color": "#757b8a",
+        "originalFileName": "CN_ByNewsletter_January_2025.csv",
+        "rowCount": 9103
+      }
+    },
+    "schemaMapping": {
+      "dimensionField": "country",
+      "dateField": "date",
+      "kpiFields": [
+        {
+          "id": "total_sends",
+          "columnName": "total_sends",
+          "label": "total_sends",
+          "format": "number",
+          "highlighted": true
+        },
+        {
+          "id": "total_opens",
+          "columnName": "total_opens",
+          "label": "total_opens",
+          "format": "number",
+          "highlighted": true
+        },
+        {
+          "id": "total_clicks",
+          "columnName": "total_clicks",
+          "label": "total_clicks",
+          "format": "number",
+          "highlighted": true
+        },
+        {
+          "id": "total_applies",
+          "columnName": "total_applies",
+          "label": "total_applies",
+          "format": "number",
+          "highlighted": true
+        }
+      ],
+      "categoricalFields": [
+        "country",
+        "source",
+        "source_detail",
+        "page"
+      ]
+    },
+    "totalRows": 19331,
+    "rowsByGroup": {
+      "groupA": 10228,
+      "groupB": 9103
+    }
+  },
+  "ruleEngineTrace": {
+    "timingsMs": {
+      "applyFilters": 0,
+      "calculateKPIs": 16,
+      "detectDimensionalOutliers": 46,
+      "findTopPerformer": 2,
+      "calculateOverallChange": 0,
+      "generateInsightsTotal": 46
+    },
+    "intermediate": {
+      "filteredRows": 19331,
+      "kpisCount": 4,
+      "kpisPreview": [
+        {
+          "name": "total_sends",
+          "label": "total_sends",
+          "groupA": 3405060465,
+          "groupB": 3777803613
+        },
+        {
+          "name": "total_opens",
+          "label": "total_opens",
+          "groupA": 445590779,
+          "groupB": 480336195
+        },
+        {
+          "name": "total_clicks",
+          "label": "total_clicks",
+          "groupA": 26985749,
+          "groupB": 30148027
+        },
+        {
+          "name": "total_applies",
+          "label": "total_applies",
+          "groupA": 15051523,
+          "groupB": 11446789
+        }
+      ],
+      "outliersCount": 24,
+      "outliersPreview": [
+        {
+          "dimension": "country",
+          "dimensionValue": "CO",
+          "kpi": "total_sends",
+          "value": 2232709007,
+          "change": 521.6765297949719
+        },
+        {
+          "dimension": "country",
+          "dimensionValue": "MX",
+          "kpi": "total_sends",
+          "value": 1803909212,
+          "change": 402.28131631366784
+        },
+        {
+          "dimension": "country",
+          "dimensionValue": "CO",
+          "kpi": "total_opens",
+          "value": 253806704,
+          "change": 448.2218600967121
+        },
+        {
+          "dimension": "country",
+          "dimensionValue": "MX",
+          "kpi": "total_opens",
+          "value": 264953695,
+          "change": 472.29933340293854
+        },
+        {
+          "dimension": "country",
+          "dimensionValue": "CO",
+          "kpi": "total_clicks",
+          "value": 18410278,
+          "change": 544.4621479245482
+        },
+        {
+          "dimension": "country",
+          "dimensionValue": "MX",
+          "kpi": "total_clicks",
+          "value": 15129261,
+          "change": 429.6083003510918
+        },
+        {
+          "dimension": "country",
+          "dimensionValue": "CO",
+          "kpi": "total_applies",
+          "value": 10529804,
+          "change": 694.7528129338956
+        },
+        {
+          "dimension": "source",
+          "dimensionValue": "Notification/App/LatestSearch",
+          "kpi": "total_sends",
+          "value": 1134853884,
+          "change": 1558.9435150940358
+        },
+        {
+          "dimension": "source",
+          "dimensionValue": "Notification/App/AlertImpact",
+          "kpi": "total_sends",
+          "value": 1309508514,
+          "change": 1814.2558243742392
+        },
+        {
+          "dimension": "source",
+          "dimensionValue": "Notification/Mail/AlertImpact",
+          "kpi": "total_sends",
+          "value": 3613845393,
+          "change": 5182.764119499464
+        },
+        {
+          "dimension": "source",
+          "dimensionValue": "Notification/Mail/AlertImpact",
+          "kpi": "total_opens",
+          "value": 722668346,
+          "change": 8095.049767499268
+        },
+        {
+          "dimension": "source",
+          "dimensionValue": "Notification/Mail/MailHanVistoTuCV",
+          "kpi": "total_clicks",
+          "value": 7174459,
+          "change": 1218.5163798730896
+        },
+        {
+          "dimension": "source",
+          "dimensionValue": "Notification/Mail/AlertImpact",
+          "kpi": "total_clicks",
+          "value": 30581413,
+          "change": 5520.227805352827
+        },
+        {
+          "dimension": "source",
+          "dimensionValue": "Notification/Mail/AlertImpact",
+          "kpi": "total_applies",
+          "value": 12926727,
+          "change": 5022.236974943914
+        },
+        {
+          "dimension": "source",
+          "dimensionValue": "Notification/Mail/Apply",
+          "kpi": "total_applies",
+          "value": 3185640,
+          "change": 1162.3151240728089
+        }
+      ],
+      "topPerformer": {
+        "dimension": "country",
+        "dimensionValue": "CO",
+        "kpi": "total_sends",
+        "value": 2232709007,
+        "change": 0
+      },
+      "overallChange": 1.6283440082477894
+    },
+    "output": {
+      "insightsCount": 26,
+      "byType": {
+        "anomaly": 24,
+        "suggestion": 1,
+        "summary": 1
+      }
+    }
+  }
+}

@@ -1,5 +1,5 @@
 import type {
-  DatasetInsight,
+  CachedInsightsPayload,
   DashboardFilters,
 } from "@/modules/insights/domain/DatasetInsight.js";
 
@@ -7,12 +7,12 @@ export interface InsightsCacheRepository {
   findCached(
     datasetId: string,
     filters: DashboardFilters,
-  ): Promise<DatasetInsight[] | null>;
+  ): Promise<CachedInsightsPayload | null>;
 
   saveToCache(
     datasetId: string,
     filters: DashboardFilters,
-    insights: DatasetInsight[],
+    payload: CachedInsightsPayload,
   ): Promise<void>;
 
   invalidate(datasetId: string): Promise<void>;

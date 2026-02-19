@@ -71,6 +71,15 @@ describe("InsightsController", () => {
           generatedAt: new Date(),
         },
       ],
+      businessNarrative: {
+        summary: "Resumen ejecutivo",
+        recommendedActions: ["Priorizar región norte"],
+        language: "es",
+        generatedBy: "ai-model",
+        confidence: 0.81,
+        generatedAt: new Date().toISOString(),
+      },
+      narrativeStatus: "generated",
       fromCache: true,
     });
 
@@ -89,10 +98,14 @@ describe("InsightsController", () => {
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({
         insights: expect.any(Array),
+        businessNarrative: expect.objectContaining({
+          generatedBy: "ai-model",
+        }),
         meta: expect.objectContaining({
           total: 1,
           cacheStatus: "hit",
           generationSource: "rule-engine",
+          narrativeStatus: "generated",
         }),
       }),
     );

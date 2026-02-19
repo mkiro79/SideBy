@@ -9,12 +9,18 @@ import {
 } from "@/modules/insights/application/use-cases/GenerateInsightsUseCase.js";
 import { InMemoryInsightsCacheRepository } from "@/modules/insights/infrastructure/InMemoryInsightsCacheRepository.js";
 import { RuleEngineAdapter } from "@/modules/insights/infrastructure/RuleEngineAdapter.js";
-import { LLMAdapter } from "@/modules/insights/infrastructure/LLMAdapter.js";
-import type { DashboardFilters } from "@/modules/insights/domain/DatasetInsight.js";
+import { LLMNarratorAdapter } from "@/modules/insights/infrastructure/LLMNarratorAdapter.js";
+import type {
+  BusinessNarrative,
+  DashboardFilters,
+  NarrativeStatus,
+} from "@/modules/insights/domain/DatasetInsight.js";
 
 interface InsightsUseCase {
   execute(command: GenerateInsightsCommand): Promise<{
     insights: unknown[];
+    businessNarrative?: BusinessNarrative;
+    narrativeStatus: NarrativeStatus;
     fromCache: boolean;
   }>;
 }
@@ -48,15 +54,20 @@ export class InsightsController {
     const llmBaseUrl = process.env.INSIGHTS_LLM_BASE_URL ?? defaultBaseUrl;
     const llmModel = process.env.INSIGHTS_LLM_MODEL ?? "qwen2.5:7b-instruct";
     const llmApiKey = process.env.INSIGHTS_LLM_API_KEY ?? defaultApiKey;
+    const llmTimeoutMs = Number(process.env.INSIGHTS_LLM_TIMEOUT_MS ?? 120000);
 
     this.generateInsightsUseCase = new GenerateInsightsUseCase(
       new MongoDatasetRepository(),
       defaultCacheRepository,
       new RuleEngineAdapter(),
-      new LLMAdapter({
+      new LLMNarratorAdapter({
         baseURL: llmBaseUrl,
         model: llmModel,
         apiKey: llmApiKey,
+        timeoutMs:
+          Number.isFinite(llmTimeoutMs) && llmTimeoutMs > 0
+            ? llmTimeoutMs
+            : 120000,
       }),
       llmEnabled,
     );
@@ -109,11 +120,13 @@ export class InsightsController {
 
       res.status(200).json({
         insights: result.insights,
+        businessNarrative: result.businessNarrative,
         meta: {
           total: result.insights.length,
           generatedAt: new Date().toISOString(),
           cacheStatus: result.fromCache ? "hit" : "miss",
           generationSource,
+          narrativeStatus: result.narrativeStatus,
           generationTimeMs,
         },
       });
@@ -178,6 +191,6 @@ export class InsightsController {
       return "mixed";
     }
 
-    return [...sources][0] as InsightSource;
+    return [...sources][0];
   }
 }

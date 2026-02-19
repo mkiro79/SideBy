@@ -26,6 +26,13 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - `RFC-008-AI-INSIGHTS-SERVICE.md` actualizado con estado real de implementación backend
 - Checklist de roadmap actualizado (backend completado/ajustado a MVP)
 
+**🧠 Refinamientos de insights (2026-02-19):**
+- Mensajes del `RuleEngineAdapter` simplificados a formato más legible para negocio
+- Nuevo resumen comparativo: **Top 3 países con mejor señal** y **Top 3 métricas a mejorar**
+- Filtro de ruido en anomalías: se descartan comparativas dimensionales con `groupA=0` o `groupB=0`
+- Prompt del narrador LLM reforzado para salida menos genérica y enfocada en la vista 3/3
+- Nuevos/actualizados tests unitarios en `RuleEngineAdapter` y `LLMNarratorAdapter`
+
 ### [RFC-009] Wizard Step 3 - SourceConfig (2026-02-16)
 
 **✨ Frontend:**

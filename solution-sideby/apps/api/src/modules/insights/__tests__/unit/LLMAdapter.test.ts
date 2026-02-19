@@ -204,4 +204,54 @@ describe("LLMAdapter", () => {
     expect(requestInit.headers.Authorization).toBeUndefined();
     expect(requestInit.headers["Content-Type"]).toBe("application/json");
   });
+
+  it("includes userContext in generated prompt when provided", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        choices: [
+          {
+            message: {
+              content: JSON.stringify({
+                insights: [],
+              }),
+            },
+          },
+        ],
+      }),
+    });
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    const adapter = new LLMAdapter({
+      baseURL: "http://localhost:11434/v1",
+      model: "qwen2.5:7b-instruct",
+      apiKey: "ollama",
+    });
+
+    await adapter.generateInsights(
+      {
+        ...baseDataset,
+        aiConfig: {
+          enabled: true,
+          userContext: "Prioriza retención y conversión en campañas de email",
+        },
+      },
+      {
+        categorical: {},
+      },
+    );
+
+    const callBody = JSON.parse(fetchMock.mock.calls[0][1].body as string) as {
+      messages: Array<{ role: string; content: string }>;
+    };
+
+    const userPrompt = callBody.messages.find(
+      (message) => message.role === "user",
+    )?.content;
+
+    expect(userPrompt).toContain(
+      "Prioriza retención y conversión en campañas de email",
+    );
+  });
 });

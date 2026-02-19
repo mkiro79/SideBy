@@ -30,6 +30,23 @@ export interface DatasetInsight {
   cacheTTL?: number;
 }
 
+export interface BusinessNarrative {
+  summary: string;
+  recommendedActions: string[];
+  language: "es" | "en";
+  generatedBy: "ai-model";
+  confidence: number;
+  generatedAt: string;
+}
+
+export type NarrativeStatus = "not-requested" | "generated" | "fallback";
+
+export interface CachedInsightsPayload {
+  insights: DatasetInsight[];
+  businessNarrative?: BusinessNarrative;
+  narrativeStatus?: NarrativeStatus;
+}
+
 export interface DashboardFilters {
   categorical?: Record<string, string[]>;
 }

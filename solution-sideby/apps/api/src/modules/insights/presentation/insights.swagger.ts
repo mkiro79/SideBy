@@ -81,6 +81,31 @@ const InsightsResponseSchema = z
     insights: z
       .array(DatasetInsightSchema)
       .openapi({ description: "Lista de insights generados" }),
+    businessNarrative: z
+      .object({
+        summary: z.string().openapi({
+          example:
+            "El desempeño mejora en KPIs clave, pero existe riesgo en una dimensión crítica.",
+        }),
+        recommendedActions: z.array(z.string()).openapi({
+          example: [
+            "Priorizar acciones en Región Norte",
+            "Revisar mix de producto de alto margen",
+          ],
+        }),
+        language: z.enum(["es", "en"]).openapi({ example: "es" }),
+        generatedBy: z.enum(["ai-model"]).openapi({ example: "ai-model" }),
+        confidence: z.number().min(0).max(1).openapi({ example: 0.82 }),
+        generatedAt: z
+          .string()
+          .datetime()
+          .openapi({ example: "2024-02-19T10:30:00Z" }),
+      })
+      .optional()
+      .openapi({
+        description:
+          "Narrativa ejecutiva opcional generada por LLM a partir de insights por reglas",
+      }),
     meta: z.object({
       total: z
         .number()
@@ -99,6 +124,13 @@ const InsightsResponseSchema = z
           example: "rule-engine",
           description:
             "Fuente de generación de insights: reglas, LLM, mezcla o desconocida",
+        }),
+      narrativeStatus: z
+        .enum(["not-requested", "generated", "fallback"])
+        .openapi({
+          example: "generated",
+          description:
+            "Estado de la narrativa LLM: no solicitada, generada o fallback por error",
         }),
       generationTimeMs: z.number().openapi({
         example: 450,
@@ -137,10 +169,10 @@ registry.registerPath({
 - Soporte para filtros dimensionales
 
 **Estrategias de generación:**
-1. **Rule Engine**: Reglas predefinidas para métricas comunes
-2. **AI Model**: Análisis con LLM (Ollama local u OpenAI compatible)
+1. **Rule Engine (siempre)**: Genera la lista base de insights
+2. **AI Narrative (opcional)**: Genera un resumen ejecutivo y acciones sobre los insights base
 
-El sistema elige automáticamente el motor según la configuración del dataset (\`aiConfig.enabled\` o \`aiConfig.enabledFeatures.insights\`).`,
+El bloque narrativo se habilita según configuración del dataset (\`aiConfig.enabled\` o \`aiConfig.enabledFeatures.insights\`).`,
   security: [{ bearerAuth: [] }],
   request: {
     params: z.object({

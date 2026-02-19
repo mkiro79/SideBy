@@ -5,6 +5,7 @@ import type { Dataset } from "@/modules/datasets/domain/Dataset.entity.js";
 import type { DatasetInsight } from "@/modules/insights/domain/DatasetInsight.js";
 import type { InsightsCacheRepository } from "@/modules/insights/application/ports/InsightsCacheRepository.js";
 import type { InsightsGenerator } from "@/modules/insights/application/ports/InsightsGenerator.js";
+import type { InsightsNarrator } from "@/modules/insights/application/ports/InsightsNarrator";
 import { DatasetNotFoundError } from "@/modules/datasets/domain/errors/DatasetNotFoundError.js";
 
 class MockDatasetRepository implements DatasetRepository {
@@ -98,7 +99,8 @@ describe("GenerateInsightsUseCase", () => {
 
   let cacheRepository: InsightsCacheRepository;
   let ruleEngine: InsightsGenerator;
-  let llmGenerator: InsightsGenerator;
+  let llmNarrator: InsightsNarrator;
+  let generateNarrativeMock: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     cacheRepository = {
@@ -111,24 +113,40 @@ describe("GenerateInsightsUseCase", () => {
       generateInsights: vi.fn().mockResolvedValue([generatedInsight]),
     };
 
-    llmGenerator = {
-      generateInsights: vi
-        .fn()
-        .mockResolvedValue([
-          { ...generatedInsight, generatedBy: "ai-model", id: "insight-ai" },
-        ]),
+    generateNarrativeMock = vi.fn().mockResolvedValue({
+      summary: "Resumen ejecutivo",
+      recommendedActions: ["Acción 1", "Acción 2"],
+      language: "es",
+      generatedBy: "ai-model",
+      generatedAt: new Date().toISOString(),
+      confidence: 0.8,
+    });
+
+    llmNarrator = {
+      generateNarrative:
+        generateNarrativeMock as InsightsNarrator["generateNarrative"],
     };
   });
 
   it("returns cached insights when cache hit and forceRefresh is false", async () => {
-    const cached = [{ ...generatedInsight, id: "cached-1" }];
+    const cached = {
+      insights: [{ ...generatedInsight, id: "cached-1" }],
+      businessNarrative: {
+        summary: "Narrativa cacheada",
+        recommendedActions: ["Acción cacheada"],
+        language: "es" as const,
+        generatedBy: "ai-model" as const,
+        confidence: 0.7,
+        generatedAt: new Date().toISOString(),
+      },
+    };
     vi.mocked(cacheRepository.findCached).mockResolvedValueOnce(cached);
 
     const useCase = new GenerateInsightsUseCase(
       new MockDatasetRepository(baseDataset),
       cacheRepository,
       ruleEngine,
-      llmGenerator,
+      llmNarrator,
       true,
     );
 
@@ -140,9 +158,10 @@ describe("GenerateInsightsUseCase", () => {
     });
 
     expect(result.fromCache).toBe(true);
-    expect(result.insights).toEqual(cached);
+    expect(result.insights).toEqual(cached.insights);
+    expect(result.businessNarrative).toEqual(cached.businessNarrative);
     expect(ruleEngine.generateInsights).not.toHaveBeenCalled();
-    expect(llmGenerator.generateInsights).not.toHaveBeenCalled();
+    expect(generateNarrativeMock).not.toHaveBeenCalled();
   });
 
   it("uses rule engine when global llm flag is disabled", async () => {
@@ -150,7 +169,7 @@ describe("GenerateInsightsUseCase", () => {
       new MockDatasetRepository(baseDataset),
       cacheRepository,
       ruleEngine,
-      llmGenerator,
+      llmNarrator,
       false,
     );
 
@@ -163,16 +182,18 @@ describe("GenerateInsightsUseCase", () => {
 
     expect(result.fromCache).toBe(false);
     expect(ruleEngine.generateInsights).toHaveBeenCalledTimes(1);
-    expect(llmGenerator.generateInsights).not.toHaveBeenCalled();
+    expect(generateNarrativeMock).not.toHaveBeenCalled();
     expect(cacheRepository.saveToCache).toHaveBeenCalledTimes(1);
+    expect(result.businessNarrative).toBeUndefined();
+    expect(result.narrativeStatus).toBe("not-requested");
   });
 
-  it("uses llm when global flag and dataset ai flag are enabled", async () => {
+  it("always uses rule engine and adds narrative when global flag and dataset ai flag are enabled", async () => {
     const useCase = new GenerateInsightsUseCase(
       new MockDatasetRepository(baseDataset),
       cacheRepository,
       ruleEngine,
-      llmGenerator,
+      llmNarrator,
       true,
     );
 
@@ -184,11 +205,13 @@ describe("GenerateInsightsUseCase", () => {
     });
 
     expect(result.fromCache).toBe(false);
-    expect(llmGenerator.generateInsights).toHaveBeenCalledTimes(1);
-    expect(ruleEngine.generateInsights).not.toHaveBeenCalled();
+    expect(ruleEngine.generateInsights).toHaveBeenCalledTimes(1);
+    expect(generateNarrativeMock).toHaveBeenCalledTimes(1);
+    expect(result.businessNarrative).toBeDefined();
+    expect(result.narrativeStatus).toBe("generated");
   });
 
-  it("uses llm when aiConfig.enabledFeatures.insights is enabled", async () => {
+  it("uses feature flag insights to enable optional narrative", async () => {
     const datasetWithFeatureFlag: Dataset = {
       ...baseDataset,
       aiConfig: {
@@ -203,7 +226,7 @@ describe("GenerateInsightsUseCase", () => {
       new MockDatasetRepository(datasetWithFeatureFlag),
       cacheRepository,
       ruleEngine,
-      llmGenerator,
+      llmNarrator,
       true,
     );
 
@@ -215,20 +238,18 @@ describe("GenerateInsightsUseCase", () => {
     });
 
     expect(result.fromCache).toBe(false);
-    expect(llmGenerator.generateInsights).toHaveBeenCalledTimes(1);
-    expect(ruleEngine.generateInsights).not.toHaveBeenCalled();
+    expect(ruleEngine.generateInsights).toHaveBeenCalledTimes(1);
+    expect(generateNarrativeMock).toHaveBeenCalledTimes(1);
   });
 
-  it("falls back to rule engine when llm fails", async () => {
-    vi.mocked(llmGenerator.generateInsights).mockRejectedValueOnce(
-      new Error("llm down"),
-    );
+  it("returns rules insights when narrative generation fails", async () => {
+    generateNarrativeMock.mockRejectedValueOnce(new Error("llm down"));
 
     const useCase = new GenerateInsightsUseCase(
       new MockDatasetRepository(baseDataset),
       cacheRepository,
       ruleEngine,
-      llmGenerator,
+      llmNarrator,
       true,
     );
 
@@ -240,9 +261,42 @@ describe("GenerateInsightsUseCase", () => {
     });
 
     expect(result.fromCache).toBe(false);
-    expect(llmGenerator.generateInsights).toHaveBeenCalledTimes(1);
+    expect(generateNarrativeMock).toHaveBeenCalledTimes(1);
     expect(ruleEngine.generateInsights).toHaveBeenCalledTimes(1);
     expect(result.insights[0]?.generatedBy).toBe("rule-engine");
+    expect(result.businessNarrative).toBeUndefined();
+    expect(result.narrativeStatus).toBe("fallback");
+  });
+
+  it("resolves narrative language from userContext and defaults to spanish", async () => {
+    const datasetWithLanguage: Dataset = {
+      ...baseDataset,
+      aiConfig: {
+        enabled: true,
+        userContext: '{"language":"en"}',
+      },
+    };
+
+    const useCase = new GenerateInsightsUseCase(
+      new MockDatasetRepository(datasetWithLanguage),
+      cacheRepository,
+      ruleEngine,
+      llmNarrator,
+      true,
+    );
+
+    await useCase.execute({
+      datasetId: "dataset-1",
+      userId: "owner-1",
+      filters: { categorical: {} },
+      forceRefresh: true,
+    });
+
+    expect(generateNarrativeMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        language: "en",
+      }),
+    );
   });
 
   it("throws DatasetNotFoundError when dataset does not belong to user", async () => {
@@ -255,7 +309,7 @@ describe("GenerateInsightsUseCase", () => {
       new MockDatasetRepository(foreignDataset),
       cacheRepository,
       ruleEngine,
-      llmGenerator,
+      llmNarrator,
       true,
     );
 

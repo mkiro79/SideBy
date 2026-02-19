@@ -35,7 +35,7 @@ export class LLMAdapter implements InsightsGenerator {
   private readonly timeoutMs: number;
 
   constructor(private readonly config: LLMAdapterConfig) {
-    this.timeoutMs = config.timeoutMs ?? 5000;
+    this.timeoutMs = config.timeoutMs ?? 120000;
   }
 
   async generateInsights(
@@ -64,6 +64,7 @@ export class LLMAdapter implements InsightsGenerator {
         body: JSON.stringify({
           model: this.config.model,
           temperature: 0.3,
+          max_tokens: 450,
           response_format: { type: "json_object" },
           messages: [
             {
@@ -158,11 +159,13 @@ export class LLMAdapter implements InsightsGenerator {
     filters: DashboardFilters,
   ): {
     datasetName: string;
+    datasetDescription: string;
     groupA: string;
     groupB: string;
     kpis: Array<{ name: string; label: string }>;
     filters: DashboardFilters;
     sampleSize: number;
+    userContext: string;
   } {
     const kpis = (dataset.schemaMapping?.kpiFields ?? []).map(
       (kpi: KPIField) => ({
@@ -182,11 +185,13 @@ export class LLMAdapter implements InsightsGenerator {
 
     return {
       datasetName: this.sanitizeText(dataset.meta.name),
+      datasetDescription: this.sanitizeText(dataset.meta.description ?? "N/A"),
       groupA: this.sanitizeText(dataset.sourceConfig.groupA.label),
       groupB: this.sanitizeText(dataset.sourceConfig.groupB.label),
       kpis,
       filters: sanitizedFilters,
       sampleSize: dataset.data.length,
+      userContext: this.sanitizeText(dataset.aiConfig?.userContext ?? "N/A"),
     };
   }
 
@@ -194,23 +199,34 @@ export class LLMAdapter implements InsightsGenerator {
     dataset: Dataset,
     summary: {
       datasetName: string;
+      datasetDescription: string;
       groupA: string;
       groupB: string;
       kpis: Array<{ name: string; label: string }>;
       filters: DashboardFilters;
       sampleSize: number;
+      userContext: string;
     },
   ): string {
     return `
-Analiza el dataset comparativo y genera insights.
+Analiza el dataset comparativo y genera insights accionables de negocio.
 
 Dataset: ${summary.datasetName}
-Descripción: ${dataset.meta.description ?? "N/A"}
+Descripción: ${summary.datasetDescription}
 Grupo A: ${summary.groupA}
 Grupo B: ${summary.groupB}
 Muestra: ${summary.sampleSize} filas
 KPIs: ${JSON.stringify(summary.kpis)}
 Filtros: ${JSON.stringify(summary.filters)}
+Contexto del usuario: ${summary.userContext}
+
+Reglas de calidad:
+- Prioriza entre 3 y 5 insights de mayor impacto.
+- Sé específico: incluye KPI y magnitud del cambio cuando exista.
+- Evita texto genérico; cada insight debe aportar una decisión o alerta clara.
+- Mantén el mensaje breve y accionable (máximo 180 caracteres).
+- Usa severidad 1-5 (5 = crítico) y confidence entre 0 y 1.
+- Si no hay señal clara, devuelve un único summary conservador.
 
 Devuelve JSON con esta forma:
 {
@@ -231,6 +247,8 @@ Devuelve JSON con esta forma:
     }
   ]
 }
+
+No incluyas markdown ni texto adicional fuera del JSON.
 `;
   }
 
