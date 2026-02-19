@@ -73,6 +73,31 @@ Start-Sleep -Seconds 15
 
 Write-Host ""
 
+# Verificar/descargar modelo de Ollama para Insights
+$insightsModel = if ($env:INSIGHTS_LLM_MODEL) { $env:INSIGHTS_LLM_MODEL } else { "qwen2.5:7b-instruct" }
+Write-Host "[*] Verificando modelo Ollama para Insights: $insightsModel" -ForegroundColor Yellow
+
+$ollamaModelList = docker compose exec -T ollama ollama list 2>$null
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "[!] No se pudo consultar modelos de Ollama. Continuando sin forzar descarga." -ForegroundColor Yellow
+}
+elseif ($ollamaModelList -match [Regex]::Escape($insightsModel)) {
+    Write-Host "[OK] Modelo Ollama disponible: $insightsModel" -ForegroundColor Green
+}
+else {
+    Write-Host "[*] Descargando modelo Ollama: $insightsModel (puede tardar varios minutos)..." -ForegroundColor Yellow
+    docker compose exec -T ollama ollama pull $insightsModel
+
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "[OK] Modelo Ollama descargado: $insightsModel" -ForegroundColor Green
+    }
+    else {
+        Write-Host "[!] No se pudo descargar el modelo Ollama. El endpoint de insights usara fallback a reglas." -ForegroundColor Yellow
+    }
+}
+
+Write-Host ""
+
 # Verificar que Docker Compose esta corriendo
 Write-Host "[+] Verificando estado de los servicios..." -ForegroundColor Yellow
 docker compose ps
