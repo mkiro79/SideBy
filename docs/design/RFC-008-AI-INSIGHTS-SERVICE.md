@@ -56,10 +56,15 @@ Implementar un servicio de AI Insights que:
 │  ├─ InsightsController (Express endpoint)                   │
 │  ├─ GenerateInsightsUseCase (Business logic)                │
 │  ├─ RuleEngineAdapter (Phase 1: Rule-based)                 │
-│  ├─ LLMAdapter (Phase 2: OpenAI/Anthropic)                  │
+│  ├─ LLMAdapter (Phase 2: Ollama local / OpenAI optional)    │
 │  └─ InsightRepository (Cache & Storage)                     │
 └─────────────────────────────────────────────────────────────┘
 ```
+
+**Prerequisito de infraestructura para desarrollo (LLM local):**
+- Contenedor Docker de Ollama levantado (`ollama/ollama`).
+- Modelo `qwen2.5:7b-instruct` instalado en el contenedor.
+- Endpoint local operativo: `http://localhost:11434/v1`.
 
 ---
 
@@ -244,7 +249,8 @@ export class GenerateInsightsUseCase {
     private datasetRepository: DatasetRepository,
     private insightRepository: InsightRepository,
     private ruleEngineAdapter: RuleEngineAdapter,
-    private llmAdapter: LLMAdapter  // Puede ser null en Phase 1
+    private llmAdapter: LLMAdapter | null, // Puede ser null en Phase 1
+    private llmEnabled: boolean // Flag global por env (enable/disable)
   ) {}
   
   async execute(command: GenerateInsightsCommand): Promise<GenerateInsightsResult> {
@@ -269,7 +275,7 @@ export class GenerateInsightsUseCase {
     
     // Phase 1: Solo Rule Engine
     // Phase 2: Intentar LLM, fallback a Rules
-    if (this.shouldUseLLM(dataset) && this.llmAdapter) {
+    if (this.llmEnabled && this.shouldUseLLM(dataset) && this.llmAdapter) {
       try {
         insights = await this.llmAdapter.generateInsights(dataset, filters);
       } catch (error) {
@@ -513,7 +519,9 @@ export class RuleEngineAdapter {
 ```typescript
 /**
  * LLM Adapter
- * Genera insights usando modelos de lenguaje (OpenAI/Anthropic)
+ * Genera insights usando proveedor configurable:
+ * - MVP: Ollama local en Docker
+ * - Opcional: OpenAI-compatible endpoint
  */
 
 import OpenAI from 'openai';
@@ -524,9 +532,18 @@ import { v4 as uuidv4 } from 'uuid';
 
 export class LLMAdapter {
   private openai: OpenAI;
+  private model: string;
   
-  constructor(apiKey: string) {
-    this.openai = new OpenAI({ apiKey });
+  constructor(config: {
+    apiKey?: string;
+    baseURL: string;
+    model: string;
+  }) {
+    this.openai = new OpenAI({
+      apiKey: config.apiKey ?? 'ollama',
+      baseURL: config.baseURL,
+    });
+    this.model = config.model;
   }
   
   async generateInsights(
@@ -539,9 +556,9 @@ export class LLMAdapter {
     // 2. Construir prompt
     const prompt = this.buildPrompt(dataset, dataSummary);
     
-    // 3. Llamar a OpenAI
+    // 3. Llamar al proveedor OpenAI-compatible (Ollama/OpenAI)
     const response = await this.openai.chat.completions.create({
-      model: 'gpt-4o',  // o 'gpt-4-turbo'
+      model: this.model,
       messages: [
         {
           role: 'system',
@@ -660,70 +677,105 @@ Genera el JSON ahora:
 }
 ```
 
+### 4.4.1 Configuración Ollama (MVP recomendado)
+
+**Objetivo:** permitir ejecutar IA local sin consumo de tokens externos, con fallback automático a reglas.
+
+**Modelo recomendado MVP:** `qwen2.5:7b-instruct`
+
+- Buen equilibrio calidad/latencia para insights de texto corto
+- Buen desempeño en español
+- Suficiente para salida estructurada JSON en entorno local
+
+**Variables de entorno sugeridas (`apps/api/.env`):**
+
+```env
+INSIGHTS_LLM_ENABLED=false
+INSIGHTS_LLM_PROVIDER=ollama
+INSIGHTS_LLM_BASE_URL=http://localhost:11434/v1
+INSIGHTS_LLM_MODEL=qwen2.5:7b-instruct
+INSIGHTS_LLM_API_KEY=ollama
+```
+
+**Arranque local con Docker (ejemplo):**
+
+```bash
+docker run -d --name sideby-ollama -p 11434:11434 ollama/ollama
+docker exec -it sideby-ollama ollama pull qwen2.5:7b-instruct
+```
+
+**Comportamiento esperado en runtime:**
+
+1. Si `INSIGHTS_LLM_ENABLED=false` → usar siempre `RuleEngineAdapter`.
+2. Si `INSIGHTS_LLM_ENABLED=true` y Ollama responde → usar `LLMAdapter`.
+3. Si `INSIGHTS_LLM_ENABLED=true` pero falla el LLM (timeout/error) → fallback inmediato a reglas.
+
 ---
 
 ### 4.5 Insight Repository (Cache Layer)
 
-**Archivo:** `solution-sideby/apps/api/src/modules/insights/infrastructure/InsightRepository.ts`
+**Archivo:** `solution-sideby/apps/api/src/modules/insights/infrastructure/InMemoryInsightsCacheRepository.ts`
 
 ```typescript
 /**
- * Insight Repository
- * Cachea insights para evitar regeneración innecesaria
+ * In-Memory Insights Cache Repository
+ * Cachea insights en memoria para el MVP (sin Redis)
  */
 
-import Redis from 'ioredis';
 import type { DatasetInsight } from '../domain/DatasetInsight.js';
-import type { DashboardFilters } from '../../datasets/types/api.types.js';
+import type { DashboardFilters } from '../domain/DatasetInsight.js';
 
-export class InsightRepository {
-  private redis: Redis;
-  private readonly TTL = 3600;  // 1 hora en segundos
-  
-  constructor(redisUrl: string) {
-    this.redis = new Redis(redisUrl);
-  }
-  
+interface CachedEntry {
+  expiresAt: number;
+  insights: DatasetInsight[];
+}
+
+export class InMemoryInsightsCacheRepository {
+  private readonly cache = new Map<string, CachedEntry>();
+  private readonly TTL = 300; // 5 minutos
+
   async findCached(
     datasetId: string,
     filters: DashboardFilters
   ): Promise<DatasetInsight[] | null> {
     const key = this.generateCacheKey(datasetId, filters);
-    const cached = await this.redis.get(key);
-    
-    if (!cached) return null;
-    
-    return JSON.parse(cached);
+    const cached = this.cache.get(key);
+
+    if (!cached) {
+      return null;
+    }
+
+    if (cached.expiresAt < Date.now()) {
+      this.cache.delete(key);
+      return null;
+    }
+
+    return cached.insights;
   }
-  
+
   async saveToCache(
     datasetId: string,
     filters: DashboardFilters,
     insights: DatasetInsight[]
   ): Promise<void> {
     const key = this.generateCacheKey(datasetId, filters);
-    await this.redis.setex(key, this.TTL, JSON.stringify(insights));
+
+    this.cache.set(key, {
+      insights,
+      expiresAt: Date.now() + this.TTL * 1000,
+    });
   }
-  
+
   async invalidate(datasetId: string): Promise<void> {
-    // Invalidar todos los insights de un dataset
-    const pattern = `insights:${datasetId}:*`;
-    const keys = await this.redis.keys(pattern);
-    
-    if (keys.length > 0) {
-      await this.redis.del(...keys);
+    for (const key of this.cache.keys()) {
+      if (key.startsWith(`insights:${datasetId}:`)) {
+        this.cache.delete(key);
+      }
     }
   }
-  
+
   private generateCacheKey(datasetId: string, filters: DashboardFilters): string {
-    // Generar key única basada en datasetId + filtros
-    const filterHash = this.hashFilters(filters);
-    return `insights:${datasetId}:${filterHash}`;
-  }
-  
-  private hashFilters(filters: DashboardFilters): string {
-    // Hash simple de los filtros para cache key
-    return Buffer.from(JSON.stringify(filters)).toString('base64');
+    return `insights:${datasetId}:${JSON.stringify(filters)}`;
   }
 }
 ```
@@ -944,7 +996,7 @@ function getSeverityVariant(severity: number): 'default' | 'destructive' {
   2. Anomalías dimensionales (outliers)
   3. Top performer
   4. Summary general
-- [x] InsightRepository con Redis cache
+- [x] InsightRepository con cache en memoria del servidor (MVP)
 - [x] Frontend AIInsights component
 - [x] React Query integration
 
@@ -956,11 +1008,17 @@ function getSeverityVariant(severity: number): 'default' | 'destructive' {
 
 **Objetivo:** Insights inteligentes con contexto
 
-- [ ] LLMAdapter con OpenAI GPT-4
+**Prerequisito de desarrollo (Scope obligatorio):**
+- Crear y levantar contenedor Docker con imagen oficial de Ollama.
+- Instalar el modelo recomendado `qwen2.5:7b-instruct` en el contenedor.
+- Validar disponibilidad del endpoint local `http://localhost:11434/v1` antes de pruebas funcionales.
+
+- [x] LLMAdapter OpenAI-compatible (MVP: Ollama local, opcional OpenAI)
+- [x] LLMAdapter con proveedor configurable (MVP: Ollama local, opcional OpenAI)
 - [ ] Prompt engineering optimizado
-- [ ] Fallback automático a Rule Engine si LLM falla
-- [ ] Confidence scoring
-- [ ] Feature flag para enable/disable IA por dataset
+- [x] Fallback automático a Rule Engine si LLM falla
+- [x] Confidence scoring básico (0-1)
+- [x] Feature flag global enable/disable por entorno + flag por dataset
 - [ ] Cost tracking (tokens consumidos)
 
 **Entregable:** Insights contextualizados generados por LLM
@@ -981,6 +1039,13 @@ function getSeverityVariant(severity: number): 'default' | 'destructive' {
 ## 7. Cost & Performance Analysis
 
 ### LLM Costs (Phase 2)
+
+**Escenario MVP (Ollama local):**
+- Costo por request: $0 en APIs externas
+- Costo operativo: CPU/RAM/GPU local
+- Recomendado para desarrollo y validación funcional temprana
+
+**Escenario Cloud (OpenAI):**
 
 **Modelo:** GPT-4o ($5 / 1M input tokens, $15 / 1M output tokens)
 
@@ -1004,7 +1069,8 @@ function getSeverityVariant(severity: number): 'default' | 'destructive' {
 ### Performance
 
 - **Rule Engine:** 50-100ms (sin I/O)
-- **LLM:** 2-5 segundos (llamada API)
+- **LLM local (Ollama):** 1-8 segundos (según modelo/hardware)
+- **LLM cloud:** 2-5 segundos (llamada API)
 - **Cache Hit:** <10ms (Redis)
 
 ---
@@ -1056,7 +1122,7 @@ test('Usuario ve insights en el dashboard', async ({ page }) => {
 
 - **Data Privacy:** Nunca enviar datos personales (PII) al LLM
 - **Sanitization:** Sanitizar nombres de dimensiones antes de enviar
-- **API Key Management:** Keys de OpenAI en variables de entorno
+- **API Key Management:** Credenciales/API keys en variables de entorno (Ollama local puede usar key dummy)
 - **Rate Limiting:** Máximo 10 generaciones por usuario por minuto
 - **Audit Log:** Registrar todas las llamadas al LLM (dataset, timestamp, costo)
 
@@ -1072,6 +1138,6 @@ test('Usuario ve insights en el dashboard', async ({ page }) => {
 
 ---
 
-**Última actualización:** 2026-02-15  
+**Última actualización:** 2026-02-19  
 **Próximo Review:** Después de Phase 1 completion
 

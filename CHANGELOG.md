@@ -7,6 +7,25 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### [RFC-008] AI Insights Service - Backend MVP (2026-02-19)
+
+**⚙️ Backend:**
+- Nuevo módulo `insights` en `apps/api` con arquitectura por capas (domain/application/infrastructure/presentation)
+- Endpoint agregado: `GET /api/v1/datasets/:id/insights`
+- Use case `GenerateInsightsUseCase` con validación de ownership y respuesta `404` para dataset inexistente/sin acceso
+- Rule engine implementado para resumen general, cambios significativos, anomalías por dimensión y top performer
+- Cache MVP en memoria del servidor (`InMemoryInsightsCacheRepository`) con TTL e invalidación por dataset
+- Integración LLM configurable (OpenAI-compatible) con soporte de Ollama local por `env`
+- Fallback automático a reglas cuando el LLM falla y feature flag global `INSIGHTS_LLM_ENABLED`
+
+**🧪 Tests:**
+- Nuevos tests unitarios para `GenerateInsightsUseCase`, `RuleEngineAdapter` e `InsightsController`
+- Suite unitaria backend completa en verde
+
+**📄 Documentación:**
+- `RFC-008-AI-INSIGHTS-SERVICE.md` actualizado con estado real de implementación backend
+- Checklist de roadmap actualizado (backend completado/ajustado a MVP)
+
 ### [RFC-009] Wizard Step 3 - SourceConfig (2026-02-16)
 
 **✨ Frontend:**
