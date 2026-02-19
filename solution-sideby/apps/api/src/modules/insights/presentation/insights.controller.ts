@@ -19,6 +19,9 @@ interface InsightsUseCase {
   }>;
 }
 
+type InsightSource = "rule-engine" | "ai-model";
+type InsightsGenerationSource = InsightSource | "mixed" | "unknown";
+
 const defaultCacheRepository = new InMemoryInsightsCacheRepository(300);
 
 type LlmProvider = "ollama" | "openai-compatible";
@@ -102,6 +105,7 @@ export class InsightsController {
         forceRefresh,
       });
       const generationTimeMs = Date.now() - startTime;
+      const generationSource = this.resolveGenerationSource(result.insights);
 
       res.status(200).json({
         insights: result.insights,
@@ -109,6 +113,7 @@ export class InsightsController {
           total: result.insights.length,
           generatedAt: new Date().toISOString(),
           cacheStatus: result.fromCache ? "hit" : "miss",
+          generationSource,
           generationTimeMs,
         },
       });
@@ -142,5 +147,37 @@ export class InsightsController {
     return {
       categorical: parsed.categorical ?? {},
     };
+  }
+
+  private resolveGenerationSource(
+    insights: unknown[],
+  ): InsightsGenerationSource {
+    if (insights.length === 0) {
+      return "unknown";
+    }
+
+    const sources = new Set<InsightSource>();
+
+    for (const insight of insights) {
+      if (!insight || typeof insight !== "object") {
+        continue;
+      }
+
+      const generatedBy = (insight as { generatedBy?: unknown }).generatedBy;
+
+      if (generatedBy === "rule-engine" || generatedBy === "ai-model") {
+        sources.add(generatedBy);
+      }
+    }
+
+    if (sources.size === 0) {
+      return "unknown";
+    }
+
+    if (sources.size > 1) {
+      return "mixed";
+    }
+
+    return [...sources][0] as InsightSource;
   }
 }

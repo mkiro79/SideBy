@@ -95,7 +95,7 @@ sequenceDiagram
     UC->>CACHE: get(cacheKey)
     CACHE-->>UC: insights cacheados
     UC-->>C: { insights, fromCache: true }
-    C-->>FE: 200 { insights, meta.cacheStatus: "hit" }
+    C-->>FE: 200 { insights, meta.cacheStatus: "hit", meta.generationSource: "rule-engine|ai-model|mixed|unknown" }
   else generar insights
     alt aiConfig.enabled o aiConfig.enabledFeatures.insights
       UC->>GEN: LLMAdapter.generateInsights(dataset, filters)
@@ -106,7 +106,7 @@ sequenceDiagram
     end
     UC->>CACHE: set(cacheKey, insights, ttl=300s)
     UC-->>C: { insights, fromCache: false }
-    C-->>FE: 200 { insights, meta.cacheStatus: "miss" }
+    C-->>FE: 200 { insights, meta.cacheStatus: "miss", meta.generationSource: "rule-engine|ai-model|mixed|unknown" }
   end
 ```
 
@@ -179,6 +179,7 @@ export interface DatasetInsightsResponse {
     total: number;
     generatedAt: string;
     cacheStatus: 'hit' | 'miss' | 'stale';
+    generationSource: 'rule-engine' | 'ai-model' | 'mixed' | 'unknown';
     generationTimeMs: number;
   };
 }
@@ -239,6 +240,7 @@ export class InsightsController {
         forceRefresh,
       });
       const generationTimeMs = Date.now() - startTime;
+      const generationSource = this.resolveGenerationSource(result.insights);
       
       // Response
       res.status(200).json({
@@ -247,6 +249,7 @@ export class InsightsController {
           total: result.insights.length,
           generatedAt: new Date().toISOString(),
           cacheStatus: result.fromCache ? 'hit' : 'miss',
+          generationSource,
           generationTimeMs,
         },
       });

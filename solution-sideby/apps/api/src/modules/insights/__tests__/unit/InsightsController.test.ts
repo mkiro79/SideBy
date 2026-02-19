@@ -92,6 +92,7 @@ describe("InsightsController", () => {
         meta: expect.objectContaining({
           total: 1,
           cacheStatus: "hit",
+          generationSource: "rule-engine",
         }),
       }),
     );

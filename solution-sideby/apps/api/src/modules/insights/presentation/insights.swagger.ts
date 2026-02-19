@@ -40,54 +40,37 @@ const DatasetInsightSchema = z
         example: "trend",
         description: "Tipo de insight generado",
       }),
-    severity: z
-      .number()
-      .int()
-      .min(1)
-      .max(5)
-      .openapi({
-        example: 3,
-        description: "Nivel de importancia (1=bajo, 5=crítico)",
-      }),
-    icon: z
-      .enum(["💡", "⚠️", "✨", "📈", "📉", "🚨", "✅"])
-      .openapi({
-        example: "📈",
-        description: "Icono visual representativo",
-      }),
+    severity: z.number().int().min(1).max(5).openapi({
+      example: 3,
+      description: "Nivel de importancia (1=bajo, 5=crítico)",
+    }),
+    icon: z.enum(["💡", "⚠️", "✨", "📈", "📉", "🚨", "✅"]).openapi({
+      example: "📈",
+      description: "Icono visual representativo",
+    }),
     title: z
       .string()
       .openapi({ example: "Incremento significativo en ventas" }),
     message: z.string().openapi({
-      example:
-        "Las ventas del Grupo A aumentaron un 15.3% respecto al Grupo B",
+      example: "Las ventas del Grupo A aumentaron un 15.3% respecto al Grupo B",
     }),
     metadata: InsightMetadataSchema,
-    generatedBy: z
-      .enum(["rule-engine", "ai-model"])
-      .openapi({
-        example: "ai-model",
-        description: "Motor que generó el insight",
-      }),
-    confidence: z
-      .number()
-      .min(0)
-      .max(1)
-      .openapi({
-        example: 0.92,
-        description: "Nivel de confianza del insight (0-1)",
-      }),
+    generatedBy: z.enum(["rule-engine", "ai-model"]).openapi({
+      example: "ai-model",
+      description: "Motor que generó el insight",
+    }),
+    confidence: z.number().min(0).max(1).openapi({
+      example: 0.92,
+      description: "Nivel de confianza del insight (0-1)",
+    }),
     generatedAt: z
       .string()
       .datetime()
       .openapi({ example: "2024-02-19T10:30:00Z" }),
-    cacheTTL: z
-      .number()
-      .optional()
-      .openapi({
-        example: 300,
-        description: "Tiempo de vida del cache en segundos",
-      }),
+    cacheTTL: z.number().optional().openapi({
+      example: 300,
+      description: "Tiempo de vida del cache en segundos",
+    }),
   })
   .openapi({
     description: "Insight individual generado para un dataset",
@@ -102,25 +85,25 @@ const InsightsResponseSchema = z
       total: z
         .number()
         .openapi({ example: 5, description: "Total de insights generados" }),
-      generatedAt: z
-        .string()
-        .datetime()
+      generatedAt: z.string().datetime().openapi({
+        example: "2024-02-19T10:30:00Z",
+        description: "Timestamp de generación",
+      }),
+      cacheStatus: z.enum(["hit", "miss"]).openapi({
+        example: "hit",
+        description: "Indica si los insights provienen de cache",
+      }),
+      generationSource: z
+        .enum(["rule-engine", "ai-model", "mixed", "unknown"])
         .openapi({
-          example: "2024-02-19T10:30:00Z",
-          description: "Timestamp de generación",
+          example: "rule-engine",
+          description:
+            "Fuente de generación de insights: reglas, LLM, mezcla o desconocida",
         }),
-      cacheStatus: z
-        .enum(["hit", "miss"])
-        .openapi({
-          example: "hit",
-          description: "Indica si los insights provienen de cache",
-        }),
-      generationTimeMs: z
-        .number()
-        .openapi({
-          example: 450,
-          description: "Tiempo de generación en milisegundos",
-        }),
+      generationTimeMs: z.number().openapi({
+        example: 450,
+        description: "Tiempo de generación en milisegundos",
+      }),
     }),
   })
   .openapi({
