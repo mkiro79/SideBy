@@ -31,6 +31,8 @@ import {
 import { createDateUmbrella, type DateGranularity } from '../../utils/dateUmbrella.js';
 import type { DataRow } from '../../types/api.types.js';
 import type { KPIResult } from '../../types/dashboard.types.js';
+import { formatKpiValue } from '../../utils/numberFormat.js';
+import { UnifiedChartTooltip } from './UnifiedChartTooltip.js';
 
 interface MiniTrendChartProps {
   /** KPI a mostrar */
@@ -58,29 +60,8 @@ interface MiniTrendChartProps {
   groupBColor: string;
 }
 
-/**
- * Formatea un valor según su tipo
- */
-function formatValue(value: number, format: 'currency' | 'percentage' | 'number' | 'text'): string {
-  if (Number.isNaN(value) || !Number.isFinite(value)) {
-    return '—';
-  }
-
-  switch (format) {
-    case 'currency':
-      return `$${value.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
-    
-    case 'percentage':
-      return `${value.toFixed(1)}%`;
-    
-    case 'text':
-      return value.toString();
-    
-    case 'number':
-    default:
-      return value.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-  }
-}
+const formatValue = (value: number, format: KPIResult['format']): string =>
+  formatKpiValue(value, format, { compact: true });
 
 export function MiniTrendChart({
   kpi,
@@ -94,6 +75,33 @@ export function MiniTrendChart({
 }: Readonly<MiniTrendChartProps>) {
   const isPositive = kpi.diffPercent > 0;
   const isNegative = kpi.diffPercent < 0;
+
+  // Helper para convertir hsl a rgba con opacidad
+  const hslToRgba = (hslColor: string, opacity: number): string => {
+    // Si ya es rgba, devolver tal cual
+    if (hslColor.startsWith('rgba')) return hslColor;
+    
+    // Crear elemento temporal para obtener color computado
+    const temp = document.createElement('div');
+    temp.style.color = hslColor;
+    document.body.appendChild(temp);
+    const computed = getComputedStyle(temp).color;
+    temp.remove();
+    
+    // Extraer rgb values y agregar alpha
+    const rgbRegex = /rgb\((\d+),\s*(\d+),\s*(\d+)\)/;
+    const match = rgbRegex.exec(computed);
+    if (match) {
+      return `rgba(${match[1]}, ${match[2]}, ${match[3]}, ${opacity})`;
+    }
+    
+    return hslColor; // Fallback
+  };
+
+  const groupBColorFaded = React.useMemo(
+    () => hslToRgba(groupBColor, 0.45),
+    [groupBColor]
+  );
 
   /**
    * Retorna el ícono de tendencia basado en el cambio porcentual
@@ -131,7 +139,7 @@ export function MiniTrendChart({
       dateField,
       kpi.name, // KPI de este mini-chart
       granularity, // Usar granularidad seleccionada
-      false,  // No omitir gaps - mostrar TODOS los períodos
+      true,  // Omitir gaps para no renderizar periodos sin datos
     );
 
     // Transformar UmbrellaDatePoint[] a formato compatible con Recharts
@@ -171,28 +179,27 @@ export function MiniTrendChart({
           <LineChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
             <XAxis dataKey="date" tick={{ fontSize: 10 }} />
-            <YAxis tick={{ fontSize: 10 }} />
+            <YAxis tick={{ fontSize: 10 }} tickFormatter={(value: number) => formatValue(value, kpi.format)} />
             <Tooltip
-              contentStyle={{
-                backgroundColor: 'hsl(var(--popover))',
-                borderColor: 'hsl(var(--border))',
-                borderRadius: '8px',
-                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-              }}
-              labelStyle={{ color: 'hsl(var(--foreground))' }}
+              content={
+                <UnifiedChartTooltip
+                  valueFormat={kpi.format}
+                  percentageDecimals={2}
+                />
+              }
             />
             <Line
               type="monotone"
               dataKey={groupALabel}
               stroke={groupAColor}
-              strokeWidth={2}
+              strokeWidth={2.25}
               dot={false}
             />
             <Line
               type="monotone"
               dataKey={groupBLabel}
-              stroke={groupBColor}
-              strokeWidth={2}
+              stroke={groupBColorFaded}
+              strokeWidth={1.75}
               dot={false}
             />
           </LineChart>

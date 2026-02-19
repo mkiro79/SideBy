@@ -56,7 +56,7 @@ export const Landing = () => {
   // Si está autenticado, redirigir al dashboard
   useEffect(() => {
     if (isAuthenticated) {
-      navigate("/dashboard");
+      navigate("/home");
     }
   }, [isAuthenticated, navigate]);
 

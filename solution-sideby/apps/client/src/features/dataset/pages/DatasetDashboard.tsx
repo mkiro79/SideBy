@@ -15,6 +15,7 @@
  */
 
 import { useState } from 'react';
+import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Loader2, RefreshCw } from 'lucide-react';
 import { SidebarProvider } from '@/shared/components/ui/sidebar.js';
@@ -23,6 +24,7 @@ import { Button } from '@/shared/components/ui/button.js';
 import { Badge } from '@/shared/components/ui/badge.js';
 import { Separator } from '@/shared/components/ui/Separator.js';
 import { useDatasetDashboard } from '../hooks/useDatasetDashboard.js';
+import { calculateDelta } from '@/features/dataset/utils/delta.js';
 import { TemplateSelector } from '../components/dashboard/TemplateSelector.js';
 import { DashboardFiltersBar } from '../components/dashboard/DashboardFiltersBar.js';
 import { KPIGrid } from '../components/dashboard/KPIGrid.js';
@@ -33,7 +35,8 @@ import { DimensionGrid } from '../components/dashboard/DimensionGrid.js';
 import { SummaryTable } from '../components/dashboard/SummaryTable.js';
 import { GranularTable } from '../components/dashboard/GranularTable.js';
 import { CategoryChart } from '../components/dashboard/CategoryChart.js';
-import type { DashboardTemplateId, DashboardFilters } from '../types/dashboard.types.js';
+import type { DashboardTemplateId, DashboardFilters, KPIResult } from '../types/dashboard.types.js';
+import type { DataRow } from '../types/api.types.js';
 
 
 // ============================================================================
@@ -55,6 +58,19 @@ export default function DatasetDashboard() {
     filters,
   });
   
+  // State para granularidad temporal (usado en filtro de período)
+  const [granularity, setGranularity] = useState<'days' | 'weeks' | 'months' | 'quarters'>('months');
+
+  // Handler para cambio de granularidad - limpia el filtro de período automáticamente
+  const handleGranularityChange = (newGranularity: 'days' | 'weeks' | 'months' | 'quarters') => {
+    setGranularity(newGranularity);
+    // Limpiar filtro de período cuando cambia granularidad para evitar valores inconsistentes
+    setFilters((prev) => ({
+      ...prev,
+      periodFilter: undefined,
+    }));
+  };
+
   // Handler para cambio de filtros multi-select (RFC-005)
   const handleFilterChange = (field: string, values: string[]) => {
     setFilters((prev) => ({
@@ -66,10 +82,108 @@ export default function DatasetDashboard() {
     }));
   };
 
+  // Handler para cambio de filtro de período
+  const handlePeriodFilterChange = (periodFilter?: { from?: number; to?: number }) => {
+    setFilters((prev) => ({
+      ...prev,
+      periodFilter,
+    }));
+  };
+
   // Handler para limpiar todos los filtros (RFC-005)
   const handleClearFilters = () => {
-    setFilters({ categorical: {} });
+    setFilters({ categorical: {}, periodFilter: undefined });
   };
+
+  // Helper: Aplicar filtro de período a los datos filtrados
+  const dataWithPeriodFilter = React.useMemo(() => {
+    // Si no hay filtro de período, retornar datos sin cambios
+    if (!filters.periodFilter?.from && !filters.periodFilter?.to) {
+      return filteredData;
+    }
+
+    // Si no hay campo de fecha, no podemos aplicar filtro temporal
+    const dateField = dataset?.schemaMapping?.dateField;
+    if (!dateField || !filteredData.length) {
+      return filteredData;
+    }
+
+    // Filtrar datos basados en el período seleccionado
+    // El filtro de período trabaja con índices (1-12 para meses, 1-52 para semanas, etc.)
+    return filteredData.filter((row) => {
+      const dateValue = row[dateField];
+      if (!dateValue) return false;
+
+      const date = new Date(dateValue as string);
+      if (isNaN(date.getTime())) return false;
+
+      // Calcular el índice según la granularidad (usando UTC para consistencia)
+      let periodIndex: number;
+      switch (granularity) {
+        case 'days': {
+          // Día del año (1-365), usando UTC para evitar problemas de zona horaria
+          const utcYear = date.getUTCFullYear();
+          const startOfYear = Date.UTC(utcYear, 0, 1);
+          const diff = date.getTime() - startOfYear;
+          const dayOfYear = Math.floor(diff / (1000 * 60 * 60 * 24)) + 1;
+          // Limitar a 365 para alinearse con getPeriodConfig (años bisiestos podrían dar 366)
+          periodIndex = Math.min(dayOfYear, 365);
+          break;
+        }
+        case 'weeks': {
+          // Semana del año (1-52), usando UTC para evitar problemas de zona horaria
+          const utcYear = date.getUTCFullYear();
+          const firstDay = Date.UTC(utcYear, 0, 1);
+          const daysDiff = Math.floor((date.getTime() - firstDay) / (1000 * 60 * 60 * 24));
+          const weekOfYear = Math.floor(daysDiff / 7) + 1;
+          // Limitar a 52 para alinearse con getPeriodConfig (algunos años pueden tener 53 semanas)
+          periodIndex = Math.min(weekOfYear, 52);
+          break;
+        }
+        case 'months':
+          // Mes (1-12), usando UTC
+          periodIndex = date.getUTCMonth() + 1;
+          break;
+        case 'quarters':
+          // Trimestre (1-4), usando UTC
+          periodIndex = Math.floor(date.getUTCMonth() / 3) + 1;
+          break;
+        default:
+          return true;
+      }
+
+      // Verificar si el índice está dentro del rango
+      const from = filters.periodFilter?.from;
+      const to = filters.periodFilter?.to;
+      if (from !== undefined && periodIndex < from) return false;
+      if (to !== undefined && periodIndex > to) return false;
+      return true;
+    });
+  }, [filteredData, filters.periodFilter, granularity, dataset?.schemaMapping?.dateField]);
+
+  const kpisWithPeriodFilter = React.useMemo<KPIResult[]>(() => {
+    if (kpis.length === 0) {
+      return [];
+    }
+
+    const dataA = dataWithPeriodFilter.filter((row) => row._source_group === 'groupA');
+    const dataB = dataWithPeriodFilter.filter((row) => row._source_group === 'groupB');
+
+    return kpis.map((kpi) => {
+      const valueA = calculateAggregate(dataA, kpi.name);
+      const valueB = calculateAggregate(dataB, kpi.name);
+      const { deltaAbs, deltaPercent, trend } = calculateDelta(valueA, valueB);
+
+      return {
+        ...kpi,
+        valueA,
+        valueB,
+        diff: deltaAbs,
+        diffPercent: deltaPercent,
+        trend,
+      };
+    });
+  }, [kpis, dataWithPeriodFilter]);
 
   // Helper: Mapea de API KPI fields a formato wizard KPIField
   const mappedKpiFields = dataset?.schemaMapping?.kpiFields.map(kpi => ({
@@ -204,37 +318,40 @@ export default function DatasetDashboard() {
             </div>
 
             {/* Filters Bar */}
-            {categoricalFields.length > 0 && (
-              <DashboardFiltersBar
-                categoricalFields={categoricalFields}
-                filters={filters.categorical}
-                onFilterChange={handleFilterChange}
-                onClearFilters={handleClearFilters}
-                dataset={dataset}
-              />
-            )}
+            <DashboardFiltersBar
+              categoricalFields={categoricalFields}
+              filters={filters.categorical}
+              onFilterChange={handleFilterChange}
+              onClearFilters={handleClearFilters}
+              dataset={dataset}
+              periodFilter={filters.periodFilter}
+              onPeriodFilterChange={handlePeriodFilterChange}
+              granularity={granularity}
+            />
 
             {/* KPI Grid */}
-            <KPIGrid kpis={kpis} />
+            <KPIGrid kpis={kpisWithPeriodFilter} />
 
             {/* RFC-006 Trends View: Grid 2×2 de mini-charts temporales */}
-            {selectedTemplate === 'sideby_trends' && dateField && filteredData.length > 0 && (
+            {selectedTemplate === 'sideby_trends' && dateField && dataWithPeriodFilter.length > 0 && (
               <TrendsGrid
-                kpis={kpis}
-                data={filteredData}
+                kpis={kpisWithPeriodFilter}
+                data={dataWithPeriodFilter}
                 dateField={dateField}
                 groupALabel={groupALabel}
                 groupBLabel={groupBLabel}
                 groupAColor={groupAColor}
                 groupBColor={groupBColor}
+                granularity={granularity}
+                onGranularityChange={handleGranularityChange}
               />
             )}
 
             {/* RFC-006 Trends View: Grid 2×2 de mini-charts por dimensión */}
             {selectedTemplate === 'sideby_trends' && categoricalFields.length > 0 && (
               <DimensionGrid
-                kpis={kpis}
-                data={filteredData}
+                kpis={kpisWithPeriodFilter}
+                data={dataWithPeriodFilter}
                 dimensions={categoricalFields}
                 groupALabel={groupALabel}
                 groupBLabel={groupBLabel}
@@ -246,8 +363,8 @@ export default function DatasetDashboard() {
             {/* RFC-006 CategoryChart - Análisis por dimensión categórica (Solo Executive) */}
             {selectedTemplate === 'sideby_executive' && categoricalFields.length > 0 && (
               <CategoryChart
-                data={filteredData}
-                kpis={kpis}
+                data={dataWithPeriodFilter}
+                kpis={kpisWithPeriodFilter}
                 dimensions={categoricalFields}
                 groupALabel={groupALabel}
                 groupBLabel={groupBLabel}
@@ -257,11 +374,11 @@ export default function DatasetDashboard() {
             )}
 
             {/* Trend Chart - Solo si hay dateField y datos (no en Detailed ni Trends)*/}
-            {dateField && kpis.length > 0 && filteredData.length > 0 && selectedTemplate !== 'sideby_detailed' && selectedTemplate !== 'sideby_trends' && (
+            {dateField && kpisWithPeriodFilter.length > 0 && dataWithPeriodFilter.length > 0 && selectedTemplate !== 'sideby_detailed' && selectedTemplate !== 'sideby_trends' && (
               <TrendChart
-                data={filteredData}
+                data={dataWithPeriodFilter}
                 dateField={dateField}
-                kpis={kpis}
+                kpis={kpisWithPeriodFilter}
                 groupALabel={groupALabel}
                 groupBLabel={groupBLabel}
                 groupAColor={groupAColor}
@@ -273,25 +390,31 @@ export default function DatasetDashboard() {
             {selectedTemplate === 'sideby_detailed' ? (
               <div className="space-y-6">
                 <SummaryTable
-                  kpis={kpis}
+                  kpis={kpisWithPeriodFilter}
                   groupALabel={groupALabel}
                   groupBLabel={groupBLabel}
+                  groupAColor={groupAColor}
+                  groupBColor={groupBColor}
                 />
                 
                 <GranularTable
-                  data={filteredData}
+                  data={dataWithPeriodFilter}
                   dimensions={categoricalFields}
                   kpis={mappedKpiFields}
                   groupALabel={groupALabel}
                   groupBLabel={groupBLabel}
+                  groupAColor={groupAColor}
+                  groupBColor={groupBColor}
                 />
               </div>
             ) : (
               /* Summary Table - Tabla de totales en Executive y Trends */
               <SummaryTable
-                kpis={kpis}
+                kpis={kpisWithPeriodFilter}
                 groupALabel={groupALabel}
                 groupBLabel={groupBLabel}
+                groupAColor={groupAColor}
+                groupBColor={groupBColor}
               />
             )}
 
@@ -311,7 +434,7 @@ export default function DatasetDashboard() {
               </span>
               <span>•</span>
               <span>
-                <strong>Filas filtradas:</strong> {filteredData.length}
+                <strong>Filas filtradas:</strong> {dataWithPeriodFilter.length}
               </span>
               <span>•</span>
               <span>
@@ -323,4 +446,14 @@ export default function DatasetDashboard() {
       </div>
     </SidebarProvider>
   );
+}
+
+function calculateAggregate(data: DataRow[], field: string): number {
+  if (data.length === 0) return 0;
+
+  const values = data.map((row) => Number(row[field])).filter((v) => !Number.isNaN(v));
+
+  if (values.length === 0) return 0;
+
+  return values.reduce((acc, v) => acc + v, 0);
 }

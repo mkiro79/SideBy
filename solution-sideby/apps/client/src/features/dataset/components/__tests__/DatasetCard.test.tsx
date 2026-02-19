@@ -27,7 +27,8 @@ describe("DatasetCard", () => {
   const mockDataset: DatasetSummary = {
     id: "dataset-123",
     status: "ready",
-    totalRows: 200,
+    totalRows: 0,
+    kpis: ["Ventas", "ROI"],
     meta: {
       name: "Test Dataset",
       description: "Dataset de prueba",
@@ -120,6 +121,53 @@ describe("DatasetCard", () => {
 
       expect(screen.getByText("200 filas")).toBeInTheDocument();
     });
+
+    it("debe renderizar badges de KPIs cuando existen", () => {
+      render(
+        <DatasetCard
+          dataset={mockDataset}
+          onOpen={mockOnOpen}
+          onDelete={mockOnDelete}
+        />
+      );
+
+      expect(screen.getByText("Ventas")).toBeInTheDocument();
+      expect(screen.getByText("ROI")).toBeInTheDocument();
+    });
+
+    it("debe mostrar indicador de IA cuando aiConfig.enabled = true", () => {
+      const datasetWithAI = {
+        ...mockDataset,
+        aiConfig: { enabled: true },
+      };
+
+      render(
+        <DatasetCard
+          dataset={datasetWithAI}
+          onOpen={mockOnOpen}
+          onDelete={mockOnDelete}
+        />
+      );
+
+      expect(screen.getByText("IA")).toBeInTheDocument();
+    });
+
+    it("no debe mostrar indicador de IA cuando aiConfig.enabled = false", () => {
+      const datasetWithoutAI = {
+        ...mockDataset,
+        aiConfig: { enabled: false },
+      };
+
+      render(
+        <DatasetCard
+          dataset={datasetWithoutAI}
+          onOpen={mockOnOpen}
+          onDelete={mockOnDelete}
+        />
+      );
+
+      expect(screen.queryByText("IA")).not.toBeInTheDocument();
+    });
   });
 
   describe("Edit Button - Feature Flag", () => {
@@ -195,6 +243,24 @@ describe("DatasetCard", () => {
       expect(mockOnEdit).toHaveBeenCalledWith("dataset-123");
     });
 
+    it("debe ejecutar onOpen al hacer click en el botón de dashboard", async () => {
+      const user = userEvent.setup();
+
+      render(
+        <DatasetCard
+          dataset={mockDataset}
+          onOpen={mockOnOpen}
+          onDelete={mockOnDelete}
+        />
+      );
+
+      const dashboardButton = screen.getByLabelText("Abrir dashboard");
+      await user.click(dashboardButton);
+
+      expect(mockOnOpen).toHaveBeenCalledOnce();
+      expect(mockOnOpen).toHaveBeenCalledWith("dataset-123");
+    });
+
     it("debe mostrar diálogo de confirmación antes de eliminar", async () => {
       const user = userEvent.setup();
       
@@ -231,9 +297,11 @@ describe("DatasetCard", () => {
       );
 
       const editButton = screen.getByLabelText("Editar dataset");
+      const dashboardButton = screen.getByLabelText("Abrir dashboard");
       const deleteButton = screen.getByLabelText("Eliminar dataset");
 
       expect(editButton).toBeDisabled();
+      expect(dashboardButton).toBeDisabled();
       expect(deleteButton).toBeDisabled();
     });
 

@@ -12,7 +12,7 @@ const Landing = lazy(() => import('@/features/public/pages/Landing.js'));
 const LoginPage = lazy(() => import('@/features/auth/pages/LoginPage.js').then(m => ({ default: m.LoginPage })));
 
 // Protected pages  
-const Home = lazy(() => import('@/features/dashboard/pages/Home.js'));
+const Home = lazy(() => import('@/features/home/pages/Home.js'));
 const DatasetsList = lazy(() => import('@/features/dataset/pages/DatasetsList.js'));
 const DataUploadWizard = lazy(() => import('@/features/dataset/pages/DataUploadWizard.js'));
 const DatasetDetail = lazy(() => import('@/features/dataset/pages/DatasetDetail.js'));
@@ -45,7 +45,7 @@ export const appRouter = createBrowserRouter([
     ),
   },
   {
-    path: '/dashboard',
+    path: '/home',
     element: <ProtectedRoute />,
     children: [
       {

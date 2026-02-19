@@ -24,9 +24,9 @@ describe('SummaryTable', () => {
     {
       name: 'orders',
       label: 'Pedidos',
-      valueA: 500,
+      valueA: 1500,
       valueB: 450,
-      diff: 50,
+      diff: 1050,
       diffPercent: 11.11,
       format: 'number',
       trend: 'up',
@@ -97,9 +97,9 @@ describe('SummaryTable', () => {
         />
       );
 
-      // Valores deben estar formateados como moneda
-      expect(screen.getByText(/50.*000/)).toBeInTheDocument(); // 50,000 o 50.000
-      expect(screen.getByText(/40.*000/)).toBeInTheDocument();
+      // Valores deben estar formateados en compacto (K)
+      expect(screen.getByText(/50\.0K/)).toBeInTheDocument();
+      expect(screen.getByText(/40\.0K/)).toBeInTheDocument();
     });
 
     it('debe formatear valores number correctamente', () => {
@@ -111,7 +111,7 @@ describe('SummaryTable', () => {
         />
       );
 
-      expect(screen.getByText('500')).toBeInTheDocument();
+      expect(screen.getByText(/1\.5K/)).toBeInTheDocument();
       expect(screen.getByText('450')).toBeInTheDocument();
     });
 
@@ -139,8 +139,8 @@ describe('SummaryTable', () => {
         />
       );
 
-      // Delta absoluto (+10,000)
-      expect(screen.getByText(/\+.*10.*000/)).toBeInTheDocument();
+      // Delta absoluto (+10.0K €)
+      expect(screen.getByText(/\+\s*10\.0K/)).toBeInTheDocument();
     });
 
     it('debe mostrar delta absoluto negativo correctamente', () => {

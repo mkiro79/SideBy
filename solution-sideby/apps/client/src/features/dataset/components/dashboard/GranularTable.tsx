@@ -25,10 +25,17 @@ import {
 } from '@/shared/components/ui/table.js';
 import { Input } from '@/shared/components/ui/Input.js';
 import { Button } from '@/shared/components/ui/button.js';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/shared/components/ui/popover.js';
+import { Checkbox } from '@/shared/components/ui/checkbox.js';
 import { ChevronRight, ChevronDown, Download, ChevronLeft, ChevronsLeft, ChevronsRight } from 'lucide-react';
 import type { DataRow } from '../../types/api.types.js';
 import type { KPIField, KPIFormat } from '../../types/wizard.types.js';
 import { calculateDelta } from '@/features/dataset/utils/delta.js';
+import { formatKpiValue } from '../../utils/numberFormat.js';
 
 interface GranularTableProps {
   /** Array de datos crudos */
@@ -45,6 +52,12 @@ interface GranularTableProps {
   
   /** Label del grupo B (ej: "2024") */
   groupBLabel: string;
+
+  /** Color del grupo A */
+  groupAColor?: string;
+
+  /** Color del grupo B */
+  groupBColor?: string;
 }
 
 interface GranularRow {
@@ -68,21 +81,7 @@ function formatValue(value: number, format?: KPIFormat): string {
     return '—';
   }
 
-  switch (format) {
-    case 'currency':
-      return `$${value.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
-    
-    case 'percentage':
-      return `${value.toFixed(1)}%`;
-    
-    case 'date':
-    case 'string':
-      return value.toString();
-    
-    case 'number':
-    default:
-      return value.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-  }
+  return formatKpiValue(value, format ?? 'number', { compact: true });
 }
 
 /**
@@ -126,7 +125,7 @@ function processGranularData(
     const sampleRow = groupData.groupA[0] || groupData.groupB[0];
     dimensions.forEach((dim) => {
       const value = sampleRow?.[dim];
-      dimensionValues[dim] = value != null ? String(value) : 'N/A';
+      dimensionValues[dim] = value == null ? 'N/A' : String(value);
     });
 
     // Calcular KPIs
@@ -236,7 +235,13 @@ export function GranularTable({
   kpis,
   groupALabel,
   groupBLabel,
+  groupAColor,
+  groupBColor,
 }: Readonly<GranularTableProps>) {
+  const resolvedGroupAColor = groupAColor ?? 'hsl(var(--primary))';
+  const resolvedGroupBColor = groupBColor ?? 'hsl(var(--secondary))';
+  const [visibleDimensions, setVisibleDimensions] = React.useState<string[]>(dimensions);
+  const [isDimensionsOpen, setIsDimensionsOpen] = React.useState(false);
   const [searchTerm, setSearchTerm] = React.useState('');
   const [sortColumn, setSortColumn] = React.useState<string | null>(null);
   const [sortDirection, setSortDirection] = React.useState<'asc' | 'desc'>('asc');
@@ -248,8 +253,18 @@ export function GranularTable({
 
   // Procesar datos en estructura granular
   const granularRows = React.useMemo(() => {
-    return processGranularData(data, dimensions, kpis);
-  }, [data, dimensions, kpis]);
+    return processGranularData(data, visibleDimensions, kpis);
+  }, [data, visibleDimensions, kpis]);
+
+  React.useEffect(() => {
+    setVisibleDimensions((prev) => {
+      const stillAvailable = prev.filter((dim) => dimensions.includes(dim));
+      if (stillAvailable.length > 0 || dimensions.length === 0) {
+        return stillAvailable;
+      }
+      return [...dimensions];
+    });
+  }, [dimensions]);
 
   // Filtrar por búsqueda
   const filteredRows = React.useMemo(() => {
@@ -260,7 +275,7 @@ export function GranularTable({
       text
         .toLowerCase()
         .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '');
+        .replaceAll(/[\u0300-\u036f]/g, '');
     
     const normalizedSearch = normalizeText(searchTerm);
     
@@ -280,7 +295,7 @@ export function GranularTable({
       let bVal: string | number = '';
 
       // Ordenar por dimensión
-      if (dimensions.includes(sortColumn)) {
+      if (visibleDimensions.includes(sortColumn)) {
         aVal = a.dimensionValues[sortColumn] || '';
         bVal = b.dimensionValues[sortColumn] || '';
       }
@@ -304,7 +319,7 @@ export function GranularTable({
           : (bVal as number) - (aVal as number);
       }
     });
-  }, [filteredRows, sortColumn, sortDirection, dimensions, kpis]);
+  }, [filteredRows, sortColumn, sortDirection, visibleDimensions, kpis]);
 
   // Calcular paginación
   const totalRows = sortedRows.length;
@@ -317,6 +332,26 @@ export function GranularTable({
   React.useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, sortColumn, sortDirection]);
+
+  React.useEffect(() => {
+    setExpandedRows(new Set());
+  }, [visibleDimensions]);
+
+  React.useEffect(() => {
+    if (sortColumn && !visibleDimensions.includes(sortColumn) && !kpis.some((kpi) => kpi.id === sortColumn)) {
+      setSortColumn(null);
+      setSortDirection('asc');
+    }
+  }, [sortColumn, visibleDimensions, kpis]);
+
+  const toggleDimension = (dimension: string) => {
+    setVisibleDimensions((prev) => {
+      if (prev.includes(dimension)) {
+        return prev.filter((dim) => dim !== dimension);
+      }
+      return [...prev, dimension];
+    });
+  };
 
   /**
    * Maneja el click en un header para ordenar
@@ -350,7 +385,7 @@ export function GranularTable({
    * Exporta datos a CSV
    */
   const handleExportCSV = () => {
-    exportToCSV(sortedRows, dimensions, kpis, groupALabel, groupBLabel);
+    exportToCSV(sortedRows, visibleDimensions, kpis, groupALabel, groupBLabel);
   };
 
   return (
@@ -360,6 +395,36 @@ export function GranularTable({
           <h3 className="text-lg font-semibold">📋 Detalle por Dimensiones</h3>
 
           <div className="flex items-center gap-2">
+            <Popover open={isDimensionsOpen} onOpenChange={setIsDimensionsOpen}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="sm">
+                  Agrupar por ({visibleDimensions.length})
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[240px]" align="end">
+                <div className="space-y-3">
+                  <p className="text-xs text-muted-foreground">
+                    Selecciona las dimensiones para mostrar y agrupar.
+                  </p>
+                  <div className="space-y-2">
+                    {dimensions.map((dimension) => {
+                      const checked = visibleDimensions.includes(dimension);
+                      return (
+                        <label key={dimension} className="flex items-center gap-2 text-sm cursor-pointer">
+                          <Checkbox
+                            checked={checked}
+                            onCheckedChange={() => toggleDimension(dimension)}
+                            aria-label={`Mostrar dimensión ${dimension}`}
+                          />
+                          <span>{dimension}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+
             {/* Search */}
             <Input
               placeholder="Buscar..."
@@ -384,7 +449,7 @@ export function GranularTable({
               <TableRow>
                 <TableHead className="w-[40px]"></TableHead>
                 {/* Dimension headers */}
-                {dimensions.map((dim) => (
+                {visibleDimensions.map((dim) => (
                   <TableHead
                     key={dim}
                     className="cursor-pointer hover:bg-muted/50"
@@ -396,7 +461,16 @@ export function GranularTable({
                 {/* KPI headers */}
                 {kpis.map((kpi) => (
                   <React.Fragment key={kpi.id}>
-                    <TableHead className="text-right text-xs">{kpi.label} A/B</TableHead>
+                    <TableHead className="text-right">
+                      <div className="flex flex-col items-end leading-tight">
+                        <span className="text-xs font-medium">{kpi.label}</span>
+                        <span className="text-[10px] text-muted-foreground">
+                          <span style={{ color: resolvedGroupAColor }}>{groupALabel}</span>
+                          <span> / </span>
+                          <span style={{ color: resolvedGroupBColor }}>{groupBLabel}</span>
+                        </span>
+                      </div>
+                    </TableHead>
                     <TableHead className="text-right">Δ {kpi.label}</TableHead>
                   </React.Fragment>
                 ))}
@@ -405,7 +479,7 @@ export function GranularTable({
             <TableBody>
               {paginatedRows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={2 + dimensions.length + (kpis.length * 2)} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={2 + visibleDimensions.length + (kpis.length * 2)} className="text-center py-8 text-muted-foreground">
                     No hay datos para mostrar
                   </TableCell>
                 </TableRow>
@@ -437,7 +511,7 @@ export function GranularTable({
                         </TableCell>
 
                         {/* Dimensiones */}
-                        {dimensions.map((dim) => (
+                        {visibleDimensions.map((dim) => (
                           <TableCell key={dim} className="font-medium">
                             {row.dimensionValues[dim]}
                           </TableCell>
@@ -469,7 +543,7 @@ export function GranularTable({
                       {isExpanded && (
                         <TableRow>
                           <TableCell
-                            colSpan={2 + dimensions.length + (kpis.length * 2)}
+                            colSpan={2 + visibleDimensions.length + (kpis.length * 2)}
                             className="bg-muted/30 p-4"
                           >
                             <div className="space-y-2">
@@ -481,10 +555,16 @@ export function GranularTable({
                                     <div key={kpi.id} className="space-y-1">
                                       <p className="font-medium">{kpi.label}</p>
                                       <p className="text-muted-foreground">
-                                        {groupALabel}: {formatValue(kpiData.groupA, kpi.format)}
+                                        <span style={{ color: resolvedGroupAColor }}>
+                                          {groupALabel}:
+                                        </span>{' '}
+                                        {formatValue(kpiData.groupA, kpi.format)}
                                       </p>
                                       <p className="text-muted-foreground">
-                                        {groupBLabel}: {formatValue(kpiData.groupB, kpi.format)}
+                                        <span style={{ color: resolvedGroupBColor }}>
+                                          {groupBLabel}:
+                                        </span>{' '}
+                                        {formatValue(kpiData.groupB, kpi.format)}
                                       </p>
                                       <p className={kpiData.deltaPercent > 0 ? 'text-green-600' : 'text-red-600'}>
                                         Delta: {kpiData.deltaPercent > 0 ? '+' : ''}

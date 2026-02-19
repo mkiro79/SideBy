@@ -40,6 +40,12 @@ interface TrendsGridProps {
   
   /** Color de la línea del grupo B */
   groupBColor: string;
+  
+  /** Granularidad temporal (controlada desde afuera) */
+  granularity?: DateGranularity;
+  
+  /** Callback para cambio de granularidad */
+  onGranularityChange?: (granularity: DateGranularity) => void;
 }
 
 export function TrendsGrid({
@@ -50,9 +56,22 @@ export function TrendsGrid({
   groupBLabel,
   groupAColor,
   groupBColor,
-}: TrendsGridProps) {
-  // Estado para granularidad seleccionada
-  const [granularity, setGranularity] = React.useState<DateGranularity>('months');
+  granularity: externalGranularity,
+  onGranularityChange,
+}: Readonly<TrendsGridProps>) {
+  // Estado para granularidad seleccionada (interno si no es controlado)
+  const [internalGranularity, setInternalGranularity] = React.useState<DateGranularity>('months');
+  
+  // Usar granularidad externa si existe, sino interna
+  const granularity = externalGranularity || internalGranularity;
+  
+  const handleGranularityChange = (newGranularity: DateGranularity) => {
+    if (onGranularityChange) {
+      onGranularityChange(newGranularity);
+    } else {
+      setInternalGranularity(newGranularity);
+    }
+  };
   
   // Tomar solo los primeros 4 KPIs para el grid 2×2
   const topKPIs = React.useMemo(() => {
@@ -70,28 +89,28 @@ export function TrendsGrid({
             <Button
               variant={granularity === 'days' ? 'default' : 'outline'}
               size="sm"
-              onClick={() => setGranularity('days')}
+              onClick={() => handleGranularityChange('days')}
             >
               Días
             </Button>
             <Button
               variant={granularity === 'weeks' ? 'default' : 'outline'}
               size="sm"
-              onClick={() => setGranularity('weeks')}
+              onClick={() => handleGranularityChange('weeks')}
             >
               Semanas
             </Button>
             <Button
               variant={granularity === 'months' ? 'default' : 'outline'}
               size="sm"
-              onClick={() => setGranularity('months')}
+              onClick={() => handleGranularityChange('months')}
             >
               Meses
             </Button>
             <Button
               variant={granularity === 'quarters' ? 'default' : 'outline'}
               size="sm"
-              onClick={() => setGranularity('quarters')}
+              onClick={() => handleGranularityChange('quarters')}
             >
               Trimestres
             </Button>

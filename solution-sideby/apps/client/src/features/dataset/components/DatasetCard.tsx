@@ -16,6 +16,7 @@ import { useState } from "react";
 import { Card, CardContent } from "@/shared/components/ui/card.js";
 import { Button } from "@/shared/components/ui/button.js";
 import { Badge } from "@/shared/components/ui/badge.js";
+import { Tooltip } from "@/shared/components/ui/tooltip.js";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -26,7 +27,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/shared/components/ui/alert-dialog.js";
-import { FileSpreadsheet, Calendar, BarChart3, Trash2, Loader2, Edit2 } from "lucide-react";
+import { FileSpreadsheet, Calendar, BarChart3, Trash2, Loader2, Edit2, LayoutDashboard, Bot, Sparkles } from "lucide-react";
 import type { DatasetSummary } from "../types/api.types.js";
 import { FEATURES } from "@/config/features.js";
 
@@ -54,6 +55,8 @@ export const DatasetCard = ({
   isDeleting = false,
 }: DatasetCardProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const totalRows =
+    dataset.sourceConfig.groupA.rowCount + dataset.sourceConfig.groupB.rowCount;
   
   const formattedDate = new Date(dataset.meta.createdAt).toLocaleDateString("es-ES", {
     day: "numeric",
@@ -68,6 +71,8 @@ export const DatasetCard = ({
     error: { variant: "destructive" as const, label: "Error" },
   };
   const statusInfo = statusMap[dataset.status] || statusMap.ready;
+  const aiConfigLegacy = dataset.aiConfig as { enabled?: boolean; Enabled?: boolean } | undefined;
+  const isAIEnabled = aiConfigLegacy?.enabled === true || aiConfigLegacy?.Enabled === true;
 
   /**
    * Maneja la confirmación de eliminación
@@ -102,6 +107,13 @@ export const DatasetCard = ({
                 <Badge variant={statusInfo.variant} className="text-xs">
                   {statusInfo.label}
                 </Badge>
+                {isAIEnabled && (
+                  <Badge variant="secondary" className="text-xs gap-1 bg-violet-50 text-violet-700 border-violet-200">
+                    <Bot className="h-3 w-3" />
+                    IA
+                    <Sparkles className="h-3 w-3" />
+                  </Badge>
+                )}
               </div>
               
               {dataset.meta.description && (
@@ -131,54 +143,76 @@ export const DatasetCard = ({
                 </div>
               </div>
 
-              {/* Row count */}
+              {/* Row count + KPIs */}
               <div className="flex flex-wrap gap-1.5 pt-2">
                 <Badge variant="outline" className="text-xs">
-                  {dataset.totalRows.toLocaleString()} filas
+                  {totalRows.toLocaleString()} filas
                 </Badge>
-                <Badge variant="outline" className="text-xs">
-                  {dataset.sourceConfig.groupA.rowCount.toLocaleString()} + {dataset.sourceConfig.groupB.rowCount.toLocaleString()}
-                </Badge>
+                {dataset.kpis?.map((kpi) => (
+                  <Badge key={kpi} variant="secondary" className="text-xs">
+                    {kpi}
+                  </Badge>
+                ))}
               </div>
             </div>
           </button>
 
           {/* Acciones - Botones de acción */}
           <div className="flex items-center gap-2 shrink-0">
-            {/* Botón Edit - Solo visible si feature flag activo */}
-            {FEATURES.DATASET_EDIT_ENABLED && onEdit && (
+            <Tooltip content="Abrir dashboard">
               <Button
                 variant="outline"
                 size="icon"
                 onClick={(e) => {
                   e.stopPropagation();
-                  onEdit(dataset.id);
+                  onOpen(dataset.id);
                 }}
                 disabled={isDeleting}
                 className="text-muted-foreground hover:text-primary"
-                aria-label="Editar dataset"
+                aria-label="Abrir dashboard"
               >
-                <Edit2 className="h-4 w-4" />
+                <LayoutDashboard className="h-4 w-4" />
               </Button>
+            </Tooltip>
+
+            {/* Botón Edit - Solo visible si feature flag activo */}
+            {FEATURES.DATASET_EDIT_ENABLED && onEdit && (
+              <Tooltip content="Actualizar dataset">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEdit(dataset.id);
+                  }}
+                  disabled={isDeleting}
+                  className="text-muted-foreground hover:text-primary"
+                  aria-label="Editar dataset"
+                >
+                  <Edit2 className="h-4 w-4" />
+                </Button>
+              </Tooltip>
             )}
 
             {/* Botón de eliminar con confirmación */}
             <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <AlertDialogTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="shrink-0 text-muted-foreground hover:text-destructive"
-                disabled={isDeleting}
-                aria-label="Eliminar dataset"
-              >
-                {isDeleting ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Trash2 className="h-4 w-4" />
-                )}
-              </Button>
-            </AlertDialogTrigger>
+              <Tooltip content="Eliminar dataset">
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="shrink-0 text-muted-foreground hover:text-destructive"
+                    disabled={isDeleting}
+                    aria-label="Eliminar dataset"
+                  >
+                    {isDeleting ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-4 w-4" />
+                    )}
+                  </Button>
+                </AlertDialogTrigger>
+              </Tooltip>
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>

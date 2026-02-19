@@ -17,7 +17,17 @@ import { AppSidebar } from '@/shared/components/AppSidebar.js';
 import { Button } from '@/shared/components/ui/button.js';
 import { Card } from '@/shared/components/ui/card.js';
 import { Separator } from '@/shared/components/ui/Separator.js';
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/shared/components/ui/alert-dialog.js';
 import { toast } from '@/shared/services/toast.js';
+import { useState } from 'react';
 import { useWizardState } from '../hooks/useWizardState.js';
 import { useDatasetUpload } from '../hooks/useDatasetUpload.js';
 import { useDatasetMapping } from '../hooks/useDatasetMapping.js';
@@ -30,6 +40,7 @@ import type { UpdateMappingRequest } from '../types/api.types.js';
 
 export default function DataUploadWizard() {
   const navigate = useNavigate();
+  const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
   
   // Wizard state (Zustand)
   const {
@@ -229,19 +240,24 @@ export default function DataUploadWizard() {
   };
   
   /**
+   * Ejecuta la cancelación del wizard
+   */
+  const executeCancel = () => {
+    setIsCancelDialogOpen(false);
+    reset();
+    navigate('/datasets');
+  };
+
+  /**
    * Handler para cancelar
    */
   const handleCancel = () => {
     if (currentStep > 1) {
-      // Confirmar si ya avanzó pasos
-      const userConfirmed = globalThis.confirm(
-        '¿Estás seguro de que quieres cancelar? Perderás todo el progreso.'
-      );
-      if (!userConfirmed) return;
+      setIsCancelDialogOpen(true);
+      return;
     }
-    
-    reset();
-    navigate('/datasets');
+
+    executeCancel();
   };
   
   return (
@@ -264,6 +280,30 @@ export default function DataUploadWizard() {
                 Cancelar
               </Button>
             </div>
+
+            <AlertDialog open={isCancelDialogOpen} onOpenChange={setIsCancelDialogOpen}>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>
+                    ¿Cancelar configuración?
+                  </AlertDialogTitle>
+                  <AlertDialogDescription>
+                    ¿Estás seguro de que quieres cancelar? Perderás todo el progreso.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>
+                    Continuar editando
+                  </AlertDialogCancel>
+                  <Button
+                    onClick={executeCancel}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    Sí, cancelar
+                  </Button>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
             
             <Separator />
             

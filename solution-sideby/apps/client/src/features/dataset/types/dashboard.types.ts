@@ -30,7 +30,20 @@ export interface DashboardFilters {
   /** Filtros categóricos multi-select (ej: { "region": ["Norte", "Sur"], "category": ["A"] }) */
   categorical: Record<string, string[]>;
 
-  /** Rango de fechas (opcional) */
+  /**
+   * Filtro de período relativo (aplica a AMBOS grupos por comparabilidad)
+   * Índices basados en granularidad actual:
+   * - days: 1-365 (día del año)
+   * - weeks: 1-52 (semana del año)
+   * - months: 1-12 (mes)
+   * - quarters: 1-4 (trimestre)
+   */
+  periodFilter?: {
+    from?: number;
+    to?: number;
+  };
+
+  /** @deprecated Rango de fechas absoluto (usar periodFilter en su lugar) */
   dateRange?: {
     from: Date;
     to: Date;

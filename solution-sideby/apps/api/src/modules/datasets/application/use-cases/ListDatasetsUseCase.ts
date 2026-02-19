@@ -62,6 +62,18 @@ export class ListDatasetsUseCase {
         updatedAt: dataset.meta.updatedAt,
       },
       sourceConfig: dataset.sourceConfig,
+      aiConfig: dataset.aiConfig
+        ? {
+            ...dataset.aiConfig,
+            enabled:
+              dataset.aiConfig.enabled === true ||
+              (dataset.aiConfig as unknown as { Enabled?: boolean }).Enabled ===
+                true,
+          }
+        : undefined,
+      kpis:
+        dataset.schemaMapping?.kpiFields.map((kpiField) => kpiField.label) ??
+        [],
       totalRows: dataset.data.length,
     }));
 

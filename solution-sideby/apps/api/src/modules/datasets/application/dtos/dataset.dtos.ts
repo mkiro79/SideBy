@@ -183,6 +183,9 @@ export interface DatasetListItem {
     groupA: GroupConfig;
     groupB: GroupConfig;
   };
+  aiConfig?: AIConfig;
+  /** Etiquetas de KPIs configurados en el dataset */
+  kpis: string[];
   /** Número total de filas (para mostrar en lista) */
   totalRows: number;
 }

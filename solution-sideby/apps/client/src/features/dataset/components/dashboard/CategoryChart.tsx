@@ -39,6 +39,8 @@ import {
 import type { KPIResult } from '../../types/dashboard.types.js';
 import type { DataRow } from '../../types/api.types.js';
 import type { ChartType } from './DimensionGrid.js';
+import { formatKpiValue } from '../../utils/numberFormat.js';
+import { UnifiedChartTooltip } from './UnifiedChartTooltip.js';
 
 interface CategoryChartProps {
   /** Array de datos filtrados */
@@ -138,32 +140,7 @@ export const CategoryChart: React.FC<CategoryChartProps> = ({
    */
   const formatValue = (value: number): string => {
     if (!selectedKpi) return String(value);
-    
-    switch (selectedKpi.format) {
-      case 'currency':
-        return new Intl.NumberFormat('es-ES', {
-          style: 'currency',
-          currency: 'EUR',
-          minimumFractionDigits: 0,
-          maximumFractionDigits: 0,
-        }).format(value);
-      
-      case 'percentage':
-        return `${value.toFixed(1)}%`;
-      
-      case 'number':
-        return new Intl.NumberFormat('es-ES').format(value);
-      
-      default:
-        return String(value);
-    }
-  };
-  
-  /**
-   * Formatear valores para tooltip
-   */
-  const formatTooltipValue = (value: number): string => {
-    return formatValue(value);
+    return formatKpiValue(value, selectedKpi.format, { compact: true });
   };
   
   // Caso: sin dimensiones disponibles
@@ -284,20 +261,14 @@ export const CategoryChart: React.FC<CategoryChartProps> = ({
                   tickFormatter={formatValue}
                 />
                 <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'hsl(var(--popover))',
-                    borderColor: 'hsl(var(--border))',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-                  }}
-                  labelStyle={{ color: 'hsl(var(--foreground))' }}
-                  formatter={(value: number, name: string) => [formatTooltipValue(value), name]}
+                  content={<UnifiedChartTooltip valueFormat={selectedKpi?.format ?? 'number'} percentageDecimals={2} />}
                 />
                 <Legend
                   wrapperStyle={{
                     paddingTop: '20px',
                   }}
                   iconType="circle"
+                  formatter={(value: string) => value}
                 />
                 <Bar
                   dataKey="groupA"
@@ -335,20 +306,14 @@ export const CategoryChart: React.FC<CategoryChartProps> = ({
                   tickFormatter={formatValue}
                 />
                 <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'hsl(var(--popover))',
-                    borderColor: 'hsl(var(--border))',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-                  }}
-                  labelStyle={{ color: 'hsl(var(--foreground))' }}
-                  formatter={(value: number, name: string) => [formatTooltipValue(value), name]}
+                  content={<UnifiedChartTooltip valueFormat={selectedKpi?.format ?? 'number'} percentageDecimals={2} />}
                 />
                 <Legend
                   wrapperStyle={{
                     paddingTop: '20px',
                   }}
                   iconType="circle"
+                  formatter={(value: string) => value}
                 />
                 <Line
                   type="monotone"
@@ -392,20 +357,14 @@ export const CategoryChart: React.FC<CategoryChartProps> = ({
                   tickFormatter={formatValue}
                 />
                 <Tooltip
-                  contentStyle={{
-                    backgroundColor: 'hsl(var(--popover))',
-                    borderColor: 'hsl(var(--border))',
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-                  }}
-                  labelStyle={{ color: 'hsl(var(--foreground))' }}
-                  formatter={(value: number, name: string) => [formatTooltipValue(value), name]}
+                  content={<UnifiedChartTooltip valueFormat={selectedKpi?.format ?? 'number'} percentageDecimals={2} />}
                 />
                 <Legend
                   wrapperStyle={{
                     paddingTop: '20px',
                   }}
                   iconType="circle"
+                  formatter={(value: string) => value}
                 />
                 <Area
                   type="monotone"

@@ -27,6 +27,8 @@ import {
 import { createDateUmbrella, type DateGranularity } from '../../utils/dateUmbrella.js';
 import type { DataRow } from '../../types/api.types.js';
 import type { KPIResult } from '../../types/dashboard.types.js';
+import { formatKpiValue } from '../../utils/numberFormat.js';
+import { UnifiedChartTooltip } from './UnifiedChartTooltip.js';
 
 interface TrendChartProps {
   data: DataRow[];
@@ -57,6 +59,33 @@ export const TrendChart: React.FC<TrendChartProps> = ({
   const selectedKpi = kpis.find(k => k.name === selectedKpiName) || kpis[0];
   const format = selectedKpi?.format || 'number';
 
+  // Helper para convertir hsl a rgba con opacidad
+  const hslToRgba = (hslColor: string, opacity: number): string => {
+    // Si ya es rgba, devolver tal cual
+    if (hslColor.startsWith('rgba')) return hslColor;
+    
+    // Crear elemento temporal para obtener color computado
+    const temp = document.createElement('div');
+    temp.style.color = hslColor;
+    document.body.appendChild(temp);
+    const computed = getComputedStyle(temp).color;
+    temp.remove();
+    
+    // Extraer rgb values y agregar alpha
+    const rgbRegex = /rgb\((\d+),\s*(\d+),\s*(\d+)\)/;
+    const match = rgbRegex.exec(computed);
+    if (match) {
+      return `rgba(${ match[1]}, ${match[2]}, ${match[3]}, ${opacity})`;
+    }
+    
+    return hslColor; // Fallback
+  };
+
+  const groupBColorFaded = React.useMemo(
+    () => hslToRgba(groupBColor, 0.45),
+    [groupBColor]
+  );
+
   /**
    * Usa Date Umbrella System para alinear fechas de diferentes años
    * y agregar datos por fecha con suma de valores
@@ -75,7 +104,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({
       dateField,
       selectedKpi.name, // KPI seleccionado
       granularity, // Usar granularidad seleccionada
-      false,  // No omitir gaps - mostrar TODOS los períodos (ej: todos los días del año)
+      true,  // Omitir gaps para no renderizar periodos sin datos
     );
 
     // Transformar UmbrellaDatePoint[] a formato compatible con Recharts
@@ -86,29 +115,8 @@ export const TrendChart: React.FC<TrendChartProps> = ({
     }));
   }, [data, dateField, selectedKpi.name, granularity]);
 
-  const formatValue = (value: number): string => {
-    switch (format) {
-      case 'currency':
-        return `€${(value / 1000).toFixed(0)}k`;
-      case 'percentage':
-        return `${value.toFixed(1)}%`;
-      case 'number':
-        return value >= 1000 ? `${(value / 1000).toFixed(1)}k` : value.toFixed(0);
-      default:
-        return value.toLocaleString();
-    }
-  };
-
-  const formatTooltipValue = (value: number): string => {
-    switch (format) {
-      case 'currency':
-        return `€${value.toLocaleString()}`;
-      case 'percentage':
-        return `${value.toFixed(2)}%`;
-      default:
-        return value.toLocaleString();
-    }
-  };
+  const formatValue = (value: number): string =>
+    formatKpiValue(value, format, { compact: true });
 
   if (chartData.length === 0) {
     return (
@@ -226,14 +234,7 @@ export const TrendChart: React.FC<TrendChartProps> = ({
               {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
               {/* @ts-ignore - Recharts 2.x has type compatibility issues with React 18 */}
               <Tooltip
-                contentStyle={{
-                  backgroundColor: 'hsl(var(--popover))',
-                  borderColor: 'hsl(var(--border))',
-                  borderRadius: '8px',
-                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-                }}
-                labelStyle={{ color: 'hsl(var(--foreground))' }}
-                formatter={(value: number, name: string) => [formatTooltipValue(value), name]}
+                {...({ content: <UnifiedChartTooltip valueFormat={format} percentageDecimals={2} /> } as Record<string, unknown>)}
               />
               {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
               {/* @ts-ignore - Recharts 2.x has type compatibility issues with React 18 */}
@@ -252,10 +253,10 @@ export const TrendChart: React.FC<TrendChartProps> = ({
                 type="monotone"
                 dataKey="groupB"
                 name={groupBLabel}
-                stroke={groupBColor}
-                strokeWidth={2.5}
-                dot={{ r: 3, fill: groupBColor }}
-                activeDot={{ r: 5, fill: groupBColor }}
+                stroke={groupBColorFaded}
+                strokeWidth={2}
+                dot={{ r: 2.5, fill: groupBColorFaded }}
+                activeDot={{ r: 4, fill: groupBColorFaded }}
               />
             </LineChart>
           </ResponsiveContainer>
