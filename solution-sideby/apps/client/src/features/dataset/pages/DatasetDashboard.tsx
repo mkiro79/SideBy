@@ -117,30 +117,36 @@ export default function DatasetDashboard() {
       const date = new Date(dateValue as string);
       if (isNaN(date.getTime())) return false;
 
-      // Calcular el índice según la granularidad
+      // Calcular el índice según la granularidad (usando UTC para consistencia)
       let periodIndex: number;
       switch (granularity) {
         case 'days': {
-          // Día del año (1-365)
-          const startOfYear = new Date(date.getFullYear(), 0, 1);
-          const diff = date.getTime() - startOfYear.getTime();
-          periodIndex = Math.floor(diff / (1000 * 60 * 60 * 24)) + 1;
+          // Día del año (1-365), usando UTC para evitar problemas de zona horaria
+          const utcYear = date.getUTCFullYear();
+          const startOfYear = Date.UTC(utcYear, 0, 1);
+          const diff = date.getTime() - startOfYear;
+          const dayOfYear = Math.floor(diff / (1000 * 60 * 60 * 24)) + 1;
+          // Limitar a 365 para alinearse con getPeriodConfig (años bisiestos podrían dar 366)
+          periodIndex = Math.min(dayOfYear, 365);
           break;
         }
         case 'weeks': {
-          // Semana del año (1-52)
-          const firstDay = new Date(date.getFullYear(), 0, 1);
-          const daysDiff = Math.floor((date.getTime() - firstDay.getTime()) / (1000 * 60 * 60 * 24));
-          periodIndex = Math.floor(daysDiff / 7) + 1;
+          // Semana del año (1-52), usando UTC para evitar problemas de zona horaria
+          const utcYear = date.getUTCFullYear();
+          const firstDay = Date.UTC(utcYear, 0, 1);
+          const daysDiff = Math.floor((date.getTime() - firstDay) / (1000 * 60 * 60 * 24));
+          const weekOfYear = Math.floor(daysDiff / 7) + 1;
+          // Limitar a 52 para alinearse con getPeriodConfig (algunos años pueden tener 53 semanas)
+          periodIndex = Math.min(weekOfYear, 52);
           break;
         }
         case 'months':
-          // Mes (1-12)
-          periodIndex = date.getMonth() + 1;
+          // Mes (1-12), usando UTC
+          periodIndex = date.getUTCMonth() + 1;
           break;
         case 'quarters':
-          // Trimestre (1-4)
-          periodIndex = Math.floor(date.getMonth() / 3) + 1;
+          // Trimestre (1-4), usando UTC
+          periodIndex = Math.floor(date.getUTCMonth() / 3) + 1;
           break;
         default:
           return true;
