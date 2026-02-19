@@ -66,6 +66,50 @@ Implementar un servicio de AI Insights que:
 - Modelo `qwen2.5:7b-instruct` instalado en el contenedor.
 - Endpoint local operativo: `http://localhost:11434/v1`.
 
+### 2.1 Diagrama de Secuencia (MVP actual)
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant FE as Frontend
+  participant API as SideBy API
+  participant AUTH as authMiddleware (JWT)
+  participant RL as insightsRateLimiter
+  participant C as InsightsController
+  participant UC as GenerateInsightsUseCase
+  participant DS as MongoDatasetRepository
+  participant CACHE as InsightsCacheRepository
+  participant GEN as RuleEngineAdapter / LLMAdapter
+
+  FE->>API: GET /api/v1/datasets/{id}/insights?filters=...&forceRefresh=false
+  API->>AUTH: Validar Bearer JWT
+  AUTH-->>API: userId válido
+  API->>RL: Aplicar rate limit (10 req/min por usuario)
+  RL-->>API: OK
+  API->>C: getDatasetInsights(req, res)
+  C->>UC: execute({ datasetId, userId, filters, forceRefresh })
+  UC->>DS: findByIdAndOwner(datasetId, userId)
+  DS-->>UC: dataset
+
+  alt forceRefresh = false y cache hit
+    UC->>CACHE: get(cacheKey)
+    CACHE-->>UC: insights cacheados
+    UC-->>C: { insights, fromCache: true }
+    C-->>FE: 200 { insights, meta.cacheStatus: "hit" }
+  else generar insights
+    alt aiConfig.enabled o aiConfig.enabledFeatures.insights
+      UC->>GEN: LLMAdapter.generateInsights(dataset, filters)
+      GEN-->>UC: insights IA
+    else
+      UC->>GEN: RuleEngineAdapter.generateInsights(dataset, filters)
+      GEN-->>UC: insights por reglas
+    end
+    UC->>CACHE: set(cacheKey, insights, ttl=300s)
+    UC-->>C: { insights, fromCache: false }
+    C-->>FE: 200 { insights, meta.cacheStatus: "miss" }
+  end
+```
+
 ---
 
 ## 3. Data Model
