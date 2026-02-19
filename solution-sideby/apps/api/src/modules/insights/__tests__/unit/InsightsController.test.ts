@@ -76,6 +76,7 @@ describe("InsightsController", () => {
         recommendedActions: ["Priorizar región norte"],
         language: "es",
         generatedBy: "ai-model",
+        model: "gemma2:9b",
         confidence: 0.81,
         generatedAt: new Date().toISOString(),
       },
@@ -100,6 +101,7 @@ describe("InsightsController", () => {
         insights: expect.any(Array),
         businessNarrative: expect.objectContaining({
           generatedBy: "ai-model",
+          model: "gemma2:9b",
         }),
         meta: expect.objectContaining({
           total: 1,

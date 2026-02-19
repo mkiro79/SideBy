@@ -95,6 +95,10 @@ const InsightsResponseSchema = z
         }),
         language: z.enum(["es", "en"]).openapi({ example: "es" }),
         generatedBy: z.enum(["ai-model"]).openapi({ example: "ai-model" }),
+        model: z.string().openapi({
+          example: "gemma2:9b",
+          description: "Modelo LLM que generó la narrativa",
+        }),
         confidence: z.number().min(0).max(1).openapi({ example: 0.82 }),
         generatedAt: z
           .string()

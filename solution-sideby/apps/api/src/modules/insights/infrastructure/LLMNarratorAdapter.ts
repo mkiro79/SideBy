@@ -90,6 +90,7 @@ export class LLMNarratorAdapter implements InsightsNarrator {
           : [],
         language: parsed.language === "en" ? "en" : input.language,
         generatedBy: "ai-model",
+        model: this.config.model,
         confidence:
           typeof parsed.confidence === "number" &&
           Number.isFinite(parsed.confidence)

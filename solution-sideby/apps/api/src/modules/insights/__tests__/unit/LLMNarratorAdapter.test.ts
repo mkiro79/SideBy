@@ -129,7 +129,7 @@ describe("LLMNarratorAdapter", () => {
       apiKey: "ollama",
     });
 
-    await adapter.generateNarrative({
+    const narrative = await adapter.generateNarrative({
       dataset,
       insights,
       language: "es",
@@ -148,5 +148,6 @@ describe("LLMNarratorAdapter", () => {
     expect(userPrompt).toContain('"country": "CO"');
     expect(userPrompt).toContain("Top 3 métricas a mejorar");
     expect(userPrompt).toContain('"kpi": "applies"');
+    expect(narrative.model).toBe("qwen2.5:7b-instruct");
   });
 });

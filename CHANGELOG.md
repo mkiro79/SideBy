@@ -31,6 +31,7 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - Nuevo resumen comparativo: **Top 3 países con mejor señal** y **Top 3 métricas a mejorar**
 - Filtro de ruido en anomalías: se descartan comparativas dimensionales con `groupA=0` o `groupB=0`
 - Prompt del narrador LLM reforzado para salida menos genérica y enfocada en la vista 3/3
+- `businessNarrative` ahora incluye `model` para identificar el LLM que respondió (ej. `gemma2:9b`)
 - Nuevos/actualizados tests unitarios en `RuleEngineAdapter` y `LLMNarratorAdapter`
 
 ### [RFC-009] Wizard Step 3 - SourceConfig (2026-02-16)

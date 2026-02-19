@@ -35,6 +35,7 @@ export interface BusinessNarrative {
   recommendedActions: string[];
   language: "es" | "en";
   generatedBy: "ai-model";
+  model: string;
   confidence: number;
   generatedAt: string;
 }

@@ -118,6 +118,7 @@ describe("GenerateInsightsUseCase", () => {
       recommendedActions: ["Acción 1", "Acción 2"],
       language: "es",
       generatedBy: "ai-model",
+      model: "gemma2:9b",
       generatedAt: new Date().toISOString(),
       confidence: 0.8,
     });
@@ -136,6 +137,7 @@ describe("GenerateInsightsUseCase", () => {
         recommendedActions: ["Acción cacheada"],
         language: "es" as const,
         generatedBy: "ai-model" as const,
+        model: "gemma2:9b",
         confidence: 0.7,
         generatedAt: new Date().toISOString(),
       },
