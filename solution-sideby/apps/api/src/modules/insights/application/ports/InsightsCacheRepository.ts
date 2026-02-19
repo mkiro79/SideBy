@@ -1,4 +1,7 @@
-import type { DatasetInsight, DashboardFilters } from "@/modules/insights/domain/DatasetInsight.js";
+import type {
+  DatasetInsight,
+  DashboardFilters,
+} from "@/modules/insights/domain/DatasetInsight.js";
 
 export interface InsightsCacheRepository {
   findCached(

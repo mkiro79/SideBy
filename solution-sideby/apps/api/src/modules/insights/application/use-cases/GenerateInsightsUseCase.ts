@@ -41,7 +41,10 @@ export class GenerateInsightsUseCase {
     }
 
     if (!forceRefresh) {
-      const cached = await this.insightRepository.findCached(datasetId, filters);
+      const cached = await this.insightRepository.findCached(
+        datasetId,
+        filters,
+      );
       if (cached) {
         return { insights: cached, fromCache: true };
       }
@@ -53,11 +56,20 @@ export class GenerateInsightsUseCase {
       try {
         insights = await this.llmAdapter.generateInsights(dataset, filters);
       } catch (error) {
-        logger.warn({ err: error, datasetId }, "LLM generation failed, using rules fallback");
-        insights = await this.ruleEngineAdapter.generateInsights(dataset, filters);
+        logger.warn(
+          { err: error, datasetId },
+          "LLM generation failed, using rules fallback",
+        );
+        insights = await this.ruleEngineAdapter.generateInsights(
+          dataset,
+          filters,
+        );
       }
     } else {
-      insights = await this.ruleEngineAdapter.generateInsights(dataset, filters);
+      insights = await this.ruleEngineAdapter.generateInsights(
+        dataset,
+        filters,
+      );
     }
 
     await this.insightRepository.saveToCache(datasetId, filters, insights);

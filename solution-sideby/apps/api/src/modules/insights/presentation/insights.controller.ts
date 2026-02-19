@@ -33,8 +33,7 @@ export class InsightsController {
     const llmEnabled = process.env.INSIGHTS_LLM_ENABLED === "true";
     const llmBaseUrl =
       process.env.INSIGHTS_LLM_BASE_URL ?? "http://localhost:11434/v1";
-    const llmModel =
-      process.env.INSIGHTS_LLM_MODEL ?? "qwen2.5:7b-instruct";
+    const llmModel = process.env.INSIGHTS_LLM_MODEL ?? "qwen2.5:7b-instruct";
     const llmApiKey = process.env.INSIGHTS_LLM_API_KEY ?? "ollama";
 
     this.generateInsightsUseCase = new GenerateInsightsUseCase(

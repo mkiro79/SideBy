@@ -1,5 +1,8 @@
 import { randomUUID } from "node:crypto";
-import type { Dataset, KPIField } from "@/modules/datasets/domain/Dataset.entity.js";
+import type {
+  Dataset,
+  KPIField,
+} from "@/modules/datasets/domain/Dataset.entity.js";
 import type { InsightsGenerator } from "@/modules/insights/application/ports/InsightsGenerator.js";
 import type {
   DashboardFilters,
@@ -114,7 +117,10 @@ export class LLMAdapter implements InsightsGenerator {
     }
   }
 
-  private prepareDataSummary(dataset: Dataset, filters: DashboardFilters): {
+  private prepareDataSummary(
+    dataset: Dataset,
+    filters: DashboardFilters,
+  ): {
     datasetName: string;
     groupA: string;
     groupB: string;
@@ -122,10 +128,12 @@ export class LLMAdapter implements InsightsGenerator {
     filters: DashboardFilters;
     sampleSize: number;
   } {
-    const kpis = (dataset.schemaMapping?.kpiFields ?? []).map((kpi: KPIField) => ({
-      name: kpi.columnName,
-      label: kpi.label,
-    }));
+    const kpis = (dataset.schemaMapping?.kpiFields ?? []).map(
+      (kpi: KPIField) => ({
+        name: kpi.columnName,
+        label: kpi.label,
+      }),
+    );
 
     return {
       datasetName: dataset.meta.name,
@@ -225,6 +233,8 @@ Devuelve JSON con esta forma:
   }
 
   private asOptionalNumber(value: unknown): number | undefined {
-    return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+    return typeof value === "number" && Number.isFinite(value)
+      ? value
+      : undefined;
   }
 }

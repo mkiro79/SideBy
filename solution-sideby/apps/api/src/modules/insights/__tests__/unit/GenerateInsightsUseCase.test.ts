@@ -112,9 +112,11 @@ describe("GenerateInsightsUseCase", () => {
     };
 
     llmGenerator = {
-      generateInsights: vi.fn().mockResolvedValue([
-        { ...generatedInsight, generatedBy: "ai-model", id: "insight-ai" },
-      ]),
+      generateInsights: vi
+        .fn()
+        .mockResolvedValue([
+          { ...generatedInsight, generatedBy: "ai-model", id: "insight-ai" },
+        ]),
     };
   });
 

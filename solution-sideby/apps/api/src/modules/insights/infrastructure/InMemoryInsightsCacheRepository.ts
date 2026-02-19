@@ -54,7 +54,10 @@ export class InMemoryInsightsCacheRepository implements InsightsCacheRepository 
     }
   }
 
-  private generateCacheKey(datasetId: string, filters: DashboardFilters): string {
+  private generateCacheKey(
+    datasetId: string,
+    filters: DashboardFilters,
+  ): string {
     return `insights:${datasetId}:${JSON.stringify(filters)}`;
   }
 }

@@ -1,5 +1,9 @@
 import { randomUUID } from "node:crypto";
-import type { Dataset, DataRow, KPIField } from "@/modules/datasets/domain/Dataset.entity.js";
+import type {
+  Dataset,
+  DataRow,
+  KPIField,
+} from "@/modules/datasets/domain/Dataset.entity.js";
 import type { InsightsGenerator } from "@/modules/insights/application/ports/InsightsGenerator.js";
 import type {
   DashboardFilters,
@@ -140,13 +144,15 @@ export class RuleEngineAdapter implements InsightsGenerator {
     }
 
     return data.filter((row) => {
-      return Object.entries(filters.categorical ?? {}).every(([field, values]) => {
-        if (!values || values.length === 0) {
-          return true;
-        }
+      return Object.entries(filters.categorical ?? {}).every(
+        ([field, values]) => {
+          if (!values || values.length === 0) {
+            return true;
+          }
 
-        return values.includes(String(row[field]));
-      });
+          return values.includes(String(row[field]));
+        },
+      );
     });
   }
 
@@ -270,7 +276,8 @@ export class RuleEngineAdapter implements InsightsGenerator {
 
   private calculateStdDev(values: number[], mean: number): number {
     const variance =
-      values.reduce((sum, value) => sum + (value - mean) ** 2, 0) / values.length;
+      values.reduce((sum, value) => sum + (value - mean) ** 2, 0) /
+      values.length;
 
     return Math.sqrt(variance);
   }
