@@ -188,6 +188,37 @@ describe("GenerateInsightsUseCase", () => {
     expect(ruleEngine.generateInsights).not.toHaveBeenCalled();
   });
 
+  it("uses llm when aiConfig.enabledFeatures.insights is enabled", async () => {
+    const datasetWithFeatureFlag: Dataset = {
+      ...baseDataset,
+      aiConfig: {
+        enabled: false,
+        enabledFeatures: {
+          insights: true,
+        },
+      },
+    };
+
+    const useCase = new GenerateInsightsUseCase(
+      new MockDatasetRepository(datasetWithFeatureFlag),
+      cacheRepository,
+      ruleEngine,
+      llmGenerator,
+      true,
+    );
+
+    const result = await useCase.execute({
+      datasetId: "dataset-1",
+      userId: "owner-1",
+      filters: { categorical: {} },
+      forceRefresh: true,
+    });
+
+    expect(result.fromCache).toBe(false);
+    expect(llmGenerator.generateInsights).toHaveBeenCalledTimes(1);
+    expect(ruleEngine.generateInsights).not.toHaveBeenCalled();
+  });
+
   it("falls back to rule engine when llm fails", async () => {
     vi.mocked(llmGenerator.generateInsights).mockRejectedValueOnce(
       new Error("llm down"),

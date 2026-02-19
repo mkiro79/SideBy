@@ -1015,11 +1015,16 @@ function getSeverityVariant(severity: number): 'default' | 'destructive' {
 
 - [x] LLMAdapter OpenAI-compatible (MVP: Ollama local, opcional OpenAI)
 - [x] LLMAdapter con proveedor configurable (MVP: Ollama local, opcional OpenAI)
+- [x] Selector runtime por `INSIGHTS_LLM_PROVIDER` (`ollama` | `openai-compatible`)
 - [ ] Prompt engineering optimizado
 - [x] Fallback automático a Rule Engine si LLM falla
 - [x] Confidence scoring básico (0-1)
 - [x] Feature flag global enable/disable por entorno + flag por dataset
-- [ ] Cost tracking (tokens consumidos)
+- [x] Cost tracking básico (tokens de uso real o estimados por request)
+- [x] Audit log de llamadas al LLM (dataset, modelo, latencia, tokens)
+- [x] Sanitización explícita del contexto enviado al LLM
+- [x] Endpoint de insights protegido por JWT
+- [x] Rate limiting específico para generación de insights (10 req/min por usuario)
 
 **Entregable:** Insights contextualizados generados por LLM
 

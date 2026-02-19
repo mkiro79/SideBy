@@ -9,6 +9,7 @@ import type {
   DatasetInsight,
   InsightType,
 } from "@/modules/insights/domain/DatasetInsight.js";
+import logger from "@/utils/logger.js";
 
 interface LLMAdapterConfig {
   baseURL: string;
@@ -18,6 +19,11 @@ interface LLMAdapterConfig {
 }
 
 interface LLMResponse {
+  usage?: {
+    prompt_tokens?: number;
+    completion_tokens?: number;
+    total_tokens?: number;
+  };
   choices?: Array<{
     message?: {
       content?: string;
@@ -36,18 +42,25 @@ export class LLMAdapter implements InsightsGenerator {
     dataset: Dataset,
     filters: DashboardFilters,
   ): Promise<DatasetInsight[]> {
+    const startedAt = Date.now();
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
 
     try {
       const summary = this.prepareDataSummary(dataset, filters);
+      const prompt = this.buildPrompt(dataset, summary);
+      const estimatedPromptTokens = this.estimateTokens(prompt);
+      const requestHeaders: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+
+      if (this.config.apiKey) {
+        requestHeaders.Authorization = `Bearer ${this.config.apiKey}`;
+      }
 
       const response = await fetch(`${this.config.baseURL}/chat/completions`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${this.config.apiKey ?? "ollama"}`,
-        },
+        headers: requestHeaders,
         body: JSON.stringify({
           model: this.config.model,
           temperature: 0.3,
@@ -60,7 +73,7 @@ export class LLMAdapter implements InsightsGenerator {
             },
             {
               role: "user",
-              content: this.buildPrompt(dataset, summary),
+              content: prompt,
             },
           ],
         }),
@@ -89,7 +102,7 @@ export class LLMAdapter implements InsightsGenerator {
         }>;
       };
 
-      return (parsed.insights ?? []).map((item) => {
+      const insights = (parsed.insights ?? []).map((item) => {
         const type = this.normalizeType(item.type);
 
         return {
@@ -107,11 +120,34 @@ export class LLMAdapter implements InsightsGenerator {
             change: this.asOptionalNumber(item.metadata?.change),
             period: this.asOptionalString(item.metadata?.period),
           },
-          generatedBy: "ai-model",
+          generatedBy: "ai-model" as const,
           confidence: this.normalizeConfidence(item.confidence),
           generatedAt: new Date(),
         };
       });
+
+      const completionTokens =
+        data.usage?.completion_tokens ?? this.estimateTokens(content);
+      const promptTokens = data.usage?.prompt_tokens ?? estimatedPromptTokens;
+
+      logger.info(
+        {
+          datasetId: dataset.id,
+          model: this.config.model,
+          insightsCount: insights.length,
+          providerBaseUrl: this.config.baseURL,
+          durationMs: Date.now() - startedAt,
+          usage: {
+            promptTokens,
+            completionTokens,
+            totalTokens:
+              data.usage?.total_tokens ?? promptTokens + completionTokens,
+          },
+        },
+        "LLM insights generated",
+      );
+
+      return insights;
     } finally {
       clearTimeout(timeout);
     }
@@ -130,17 +166,26 @@ export class LLMAdapter implements InsightsGenerator {
   } {
     const kpis = (dataset.schemaMapping?.kpiFields ?? []).map(
       (kpi: KPIField) => ({
-        name: kpi.columnName,
-        label: kpi.label,
+        name: this.sanitizeText(kpi.columnName),
+        label: this.sanitizeText(kpi.label),
       }),
     );
 
+    const sanitizedFilters: DashboardFilters = {
+      categorical: Object.fromEntries(
+        Object.entries(filters.categorical ?? {}).map(([key, values]) => [
+          this.sanitizeText(key),
+          values.map((value) => this.sanitizeText(value)),
+        ]),
+      ),
+    };
+
     return {
-      datasetName: dataset.meta.name,
-      groupA: dataset.sourceConfig.groupA.label,
-      groupB: dataset.sourceConfig.groupB.label,
+      datasetName: this.sanitizeText(dataset.meta.name),
+      groupA: this.sanitizeText(dataset.sourceConfig.groupA.label),
+      groupB: this.sanitizeText(dataset.sourceConfig.groupB.label),
       kpis,
-      filters,
+      filters: sanitizedFilters,
       sampleSize: dataset.data.length,
     };
   }
@@ -187,6 +232,21 @@ Devuelve JSON con esta forma:
   ]
 }
 `;
+  }
+
+  private sanitizeText(value: string): string {
+    return value
+      .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, "[REDACTED_EMAIL]")
+      .replace(/\b\d{8,}\b/g, "[REDACTED_NUMBER]")
+      .trim();
+  }
+
+  private estimateTokens(text: string): number {
+    if (!text) {
+      return 0;
+    }
+
+    return Math.ceil(text.length / 4);
   }
 
   private normalizeType(type: string | undefined): InsightType {

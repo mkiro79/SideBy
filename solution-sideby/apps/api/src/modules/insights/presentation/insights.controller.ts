@@ -21,6 +21,8 @@ interface InsightsUseCase {
 
 const defaultCacheRepository = new InMemoryInsightsCacheRepository(300);
 
+type LlmProvider = "ollama" | "openai-compatible";
+
 export class InsightsController {
   private readonly generateInsightsUseCase: InsightsUseCase;
 
@@ -31,10 +33,18 @@ export class InsightsController {
     }
 
     const llmEnabled = process.env.INSIGHTS_LLM_ENABLED === "true";
-    const llmBaseUrl =
-      process.env.INSIGHTS_LLM_BASE_URL ?? "http://localhost:11434/v1";
+    const llmProvider =
+      (process.env.INSIGHTS_LLM_PROVIDER as LlmProvider | undefined) ??
+      "ollama";
+    const defaultBaseUrl =
+      llmProvider === "openai-compatible"
+        ? "https://api.openai.com/v1"
+        : "http://localhost:11434/v1";
+    const defaultApiKey = llmProvider === "openai-compatible" ? "" : "ollama";
+
+    const llmBaseUrl = process.env.INSIGHTS_LLM_BASE_URL ?? defaultBaseUrl;
     const llmModel = process.env.INSIGHTS_LLM_MODEL ?? "qwen2.5:7b-instruct";
-    const llmApiKey = process.env.INSIGHTS_LLM_API_KEY ?? "ollama";
+    const llmApiKey = process.env.INSIGHTS_LLM_API_KEY ?? defaultApiKey;
 
     this.generateInsightsUseCase = new GenerateInsightsUseCase(
       new MongoDatasetRepository(),

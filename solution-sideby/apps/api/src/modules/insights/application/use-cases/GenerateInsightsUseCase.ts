@@ -77,7 +77,17 @@ export class GenerateInsightsUseCase {
     return { insights, fromCache: false };
   }
 
-  private shouldUseLLM(dataset: { aiConfig?: { enabled?: boolean } }): boolean {
-    return dataset.aiConfig?.enabled === true;
+  private shouldUseLLM(dataset: {
+    aiConfig?: {
+      enabled?: boolean;
+      enabledFeatures?: {
+        insights?: boolean;
+      };
+    };
+  }): boolean {
+    return (
+      dataset.aiConfig?.enabledFeatures?.insights === true ||
+      dataset.aiConfig?.enabled === true
+    );
   }
 }

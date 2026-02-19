@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { authMiddleware } from "@/middleware/auth.middleware.js";
-import { generalRateLimiter } from "@/middleware/rate-limit.middleware.js";
+import { insightsRateLimiter } from "@/middleware/rate-limit.middleware.js";
 import { InsightsController } from "@/modules/insights/presentation/insights.controller.js";
 
 const router = Router();
@@ -10,7 +10,7 @@ router.use(authMiddleware);
 
 router.get(
   "/:id/insights",
-  generalRateLimiter,
+  insightsRateLimiter,
   controller.getDatasetInsights.bind(controller),
 );
 

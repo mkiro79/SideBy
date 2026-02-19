@@ -95,6 +95,10 @@ export interface DashboardLayout {
 export interface AIConfig {
   /** Si el análisis con IA está habilitado */
   enabled: boolean;
+  /** Flags granulares por funcionalidad de IA */
+  enabledFeatures?: {
+    insights?: boolean;
+  };
   /** Contexto del usuario para personalizar análisis */
   userContext?: string;
   /** Último análisis generado por IA */
