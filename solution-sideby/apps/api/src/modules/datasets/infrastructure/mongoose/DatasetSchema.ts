@@ -118,6 +118,9 @@ const DatasetSchema = new Schema<DatasetDocument>(
     // === AI CONFIGURATION (opcional) ===
     aiConfig: {
       enabled: { type: Boolean, default: false },
+      enabledFeatures: {
+        insights: { type: Boolean, default: false },
+      },
       userContext: { type: String, maxlength: 500 },
       lastAnalysis: { type: String, maxlength: 5000 },
     },

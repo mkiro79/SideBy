@@ -64,6 +64,11 @@ export const UpdateMappingSchema = z.object({
   aiConfig: z
     .object({
       enabled: z.boolean(),
+      enabledFeatures: z
+        .object({
+          insights: z.boolean().optional(),
+        })
+        .optional(),
       userContext: z
         .string()
         .max(

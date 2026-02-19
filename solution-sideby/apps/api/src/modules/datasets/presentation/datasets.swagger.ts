@@ -45,9 +45,18 @@ const DashboardLayoutSchema = z.object({
 });
 
 const AIConfigSchema = z.object({
-  contextPrompt: z.string().optional().openapi({
+  enabled: z.boolean().openapi({ example: true }),
+  enabledFeatures: z
+    .object({
+      insights: z.boolean().optional().openapi({ example: true }),
+    })
+    .optional(),
+  userContext: z.string().optional().openapi({
     example:
       "Analiza las ventas desde la perspectiva del crecimiento trimestral",
+  }),
+  lastAnalysis: z.string().optional().openapi({
+    example: "Las ventas aumentaron en las regiones Norte y Centro.",
   }),
 });
 

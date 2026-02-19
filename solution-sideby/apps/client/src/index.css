@@ -76,7 +76,7 @@
   
   /* Data Visualization Colors */
   --color-data-primary: #3b82f6;
-  --color-data-comparative: #6366f1;
+  --color-data-comparative: #f97415; /*6366f1*/
   --color-data-success: #22c55e;
   --color-data-warning: #f59e0b;
   
@@ -124,7 +124,7 @@
     --color-card-foreground: #e2e8f0;
     --color-popover: #020617;
     --color-popover-foreground: #e2e8f0;
-    --color-primary: #3b82f6;
+    --color-primary: #3c83f6; /*3b82f6*/
     --color-primary-foreground: #ffffff;
     --color-secondary: #1e293b;
     --color-secondary-foreground: #e2e8f0;
