@@ -213,3 +213,45 @@ export interface ApiError {
   success: false;
   error: string;
 }
+
+export interface DatasetInsight {
+  id: string;
+  datasetId: string;
+  type: "summary" | "warning" | "suggestion" | "trend" | "anomaly";
+  severity: 1 | 2 | 3 | 4 | 5;
+  icon: "💡" | "⚠️" | "✨" | "📈" | "📉" | "🚨" | "✅";
+  title: string;
+  message: string;
+  metadata: {
+    kpi?: string;
+    dimension?: string;
+    value?: number;
+    change?: number;
+    period?: string;
+  };
+  generatedBy: "rule-engine" | "ai-model";
+  confidence: number;
+  generatedAt: string;
+}
+
+export interface BusinessNarrative {
+  summary: string;
+  recommendedActions: string[];
+  language: "es" | "en";
+  generatedBy: "ai-model";
+  confidence: number;
+  generatedAt: string;
+}
+
+export interface DatasetInsightsResponse {
+  insights: DatasetInsight[];
+  businessNarrative?: BusinessNarrative;
+  meta: {
+    total: number;
+    generatedAt: string;
+    cacheStatus: "hit" | "miss" | "stale";
+    generationSource: "rule-engine" | "ai-model" | "mixed" | "unknown";
+    narrativeStatus?: "not-requested" | "generated" | "fallback";
+    generationTimeMs: number;
+  };
+}
