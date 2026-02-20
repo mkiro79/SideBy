@@ -7,6 +7,33 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### [RFC-008] AI Insights Service - Backend MVP (2026-02-19)
+
+**⚙️ Backend:**
+- Nuevo módulo `insights` en `apps/api` con arquitectura por capas (domain/application/infrastructure/presentation)
+- Endpoint agregado: `GET /api/v1/datasets/:id/insights`
+- Use case `GenerateInsightsUseCase` con validación de ownership y respuesta `404` para dataset inexistente/sin acceso
+- Rule engine implementado para resumen general, cambios significativos, anomalías por dimensión y top performer
+- Cache MVP en memoria del servidor (`InMemoryInsightsCacheRepository`) con TTL e invalidación por dataset
+- Integración LLM configurable (OpenAI-compatible) con soporte de Ollama local por `env`
+- Fallback automático a reglas cuando el LLM falla y feature flag global `INSIGHTS_LLM_ENABLED`
+
+**🧪 Tests:**
+- Nuevos tests unitarios para `GenerateInsightsUseCase`, `RuleEngineAdapter` e `InsightsController`
+- Suite unitaria backend completa en verde
+
+**📄 Documentación:**
+- `RFC-008-AI-INSIGHTS-SERVICE.md` actualizado con estado real de implementación backend
+- Checklist de roadmap actualizado (backend completado/ajustado a MVP)
+
+**🧠 Refinamientos de insights (2026-02-19):**
+- Mensajes del `RuleEngineAdapter` simplificados a formato más legible para negocio
+- Nuevo resumen comparativo: **Top 3 países con mejor señal** y **Top 3 métricas a mejorar**
+- Filtro de ruido en anomalías: se descartan comparativas dimensionales con `groupA=0` o `groupB=0`
+- Prompt del narrador LLM reforzado para salida menos genérica y enfocada en la vista 3/3
+- `businessNarrative` ahora incluye `model` para identificar el LLM que respondió (ej. `gemma2:9b`)
+- Nuevos/actualizados tests unitarios en `RuleEngineAdapter` y `LLMNarratorAdapter`
+
 ### [RFC-009] Wizard Step 3 - SourceConfig (2026-02-16)
 
 **✨ Frontend:**

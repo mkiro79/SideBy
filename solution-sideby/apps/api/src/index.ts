@@ -13,6 +13,7 @@ import { generateOpenApiDocs } from "./infrastructure/openapi/openapi.registry.j
 import "./modules/auth/presentation/auth.swagger.js";
 import "./modules/auth/presentation/dev-auth.swagger.js";
 import "./modules/datasets/presentation/datasets.swagger.js";
+import "./modules/insights/presentation/insights.swagger.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;

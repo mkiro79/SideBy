@@ -55,10 +55,68 @@ Implementar un servicio de AI Insights que:
 │ Backend: Insights Generation Service                        │
 │  ├─ InsightsController (Express endpoint)                   │
 │  ├─ GenerateInsightsUseCase (Business logic)                │
-│  ├─ RuleEngineAdapter (Phase 1: Rule-based)                 │
-│  ├─ LLMAdapter (Phase 2: OpenAI/Anthropic)                  │
+│  ├─ RuleEngineAdapter (fuente principal de insights)         │
+│  ├─ LLMNarratorAdapter (narrativa ejecutiva opcional)        │
 │  └─ InsightRepository (Cache & Storage)                     │
 └─────────────────────────────────────────────────────────────┘
+```
+
+**Estrategia vigente (rules-first):**
+- El endpoint **siempre** genera `insights` con `RuleEngineAdapter`.
+- El LLM no reemplaza los insights: genera un bloque opcional `businessNarrative` a partir de un resumen sanitizado de reglas.
+- Idioma de salida para narrativa: `dataset.aiConfig.userContext.language` cuando exista; por defecto `es`.
+
+**Prerequisito de infraestructura para desarrollo (LLM local):**
+- Contenedor Docker de Ollama levantado (`ollama/ollama`).
+- Modelo `qwen2.5:7b-instruct` instalado en el contenedor.
+- Endpoint local operativo: `http://localhost:11434/v1`.
+
+### 2.1 Diagrama de Secuencia (MVP actual)
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant FE as Frontend
+  participant API as SideBy API
+  participant AUTH as authMiddleware (JWT)
+  participant RL as insightsRateLimiter
+  participant C as InsightsController
+  participant UC as GenerateInsightsUseCase
+  participant DS as MongoDatasetRepository
+  participant CACHE as InsightsCacheRepository
+  participant RULES as RuleEngineAdapter
+  participant NARR as LLMNarratorAdapter (optional)
+
+  FE->>API: GET /api/v1/datasets/{id}/insights?filters=...&forceRefresh=false
+  API->>AUTH: Validar Bearer JWT
+  AUTH-->>API: userId válido
+  API->>RL: Aplicar rate limit (10 req/min por usuario)
+  RL-->>API: OK
+  API->>C: getDatasetInsights(req, res)
+  C->>UC: execute({ datasetId, userId, filters, forceRefresh })
+  UC->>DS: findByIdAndOwner(datasetId, userId)
+  DS-->>UC: dataset
+
+  alt forceRefresh = false y cache hit
+    UC->>CACHE: get(cacheKey)
+    CACHE-->>UC: insights cacheados
+    UC-->>C: { insights, fromCache: true }
+    C-->>FE: 200 { insights, meta.cacheStatus: "hit", meta.generationSource: "rule-engine|ai-model|mixed|unknown" }
+  else generar insights
+    UC->>RULES: generateInsights(dataset, filters)
+    RULES-->>UC: insights por reglas
+
+    alt aiConfig.enabled o dataset.aiConfig?.enabledFeatures?.insights
+      UC->>UC: buildInsightsDigest(insights)
+      UC->>NARR: generateNarrative(insightsDigest, language, userContext)
+      NARR-->>UC: businessNarrative (opcional)
+    else LLM deshabilitado
+      UC->>UC: continuar sin narrativa
+    end
+    UC->>CACHE: set(cacheKey, insights+narrative, ttl=300s)
+    UC-->>C: { insights, businessNarrative?, fromCache: false }
+    C-->>FE: 200 { insights, meta.cacheStatus: "miss", meta.generationSource: "rule-engine|ai-model|mixed|unknown" }
+  end
 ```
 
 ---
@@ -126,10 +184,20 @@ export interface DatasetInsight {
 
 export interface DatasetInsightsResponse {
   insights: DatasetInsight[];
+  businessNarrative?: {
+    summary: string;
+    recommendedActions: string[];
+    language: 'es' | 'en';
+    generatedBy: 'ai-model';
+    confidence: number;
+    generatedAt: string;
+  };
   meta: {
     total: number;
     generatedAt: string;
     cacheStatus: 'hit' | 'miss' | 'stale';
+    generationSource: 'rule-engine' | 'ai-model' | 'mixed' | 'unknown';
+    narrativeStatus?: 'not-requested' | 'generated' | 'fallback';
     generationTimeMs: number;
   };
 }
@@ -190,6 +258,7 @@ export class InsightsController {
         forceRefresh,
       });
       const generationTimeMs = Date.now() - startTime;
+      const generationSource = this.resolveGenerationSource(result.insights);
       
       // Response
       res.status(200).json({
@@ -198,6 +267,7 @@ export class InsightsController {
           total: result.insights.length,
           generatedAt: new Date().toISOString(),
           cacheStatus: result.fromCache ? 'hit' : 'miss',
+          generationSource,
           generationTimeMs,
         },
       });
@@ -217,13 +287,13 @@ export class InsightsController {
 ```typescript
 /**
  * Use Case: Generate Insights
- * Genera insights sobre un dataset usando el motor configurado
+ * Pipeline rules-first con narrativa LLM opcional
  */
 
 import { DatasetRepository } from '../../datasets/infrastructure/DatasetRepository.js';
 import { InsightRepository } from '../infrastructure/InsightRepository.js';
 import { RuleEngineAdapter } from '../infrastructure/RuleEngineAdapter.js';
-import { LLMAdapter } from '../infrastructure/LLMAdapter.js';
+import { LLMNarratorAdapter } from '../infrastructure/LLMNarratorAdapter.js';
 import type { DatasetInsight } from '../domain/DatasetInsight.js';
 import type { DashboardFilters } from '../../datasets/types/api.types.js';
 
@@ -236,6 +306,11 @@ interface GenerateInsightsCommand {
 
 interface GenerateInsightsResult {
   insights: DatasetInsight[];
+  businessNarrative?: {
+    summary: string;
+    recommendedActions: string[];
+    language: 'es' | 'en';
+  };
   fromCache: boolean;
 }
 
@@ -244,7 +319,8 @@ export class GenerateInsightsUseCase {
     private datasetRepository: DatasetRepository,
     private insightRepository: InsightRepository,
     private ruleEngineAdapter: RuleEngineAdapter,
-    private llmAdapter: LLMAdapter  // Puede ser null en Phase 1
+    private llmNarratorAdapter: LLMNarratorAdapter | null,
+    private llmEnabled: boolean // Flag global por env (enable/disable)
   ) {}
   
   async execute(command: GenerateInsightsCommand): Promise<GenerateInsightsResult> {
@@ -264,34 +340,35 @@ export class GenerateInsightsUseCase {
       }
     }
     
-    // 3. Generar insights según el motor configurado
-    let insights: DatasetInsight[] = [];
-    
-    // Phase 1: Solo Rule Engine
-    // Phase 2: Intentar LLM, fallback a Rules
-    if (this.shouldUseLLM(dataset) && this.llmAdapter) {
+    // 3. Generar SIEMPRE insights por reglas (contrato estable)
+    const insights = await this.ruleEngineAdapter.generateInsights(dataset, filters);
+
+    // 4. Intentar narrativa opcional (no bloquea insights)
+    let businessNarrative: GenerateInsightsResult['businessNarrative'] | undefined;
+    if (this.llmEnabled && this.shouldUseLLM(dataset) && this.llmNarratorAdapter) {
       try {
-        insights = await this.llmAdapter.generateInsights(dataset, filters);
-      } catch (error) {
-        console.warn('LLM generation failed, falling back to rules:', error);
-        insights = await this.ruleEngineAdapter.generateInsights(dataset, filters);
+        const digest = this.buildInsightsDigest(insights);
+        const language = this.resolveLanguage(dataset.aiConfig?.userContext);
+        businessNarrative = await this.llmNarratorAdapter.generateNarrative({
+          dataset,
+          digest,
+          language,
+          userContext: dataset.aiConfig?.userContext,
+        });
+      } catch {
+        // Fallback silencioso: no se rompe el response base
       }
-    } else {
-      insights = await this.ruleEngineAdapter.generateInsights(dataset, filters);
     }
     
-    // 4. Guardar en caché
-    await this.insightRepository.saveToCache(datasetId, filters, insights);
+    // 5. Guardar en caché (insights + narrativa opcional)
+    await this.insightRepository.saveToCache(datasetId, filters, { insights, businessNarrative });
     
-    return { insights, fromCache: false };
+    return { insights, businessNarrative, fromCache: false };
   }
   
   private shouldUseLLM(dataset: any): boolean {
-    // Decidir si usar LLM basado en:
-    // - dataset.aiConfig?.enabledFeatures?.insights === true
-    // - Tamaño del dataset (no usar LLM si >10k filas)
-    // - Plan del usuario (premium vs free)
-    return dataset.aiConfig?.enabledFeatures?.insights === true;
+    // Narrativa LLM habilitada por feature flag de dataset o flag legacy
+    return dataset.aiConfig?.enabledFeatures?.insights === true || dataset.aiConfig?.enabled === true;
   }
 }
 ```
@@ -506,46 +583,57 @@ export class RuleEngineAdapter {
 
 ---
 
-### 4.4 LLM Adapter (Phase 2)
+### 4.4 LLM Narrator Adapter (Phase 2)
 
-**Archivo:** `solution-sideby/apps/api/src/modules/insights/infrastructure/LLMAdapter.ts`
+**Archivo:** `solution-sideby/apps/api/src/modules/insights/infrastructure/LLMNarratorAdapter.ts`
 
 ```typescript
 /**
- * LLM Adapter
- * Genera insights usando modelos de lenguaje (OpenAI/Anthropic)
+ * LLM Narrator Adapter
+ * Genera narrativa de negocio desde insights por reglas:
+ * - MVP: Ollama local en Docker
+ * - Opcional: OpenAI-compatible endpoint
  */
 
 import OpenAI from 'openai';
-import type { Dataset, DataRow } from '../../datasets/types/api.types.js';
-import type { DashboardFilters } from '../../datasets/types/api.types.js';
+import type { Dataset } from '../../datasets/types/api.types.js';
 import type { DatasetInsight } from '../domain/DatasetInsight.js';
-import { v4 as uuidv4 } from 'uuid';
 
-export class LLMAdapter {
+export class LLMNarratorAdapter {
   private openai: OpenAI;
+  private model: string;
   
-  constructor(apiKey: string) {
-    this.openai = new OpenAI({ apiKey });
+  constructor(config: {
+    apiKey?: string;
+    baseURL: string;
+    model: string;
+  }) {
+    this.openai = new OpenAI({
+      apiKey: config.apiKey ?? 'ollama',
+      baseURL: config.baseURL,
+    });
+    this.model = config.model;
   }
   
-  async generateInsights(
-    dataset: Dataset,
-    filters: DashboardFilters
-  ): Promise<DatasetInsight[]> {
-    // 1. Preparar datos para el prompt
-    const dataSummary = this.prepareDataSummary(dataset, filters);
+  async generateNarrative(input: {
+    dataset: Dataset;
+    digest: DatasetInsight[];
+    language: 'es' | 'en';
+    userContext?: unknown;
+  }): Promise<{
+    summary: string;
+    recommendedActions: string[];
+    language: 'es' | 'en';
+  }> {
+    const prompt = this.buildPrompt(input);
     
-    // 2. Construir prompt
-    const prompt = this.buildPrompt(dataset, dataSummary);
-    
-    // 3. Llamar a OpenAI
+    // 3. Llamar al proveedor OpenAI-compatible (Ollama/OpenAI)
     const response = await this.openai.chat.completions.create({
-      model: 'gpt-4o',  // o 'gpt-4-turbo'
+      model: this.model,
       messages: [
         {
           role: 'system',
-          content: `Eres un analista de datos experto. Tu tarea es generar insights accionables sobre datasets de negocio. Devuelve SOLO un JSON array de insights, sin texto adicional.`,
+          content: `Eres un analista de negocio. Redacta una narrativa ejecutiva basada SOLO en el resumen de insights recibidos. Devuelve SOLO JSON válido.`,
         },
         {
           role: 'user',
@@ -553,8 +641,8 @@ export class LLMAdapter {
         },
       ],
       temperature: 0.7,
-      max_tokens: 1500,
-      response_format: { type: 'json_object' },  // Forzar JSON
+      max_tokens: 450,
+      response_format: { type: 'json_object' },
     });
     
     // 4. Parsear respuesta
@@ -564,166 +652,151 @@ export class LLMAdapter {
     }
     
     const parsed = JSON.parse(content);
-    const insights: DatasetInsight[] = parsed.insights.map((item: any) => ({
-      id: uuidv4(),
-      datasetId: dataset._id,
-      type: item.type,
-      severity: item.severity,
-      icon: this.mapIcon(item.type),
-      title: item.title,
-      message: item.message,
-      metadata: item.metadata || {},
-      generatedBy: 'ai-model',
-      confidence: item.confidence || 0.8,
-      generatedAt: new Date(),
-    }));
-    
-    return insights;
-  }
-  
-  private prepareDataSummary(dataset: Dataset, filters: DashboardFilters): any {
-    // Generar resumen estadístico de los datos (no enviar todo el dataset)
-    // - KPIs calculados
-    // - Top 5 de cada dimensión
-    // - Tendencias temporales resumidas
-    
     return {
-      kpis: [
-        { name: 'revenue', groupA: 45000, groupB: 58500, change: 30 },
-        // ...
-      ],
-      dimensions: {
-        region: ['Norte', 'Sur', 'Este', 'Oeste'],
-        product: ['Balón', 'Camiseta', 'Raqueta'],
-      },
-      // ...
+      summary: parsed.summary,
+      recommendedActions: Array.isArray(parsed.recommendedActions) ? parsed.recommendedActions : [],
+      language: parsed.language === 'en' ? 'en' : 'es',
     };
   }
   
-  private buildPrompt(dataset: Dataset, dataSummary: any): string {
+  private buildPrompt(input: {
+    dataset: Dataset;
+    digest: DatasetInsight[];
+    language: 'es' | 'en';
+    userContext?: unknown;
+  }): string {
     return `
-Analiza el siguiente dataset comparativo y genera insights significativos.
+Convierte insights de reglas en un resumen ejecutivo y acciones.
 
-**Dataset:** ${dataset.meta.name}
-**Descripción:** ${dataset.meta.description}
+**Dataset:** ${input.dataset.meta.name}
+**Descripción:** ${input.dataset.meta.description}
+**Idioma requerido:** ${input.language}
 
-**Grupos comparados:**
-- Grupo A: ${dataset.sourceConfig.groupA.label}
-- Grupo B: ${dataset.sourceConfig.groupB.label}
+**Contexto de usuario (sanitizado):**
+${JSON.stringify(input.userContext ?? {}, null, 2)}
 
-**KPIs principales:**
-${JSON.stringify(dataSummary.kpis, null, 2)}
-
-**Dimensiones:**
-${JSON.stringify(dataSummary.dimensions, null, 2)}
+**Insights por reglas (fuente de verdad):**
+${JSON.stringify(input.digest, null, 2)}
 
 **Instrucciones:**
-1. Genera entre 3-6 insights ordenados por importancia
-2. Cada insight debe tener:
-   - type: 'summary' | 'warning' | 'suggestion' | 'trend' | 'anomaly'
-   - severity: 1-5 (5 = crítico)
-   - title: Título conciso (max 60 chars)
-   - message: Descripción clara (max 200 chars)
-   - metadata: { kpi?, dimension?, value?, change? }
-   - confidence: 0-1
+1. No inventes datos que no estén en los insights de reglas.
+2. Resume impacto de negocio en 1 párrafo breve.
+3. Propón 3-5 acciones concretas, priorizadas y ejecutables.
 
 **Formato de respuesta:**
 \`\`\`json
 {
-  "insights": [
-    {
-      "type": "trend",
-      "severity": 4,
-      "title": "Revenue aumentó significativamente",
-      "message": "Revenue creció un 30% en el Grupo B, impulsado principalmente por la región Norte.",
-      "metadata": { "kpi": "revenue", "change": 30 },
-      "confidence": 0.9
-    }
-  ]
+  "summary": "...",
+  "recommendedActions": ["...", "...", "..."],
+  "language": "es"
 }
 \`\`\`
 
 Genera el JSON ahora:
 `;
   }
-  
-  private mapIcon(type: string): string {
-    const iconMap: Record<string, string> = {
-      summary: '💡',
-      warning: '⚠️',
-      suggestion: '✨',
-      trend: '📈',
-      anomaly: '🚨',
-    };
-    return iconMap[type] || '💡';
-  }
 }
 ```
+
+### 4.4.1 Configuración Ollama (MVP recomendado)
+
+**Objetivo:** permitir ejecutar IA local sin consumo de tokens externos, con fallback automático a reglas.
+
+**Modelo recomendado MVP:** `qwen2.5:7b-instruct`
+
+- Buen equilibrio calidad/latencia para insights de texto corto
+- Buen desempeño en español
+- Suficiente para salida estructurada JSON en entorno local
+
+**Variables de entorno sugeridas (`apps/api/.env`):**
+
+```env
+INSIGHTS_LLM_ENABLED=false
+INSIGHTS_LLM_PROVIDER=ollama
+INSIGHTS_LLM_BASE_URL=http://localhost:11434/v1
+INSIGHTS_LLM_MODEL=qwen2.5:7b-instruct
+INSIGHTS_LLM_API_KEY=ollama
+```
+
+**Arranque local con Docker (ejemplo):**
+
+```bash
+docker run -d --name sideby-ollama -p 11434:11434 ollama/ollama
+docker exec -it sideby-ollama ollama pull qwen2.5:7b-instruct
+```
+
+**Comportamiento esperado en runtime:**
+
+1. Si `INSIGHTS_LLM_ENABLED=false` → usar siempre `RuleEngineAdapter`.
+2. Si `INSIGHTS_LLM_ENABLED=true` y Ollama responde → adjuntar `businessNarrative` (sin reemplazar `insights`).
+3. Si `INSIGHTS_LLM_ENABLED=true` pero falla el LLM (timeout/error) → fallback silencioso, response con `insights` por reglas.
 
 ---
 
 ### 4.5 Insight Repository (Cache Layer)
 
-**Archivo:** `solution-sideby/apps/api/src/modules/insights/infrastructure/InsightRepository.ts`
+**Archivo:** `solution-sideby/apps/api/src/modules/insights/infrastructure/InMemoryInsightsCacheRepository.ts`
 
 ```typescript
 /**
- * Insight Repository
- * Cachea insights para evitar regeneración innecesaria
+ * In-Memory Insights Cache Repository
+ * Cachea insights en memoria para el MVP (sin Redis)
  */
 
-import Redis from 'ioredis';
 import type { DatasetInsight } from '../domain/DatasetInsight.js';
-import type { DashboardFilters } from '../../datasets/types/api.types.js';
+import type { DashboardFilters } from '../domain/DatasetInsight.js';
 
-export class InsightRepository {
-  private redis: Redis;
-  private readonly TTL = 3600;  // 1 hora en segundos
-  
-  constructor(redisUrl: string) {
-    this.redis = new Redis(redisUrl);
-  }
-  
+interface CachedEntry {
+  expiresAt: number;
+  insights: DatasetInsight[];
+}
+
+export class InMemoryInsightsCacheRepository {
+  private readonly cache = new Map<string, CachedEntry>();
+  private readonly TTL = 300; // 5 minutos
+
   async findCached(
     datasetId: string,
     filters: DashboardFilters
   ): Promise<DatasetInsight[] | null> {
     const key = this.generateCacheKey(datasetId, filters);
-    const cached = await this.redis.get(key);
-    
-    if (!cached) return null;
-    
-    return JSON.parse(cached);
+    const cached = this.cache.get(key);
+
+    if (!cached) {
+      return null;
+    }
+
+    if (cached.expiresAt < Date.now()) {
+      this.cache.delete(key);
+      return null;
+    }
+
+    return cached.insights;
   }
-  
+
   async saveToCache(
     datasetId: string,
     filters: DashboardFilters,
     insights: DatasetInsight[]
   ): Promise<void> {
     const key = this.generateCacheKey(datasetId, filters);
-    await this.redis.setex(key, this.TTL, JSON.stringify(insights));
+
+    this.cache.set(key, {
+      insights,
+      expiresAt: Date.now() + this.TTL * 1000,
+    });
   }
-  
+
   async invalidate(datasetId: string): Promise<void> {
-    // Invalidar todos los insights de un dataset
-    const pattern = `insights:${datasetId}:*`;
-    const keys = await this.redis.keys(pattern);
-    
-    if (keys.length > 0) {
-      await this.redis.del(...keys);
+    for (const key of this.cache.keys()) {
+      if (key.startsWith(`insights:${datasetId}:`)) {
+        this.cache.delete(key);
+      }
     }
   }
-  
+
   private generateCacheKey(datasetId: string, filters: DashboardFilters): string {
-    // Generar key única basada en datasetId + filtros
-    const filterHash = this.hashFilters(filters);
-    return `insights:${datasetId}:${filterHash}`;
-  }
-  
-  private hashFilters(filters: DashboardFilters): string {
-    // Hash simple de los filtros para cache key
-    return Buffer.from(JSON.stringify(filters)).toString('base64');
+    return `insights:${datasetId}:${JSON.stringify(filters)}`;
   }
 }
 ```
@@ -944,7 +1017,7 @@ function getSeverityVariant(severity: number): 'default' | 'destructive' {
   2. Anomalías dimensionales (outliers)
   3. Top performer
   4. Summary general
-- [x] InsightRepository con Redis cache
+- [x] InsightRepository con cache en memoria del servidor (MVP)
 - [x] Frontend AIInsights component
 - [x] React Query integration
 
@@ -954,16 +1027,27 @@ function getSeverityVariant(severity: number): 'default' | 'destructive' {
 
 ### **Phase 2: LLM Integration (v0.6.0) - 4 días**
 
-**Objetivo:** Insights inteligentes con contexto
+**Objetivo:** Narrativa inteligente sobre insights por reglas (sin romper contrato base)
 
-- [ ] LLMAdapter con OpenAI GPT-4
-- [ ] Prompt engineering optimizado
-- [ ] Fallback automático a Rule Engine si LLM falla
-- [ ] Confidence scoring
-- [ ] Feature flag para enable/disable IA por dataset
-- [ ] Cost tracking (tokens consumidos)
+**Prerequisito de desarrollo (Scope obligatorio):**
+- Crear y levantar contenedor Docker con imagen oficial de Ollama.
+- Instalar el modelo recomendado `qwen2.5:7b-instruct` en el contenedor.
+- Validar disponibilidad del endpoint local `http://localhost:11434/v1` antes de pruebas funcionales.
 
-**Entregable:** Insights contextualizados generados por LLM
+- [x] LLMNarratorAdapter OpenAI-compatible (MVP: Ollama local, opcional OpenAI)
+- [x] LLMNarratorAdapter con proveedor configurable (MVP: Ollama local, opcional OpenAI)
+- [x] Selector runtime por `INSIGHTS_LLM_PROVIDER` (`ollama` | `openai-compatible`)
+- [x] Prompt engineering optimizado para narrativa de negocio
+- [x] Fallback automático a Rule Engine si LLM falla
+- [x] Confidence scoring básico (0-1)
+- [x] Feature flag global enable/disable por entorno + flag por dataset
+- [x] Cost tracking básico (tokens de uso real o estimados por request)
+- [x] Audit log de llamadas al LLM (dataset, modelo, latencia, tokens)
+- [x] Sanitización explícita del contexto enviado al LLM
+- [x] Endpoint de insights protegido por JWT
+- [x] Rate limiting específico para generación de insights (10 req/min por usuario)
+
+**Entregable:** `insights` por reglas + bloque opcional `businessNarrative` generado por LLM
 
 ---
 
@@ -982,11 +1066,18 @@ function getSeverityVariant(severity: number): 'default' | 'destructive' {
 
 ### LLM Costs (Phase 2)
 
+**Escenario MVP (Ollama local):**
+- Costo por request: $0 en APIs externas
+- Costo operativo: CPU/RAM/GPU local
+- Recomendado para desarrollo y validación funcional temprana
+
+**Escenario Cloud (OpenAI):**
+
 **Modelo:** GPT-4o ($5 / 1M input tokens, $15 / 1M output tokens)
 
 **Por Request:**
-- Input: ~2000 tokens (data summary + prompt)
-- Output: ~500 tokens (JSON insights)
+- Input: ~800-1400 tokens (resumen de insights + contexto de usuario)
+- Output: ~150-350 tokens (summary + acciones)
 - **Costo por generación:** ~$0.015 USD
 
 **Con cache (1h TTL):**
@@ -1004,7 +1095,8 @@ function getSeverityVariant(severity: number): 'default' | 'destructive' {
 ### Performance
 
 - **Rule Engine:** 50-100ms (sin I/O)
-- **LLM:** 2-5 segundos (llamada API)
+- **LLM local (Ollama):** 1-8 segundos (según modelo/hardware)
+- **LLM cloud:** 2-5 segundos (llamada API)
 - **Cache Hit:** <10ms (Redis)
 
 ---
@@ -1056,7 +1148,7 @@ test('Usuario ve insights en el dashboard', async ({ page }) => {
 
 - **Data Privacy:** Nunca enviar datos personales (PII) al LLM
 - **Sanitization:** Sanitizar nombres de dimensiones antes de enviar
-- **API Key Management:** Keys de OpenAI en variables de entorno
+- **API Key Management:** Credenciales/API keys en variables de entorno (Ollama local puede usar key dummy)
 - **Rate Limiting:** Máximo 10 generaciones por usuario por minuto
 - **Audit Log:** Registrar todas las llamadas al LLM (dataset, timestamp, costo)
 
@@ -1072,6 +1164,6 @@ test('Usuario ve insights en el dashboard', async ({ page }) => {
 
 ---
 
-**Última actualización:** 2026-02-15  
+**Última actualización:** 2026-02-19 (rules-first + narrative opcional)  
 **Próximo Review:** Después de Phase 1 completion
 

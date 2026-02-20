@@ -54,6 +54,7 @@ Write-Host "   - MongoDB en puerto 27017" -ForegroundColor Cyan
 Write-Host "   - Mongo Express en puerto 8081" -ForegroundColor Cyan
 Write-Host "   - API en puerto 3000" -ForegroundColor Cyan
 Write-Host "   - Cliente en puerto 5173" -ForegroundColor Cyan
+Write-Host "   - Ollama en puerto 11434" -ForegroundColor Cyan
 Write-Host ""
 
 docker compose up -d
@@ -69,6 +70,31 @@ Write-Host ""
 # Esperar a que los servicios esten listos
 Write-Host "[*] Esperando 15 segundos para que los servicios se inicien..." -ForegroundColor Yellow
 Start-Sleep -Seconds 15
+
+Write-Host ""
+
+# Verificar/descargar modelo de Ollama para Insights
+$insightsModel = if ($env:INSIGHTS_LLM_MODEL) { $env:INSIGHTS_LLM_MODEL } else { "qwen2.5:7b-instruct" }
+Write-Host "[*] Verificando modelo Ollama para Insights: $insightsModel" -ForegroundColor Yellow
+
+$ollamaModelList = docker compose exec -T ollama ollama list 2>$null
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "[!] No se pudo consultar modelos de Ollama. Continuando sin forzar descarga." -ForegroundColor Yellow
+}
+elseif ($ollamaModelList -match [Regex]::Escape($insightsModel)) {
+    Write-Host "[OK] Modelo Ollama disponible: $insightsModel" -ForegroundColor Green
+}
+else {
+    Write-Host "[*] Descargando modelo Ollama: $insightsModel (puede tardar varios minutos)..." -ForegroundColor Yellow
+    docker compose exec -T ollama ollama pull $insightsModel
+
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "[OK] Modelo Ollama descargado: $insightsModel" -ForegroundColor Green
+    }
+    else {
+        Write-Host "[!] No se pudo descargar el modelo Ollama. El endpoint de insights usara fallback a reglas." -ForegroundColor Yellow
+    }
+}
 
 Write-Host ""
 
@@ -97,6 +123,7 @@ Write-Host "URLs disponibles:" -ForegroundColor Cyan
 Write-Host "   Cliente:        http://localhost:5173" -ForegroundColor Green
 Write-Host "   API:            http://localhost:3000" -ForegroundColor Green
 Write-Host "   Mongo Express:  http://localhost:8081" -ForegroundColor Green
+Write-Host "   Ollama:         http://localhost:11434" -ForegroundColor Green
 Write-Host "     * Credenciales configuradas en .env (ME_BASICAUTH_USERNAME / ME_BASICAUTH_PASSWORD)" -ForegroundColor Gray
 Write-Host ""
 Write-Host "Comandos utiles:" -ForegroundColor Cyan

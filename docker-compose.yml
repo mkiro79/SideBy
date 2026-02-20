@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # MongoDB Database
   mongo:
@@ -42,6 +40,25 @@ services:
     networks:
       - sideby-network
 
+  # Ollama - Local LLM service
+  ollama:
+    image: ollama/ollama:latest
+    container_name: sideby-ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    networks:
+      - sideby-network
+
   # API - Node.js Backend with hot-reload
   api:
     build:
@@ -67,6 +84,12 @@ services:
       SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD}
       SEED_ADMIN_GOOGLE_ID: ${SEED_ADMIN_GOOGLE_ID}
       SEED_ADMIN_NAME: ${SEED_ADMIN_NAME}
+      INSIGHTS_LLM_ENABLED: ${INSIGHTS_LLM_ENABLED:-false}
+      INSIGHTS_LLM_PROVIDER: ${INSIGHTS_LLM_PROVIDER:-ollama}
+      INSIGHTS_LLM_BASE_URL: ${INSIGHTS_LLM_BASE_URL:-http://ollama:11434/v1}
+      INSIGHTS_LLM_MODEL: ${INSIGHTS_LLM_MODEL:-qwen2.5:7b-instruct}
+      INSIGHTS_LLM_API_KEY: ${INSIGHTS_LLM_API_KEY:-ollama}
+      INSIGHTS_LLM_TIMEOUT_MS: ${INSIGHTS_LLM_TIMEOUT_MS:-120000}
     volumes:
       - ./solution-sideby/apps/api/src:/app/src
       - ./solution-sideby/apps/api/package.json:/app/package.json
@@ -75,6 +98,8 @@ services:
     depends_on:
       mongo:
         condition: service_healthy
+      ollama:
+        condition: service_started
     networks:
       - sideby-network
     command: npm run dev:docker
@@ -124,4 +149,6 @@ volumes:
   api_node_modules:
     driver: local
   client_node_modules:
+    driver: local
+  ollama_data:
     driver: local

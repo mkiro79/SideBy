@@ -54,6 +54,10 @@ export function generateOpenApiDocs() {
         description: "Gestion de conjuntos de datos",
       },
       {
+        name: "Insights",
+        description: "Generacion de insights con IA para datasets",
+      },
+      {
         name: "Reports",
         description: "Generacion y visualizacion de reportes",
       },

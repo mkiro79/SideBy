@@ -15,12 +15,12 @@ const getClientKey = (req: Request & { userId?: string }): string => {
   if (req.userId) {
     return `user:${req.userId}`;
   }
-  
+
   const ip = req.ip;
   if (!ip) {
     throw new Error("Unable to determine client IP address for rate limiting");
   }
-  
+
   return `ip:${ip}`;
 };
 
@@ -99,6 +99,24 @@ export const generalRateLimiter = rateLimit({
     success: false,
     error: {
       message: "Demasiadas solicitudes. Reduce la frecuencia de peticiones.",
+      code: "RATE_LIMIT_EXCEEDED",
+    },
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: getClientKey,
+  validate: false,
+  skip: (req: Request) => req.path === "/health",
+});
+
+export const insightsRateLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 10,
+  message: {
+    success: false,
+    error: {
+      message:
+        "Demasiadas generaciones de insights. Intenta de nuevo en un minuto.",
       code: "RATE_LIMIT_EXCEEDED",
     },
   },
