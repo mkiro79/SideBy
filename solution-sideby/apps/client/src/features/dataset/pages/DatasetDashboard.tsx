@@ -36,8 +36,12 @@ import { DimensionGrid } from '../components/dashboard/DimensionGrid.js';
 import { SummaryTable } from '../components/dashboard/SummaryTable.js';
 import { GranularTable } from '../components/dashboard/GranularTable.js';
 import { CategoryChart } from '../components/dashboard/CategoryChart.js';
+import {
+  buildInsightsCategoricalKey,
+  buildInsightsRequestFilters,
+} from '../utils/insightsFilters.js';
 import type { DashboardTemplateId, DashboardFilters, KPIResult } from '../types/dashboard.types.js';
-import type { DataRow } from '../types/api.types.js';
+import type { DataRow, DatasetInsightsResponse } from '../types/api.types.js';
 
 
 // ============================================================================
@@ -51,7 +55,17 @@ export default function DatasetDashboard() {
   // State para template y filtros
   const [selectedTemplate, setSelectedTemplate] = useState<DashboardTemplateId>('sideby_executive');
   const [filters, setFilters] = useState<DashboardFilters>({ categorical: {} });
-  const [shouldLoadInsights, setShouldLoadInsights] = useState(false);
+  const [hasRequestedInsights, setHasRequestedInsights] = useState(false);
+  const [resetReason, setResetReason] = useState<string | undefined>(undefined);
+  const [insightsCache, setInsightsCache] = useState<Record<string, DatasetInsightsResponse>>({});
+  const [insightsData, setInsightsData] = useState<DatasetInsightsResponse | undefined>(undefined);
+  const [requestedFilterKey, setRequestedFilterKey] = useState<string>(() =>
+    buildInsightsCategoricalKey(filters.categorical),
+  );
+  const [insightsRequestFilters, setInsightsRequestFilters] = useState<DashboardFilters>(() =>
+    buildInsightsRequestFilters(filters),
+  );
+  const [pendingInsightsRequest, setPendingInsightsRequest] = useState(0);
 
   // Hook principal del dashboard
   const { dataset, kpis, filteredData, categoricalFields, isLoading, error } = useDatasetDashboard({
@@ -60,8 +74,8 @@ export default function DatasetDashboard() {
     filters,
   });
 
-  const insightsQuery = useDatasetInsights(id || '', filters, {
-    enabled: shouldLoadInsights && Boolean(id),
+  const insightsQuery = useDatasetInsights(id || '', insightsRequestFilters, {
+    enabled: false,
   });
   
   // State para granularidad temporal (usado en filtro de período)
@@ -102,13 +116,66 @@ export default function DatasetDashboard() {
   };
 
   const handleGenerateInsights = () => {
-    if (!shouldLoadInsights) {
-      setShouldLoadInsights(true);
+    setHasRequestedInsights(true);
+    setResetReason(undefined);
+    setInsightsRequestFilters(buildInsightsRequestFilters(filters));
+    setPendingInsightsRequest((previousValue) => previousValue + 1);
+  };
+
+  React.useEffect(() => {
+    const nextFilterKey = buildInsightsCategoricalKey(filters.categorical);
+
+    if (nextFilterKey === requestedFilterKey) {
       return;
     }
 
-    void insightsQuery.fetchInsights();
-  };
+    setRequestedFilterKey(nextFilterKey);
+
+    const cachedInsights = insightsCache[nextFilterKey];
+    if (cachedInsights) {
+      setInsightsData(cachedInsights);
+      setHasRequestedInsights(true);
+      setResetReason(undefined);
+      return;
+    }
+
+    setInsightsData(undefined);
+    setHasRequestedInsights(false);
+    setResetReason('Los filtros cambiaron, vuelve a generar el resumen.');
+  }, [filters.categorical, insightsCache, requestedFilterKey]);
+
+  React.useEffect(() => {
+    if (pendingInsightsRequest === 0) {
+      return;
+    }
+
+    void insightsQuery.fetchInsights().finally(() => {
+      setPendingInsightsRequest(0);
+    });
+  }, [pendingInsightsRequest, insightsQuery]);
+
+  React.useEffect(() => {
+    if (!insightsQuery.data) {
+      return;
+    }
+
+    const currentRequestKey = buildInsightsCategoricalKey(insightsRequestFilters.categorical);
+    setInsightsData(insightsQuery.data);
+    setInsightsCache((previousCache) => ({
+      ...previousCache,
+      [currentRequestKey]: insightsQuery.data,
+    }));
+  }, [insightsQuery.data, insightsRequestFilters.categorical]);
+
+  React.useEffect(() => {
+    setInsightsData(undefined);
+    setHasRequestedInsights(false);
+    setResetReason(undefined);
+    setInsightsCache({});
+    setRequestedFilterKey(buildInsightsCategoricalKey(filters.categorical));
+    setInsightsRequestFilters(buildInsightsRequestFilters(filters));
+    setPendingInsightsRequest(0);
+  }, [id]);
 
   // Helper: Aplicar filtro de período a los datos filtrados
   const dataWithPeriodFilter = React.useMemo(() => {
@@ -437,11 +504,12 @@ export default function DatasetDashboard() {
             {dataset.aiConfig?.enabled && (
               <AIInsights
                 enabled={dataset.aiConfig.enabled}
-                hasRequested={shouldLoadInsights}
+                hasRequested={hasRequestedInsights}
                 isLoading={insightsQuery.isLoading || insightsQuery.isFetching}
                 isError={insightsQuery.isError}
                 onGenerate={handleGenerateInsights}
-                data={insightsQuery.data}
+                data={insightsData}
+                resetReason={resetReason}
               />
             )}
 

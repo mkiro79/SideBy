@@ -13,6 +13,7 @@ interface AIInsightsProps {
   isError: boolean;
   onGenerate: () => void;
   data?: DatasetInsightsResponse;
+  resetReason?: string;
 }
 
 export const AIInsights: React.FC<AIInsightsProps> = ({
@@ -22,6 +23,7 @@ export const AIInsights: React.FC<AIInsightsProps> = ({
   isError,
   onGenerate,
   data,
+  resetReason,
 }) => {
   if (!enabled) {
     return null;
@@ -57,6 +59,11 @@ export const AIInsights: React.FC<AIInsightsProps> = ({
 
         {!hasRequested && (
           <div className="space-y-3">
+            {resetReason && (
+              <Alert variant="warning">
+                <AlertDescription>{resetReason}</AlertDescription>
+              </Alert>
+            )}
             <p className="text-sm text-muted-foreground">
               La generación de insights puede tardar unos segundos. Se consulta solo cuando lo solicitas.
             </p>
