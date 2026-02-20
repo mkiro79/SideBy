@@ -46,9 +46,11 @@ import {
   uploadFiles,
   updateMapping,
   getDataset,
+  getDatasetInsights,
   listDatasets,
   deleteDataset,
 } from "../../services/datasets.api.js";
+import type { DashboardFilters } from "../../types/dashboard.types.js";
 
 describe("datasets.api", () => {
   let mockAxiosInstance: {
@@ -402,6 +404,62 @@ describe("datasets.api", () => {
       // Act & Assert
       await expect(deleteDataset(datasetId)).rejects.toThrow(
         "Cannot delete dataset in use",
+      );
+    });
+  });
+
+  describe("getDatasetInsights", () => {
+    it("debe obtener insights con filtros serializados", async () => {
+      const datasetId = "dataset-123";
+      const filters: DashboardFilters = {
+        categorical: {
+          region: ["Norte", "Sur"],
+        },
+      };
+
+      const mockResponse = {
+        data: {
+          insights: [],
+          meta: {
+            total: 0,
+            generatedAt: "2026-02-20T10:00:00.000Z",
+            cacheStatus: "hit",
+            generationSource: "rule-engine",
+            generationTimeMs: 24,
+          },
+        },
+      };
+
+      mockAxiosInstance.get.mockResolvedValue(mockResponse);
+
+      const result = await getDatasetInsights(datasetId, filters);
+
+      expect(mockAxiosInstance.get).toHaveBeenCalledWith(
+        `/api/v1/datasets/${datasetId}/insights`,
+        {
+          params: {
+            filters: JSON.stringify(filters),
+          },
+        },
+      );
+      expect(result).toEqual(mockResponse.data);
+    });
+
+    it("debe lanzar error cuando falla la generación de insights", async () => {
+      const datasetId = "dataset-123";
+      const filters: DashboardFilters = { categorical: {} };
+
+      mockAxiosInstance.get.mockRejectedValue({
+        response: {
+          data: {
+            success: false,
+            error: "Insights generation failed",
+          },
+        },
+      });
+
+      await expect(getDatasetInsights(datasetId, filters)).rejects.toThrow(
+        "Insights generation failed",
       );
     });
   });

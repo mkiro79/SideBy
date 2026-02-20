@@ -7,6 +7,26 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### [RFC-008] AI Insights Service - Frontend Integration (2026-02-20)
+
+**🎨 Frontend (`apps/client`):**
+- Integración del flujo de insights en dashboard por dataset con carga **on-demand** (sin consulta automática inicial)
+- Nuevo hook `useDatasetInsights` con React Query (`enabled=false` por defecto, `fetchInsights()` manual, cache por `staleTime/gcTime`)
+- Nuevo servicio API `getDatasetInsights(datasetId, filters)` en `datasets.api.ts`
+- Tipos API añadidos: `DatasetInsight`, `BusinessNarrative`, `DatasetInsightsResponse`
+- Refactor de `AIInsights` a componente presentacional con estados `idle/loading/error/empty/success`
+- Render del bloque `businessNarrative` + acciones recomendadas y meta de cache (`Desde caché`)
+
+**🧪 Tests:**
+- Nuevos tests unitarios:
+  - `hooks/__tests__/useDatasetInsights.test.ts`
+  - `components/dashboard/__tests__/AIInsights.test.tsx`
+  - casos de insights en `services/__tests__/datasets.api.test.ts`
+- Validación amplia del módulo dataset en verde: **459/459 tests passing**
+
+**📄 Documentación:**
+- `docs/design/RFC-008-AI-INSIGHTS-SERVICE.md` actualizado con registro de implementación frontend
+
 ### [RFC-008] AI Insights Service - Backend MVP (2026-02-19)
 
 **⚙️ Backend:**

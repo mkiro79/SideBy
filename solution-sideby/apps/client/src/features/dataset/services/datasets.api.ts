@@ -17,7 +17,9 @@ import type {
   ListDatasetsResponse,
   DeleteDatasetResponse,
   ApiError,
+  DatasetInsightsResponse,
 } from "../types/api.types.js";
+import type { DashboardFilters } from "../types/dashboard.types.js";
 
 // ============================================================================
 // AXIOS INSTANCE CON CONFIGURACIÓN BASE
@@ -188,6 +190,26 @@ export async function getDataset(datasetId: string): Promise<Dataset> {
     );
 
     return response.data.data;
+  } catch (error) {
+    throw new Error(extractErrorMessage(error));
+  }
+}
+
+export async function getDatasetInsights(
+  datasetId: string,
+  filters: DashboardFilters,
+): Promise<DatasetInsightsResponse> {
+  try {
+    const response = await apiClient.get<DatasetInsightsResponse>(
+      `/api/v1/datasets/${datasetId}/insights`,
+      {
+        params: {
+          filters: JSON.stringify(filters),
+        },
+      },
+    );
+
+    return response.data;
   } catch (error) {
     throw new Error(extractErrorMessage(error));
   }

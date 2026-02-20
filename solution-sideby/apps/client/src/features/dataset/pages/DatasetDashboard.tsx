@@ -30,6 +30,7 @@ import { DashboardFiltersBar } from '../components/dashboard/DashboardFiltersBar
 import { KPIGrid } from '../components/dashboard/KPIGrid.js';
 import { TrendChart } from '../components/dashboard/TrendChart.js';
 import { AIInsights } from '../components/dashboard/AIInsights.js';
+import { useDatasetInsights } from '../hooks/useDatasetInsights.js';
 import { TrendsGrid } from '../components/dashboard/TrendsGrid.js';
 import { DimensionGrid } from '../components/dashboard/DimensionGrid.js';
 import { SummaryTable } from '../components/dashboard/SummaryTable.js';
@@ -50,12 +51,17 @@ export default function DatasetDashboard() {
   // State para template y filtros
   const [selectedTemplate, setSelectedTemplate] = useState<DashboardTemplateId>('sideby_executive');
   const [filters, setFilters] = useState<DashboardFilters>({ categorical: {} });
+  const [shouldLoadInsights, setShouldLoadInsights] = useState(false);
 
   // Hook principal del dashboard
   const { dataset, kpis, filteredData, categoricalFields, isLoading, error } = useDatasetDashboard({
     datasetId: id || null,
     templateId: selectedTemplate,
     filters,
+  });
+
+  const insightsQuery = useDatasetInsights(id || '', filters, {
+    enabled: shouldLoadInsights && Boolean(id),
   });
   
   // State para granularidad temporal (usado en filtro de período)
@@ -93,6 +99,15 @@ export default function DatasetDashboard() {
   // Handler para limpiar todos los filtros (RFC-005)
   const handleClearFilters = () => {
     setFilters({ categorical: {}, periodFilter: undefined });
+  };
+
+  const handleGenerateInsights = () => {
+    if (!shouldLoadInsights) {
+      setShouldLoadInsights(true);
+      return;
+    }
+
+    void insightsQuery.fetchInsights();
   };
 
   // Helper: Aplicar filtro de período a los datos filtrados
@@ -422,8 +437,11 @@ export default function DatasetDashboard() {
             {dataset.aiConfig?.enabled && (
               <AIInsights
                 enabled={dataset.aiConfig.enabled}
-                userContext={dataset.aiConfig.userContext}
-                lastAnalysis={dataset.aiConfig.lastAnalysis}
+                hasRequested={shouldLoadInsights}
+                isLoading={insightsQuery.isLoading || insightsQuery.isFetching}
+                isError={insightsQuery.isError}
+                onGenerate={handleGenerateInsights}
+                data={insightsQuery.data}
               />
             )}
 

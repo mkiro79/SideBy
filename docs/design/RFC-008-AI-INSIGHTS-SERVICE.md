@@ -1164,6 +1164,39 @@ test('Usuario ve insights en el dashboard', async ({ page }) => {
 
 ---
 
-**Última actualización:** 2026-02-19 (rules-first + narrative opcional)  
+## 11. Registro de Implementación Frontend (2026-02-20)
+
+Scope ejecutado en `apps/client` (backend ya implementado):
+
+- [x] Rama creada: `rfc-008-ai-insights-service-frontend`
+- [x] Contratos frontend agregados en `types/api.types.ts`:
+  - `DatasetInsight`
+  - `BusinessNarrative`
+  - `DatasetInsightsResponse`
+- [x] Servicio API agregado en `services/datasets.api.ts`:
+  - `getDatasetInsights(datasetId, filters)`
+- [x] Hook React Query agregado en `hooks/useDatasetInsights.ts`:
+  - Consulta deshabilitada por defecto (`enabled=false`)
+  - Trigger manual con `fetchInsights()`
+  - Cache via `staleTime`/`gcTime`
+- [x] Componente `AIInsights` refactorizado:
+  - UI presentacional (sin lógica de fetch interna)
+  - Botón para generar insights bajo demanda
+  - Render de `insights` + `businessNarrative`
+  - Estados `loading`, `error`, `empty` y `cache meta`
+- [x] Integración en `pages/DatasetDashboard.tsx`:
+  - Carga on-demand desde la sección IA
+  - Sin `forceRefresh` (priorizando cache)
+- [x] TDD aplicado en frontend (sin E2E):
+  - `services/__tests__/datasets.api.test.ts` (casos de insights)
+  - `hooks/__tests__/useDatasetInsights.test.ts`
+  - `components/dashboard/__tests__/AIInsights.test.tsx`
+- [x] Validación de calidad:
+  - Tests objetivo en verde
+  - Build cliente exitoso (`npm run build --prefix solution-sideby/apps/client`)
+
+---
+
+**Última actualización:** 2026-02-20 (frontend RFC-008 integrado en dashboard)  
 **Próximo Review:** Después de Phase 1 completion
 
