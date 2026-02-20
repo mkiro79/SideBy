@@ -190,6 +190,29 @@ describe("GenerateInsightsUseCase", () => {
     expect(result.narrativeStatus).toBe("not-requested");
   });
 
+  it("saves cache in background without blocking response", async () => {
+    const unresolvedSave = new Promise<void>(() => {});
+    vi.mocked(cacheRepository.saveToCache).mockReturnValueOnce(unresolvedSave);
+
+    const useCase = new GenerateInsightsUseCase(
+      new MockDatasetRepository(baseDataset),
+      cacheRepository,
+      ruleEngine,
+      llmNarrator,
+      false,
+    );
+
+    const result = await useCase.execute({
+      datasetId: "dataset-1",
+      userId: "owner-1",
+      filters: { categorical: {} },
+      forceRefresh: true,
+    });
+
+    expect(result.fromCache).toBe(false);
+    expect(result.insights).toEqual([generatedInsight]);
+  });
+
   it("always uses rule engine and adds narrative when global flag and dataset ai flag are enabled", async () => {
     const useCase = new GenerateInsightsUseCase(
       new MockDatasetRepository(baseDataset),

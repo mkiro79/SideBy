@@ -375,14 +375,14 @@ export class RuleEngineAdapter implements InsightsGenerator {
   }
 
   private calculatePercentChange(
-    baseValue: number,
-    comparedValue: number,
+    currentValue: number,
+    referenceValue: number,
   ): number {
-    if (baseValue > 0) {
-      return ((comparedValue - baseValue) / baseValue) * 100;
+    if (referenceValue > 0) {
+      return ((currentValue - referenceValue) / referenceValue) * 100;
     }
 
-    if (comparedValue > 0) {
+    if (currentValue > 0) {
       return 100;
     }
 

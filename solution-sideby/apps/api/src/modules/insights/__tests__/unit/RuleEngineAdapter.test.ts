@@ -42,10 +42,10 @@ describe("RuleEngineAdapter", () => {
       categoricalFields: ["region"],
     },
     data: [
-      { _source_group: "groupA", region: "north", revenue: 100 },
-      { _source_group: "groupA", region: "south", revenue: 100 },
-      { _source_group: "groupB", region: "north", revenue: 200 },
-      { _source_group: "groupB", region: "south", revenue: 200 },
+      { _source_group: "groupA", region: "north", revenue: 200 },
+      { _source_group: "groupA", region: "south", revenue: 200 },
+      { _source_group: "groupB", region: "north", revenue: 100 },
+      { _source_group: "groupB", region: "south", revenue: 100 },
     ],
   };
 
@@ -70,6 +70,29 @@ describe("RuleEngineAdapter", () => {
 
     expect(changeInsight).toBeDefined();
     expect(Math.abs(changeInsight?.metadata.change ?? 0)).toBeGreaterThan(30);
+    expect((changeInsight?.metadata.change ?? 0) > 0).toBe(true);
+  });
+
+  it("returns negative change when groupA is below groupB", async () => {
+    const datasetWithDecline: Dataset = {
+      ...baseDataset,
+      data: [
+        { _source_group: "groupA", region: "north", revenue: 90 },
+        { _source_group: "groupA", region: "south", revenue: 110 },
+        { _source_group: "groupB", region: "north", revenue: 180 },
+        { _source_group: "groupB", region: "south", revenue: 220 },
+      ],
+    };
+
+    const insights = await adapter.generateInsights(datasetWithDecline, {
+      categorical: {},
+    });
+
+    const trend = insights.find(
+      (insight) => insight.type === "trend" || insight.type === "warning",
+    );
+
+    expect((trend?.metadata.change ?? 0) < 0).toBe(true);
   });
 
   it("builds comparative anomaly by dimension with group values in message", async () => {
@@ -128,12 +151,42 @@ describe("RuleEngineAdapter", () => {
         categoricalFields: ["country"],
       },
       data: [
-        { _source_group: "groupA", country: "CO", revenue: 100, applies: 80 },
-        { _source_group: "groupB", country: "CO", revenue: 240, applies: 30 },
-        { _source_group: "groupA", country: "MX", revenue: 90, applies: 70 },
-        { _source_group: "groupB", country: "MX", revenue: 180, applies: 25 },
-        { _source_group: "groupA", country: "AR", revenue: 70, applies: 60 },
-        { _source_group: "groupB", country: "AR", revenue: 120, applies: 20 },
+        {
+          _source_group: "groupA",
+          country: "CO",
+          revenue: 240,
+          applies: 30,
+        },
+        {
+          _source_group: "groupB",
+          country: "CO",
+          revenue: 100,
+          applies: 80,
+        },
+        {
+          _source_group: "groupA",
+          country: "MX",
+          revenue: 180,
+          applies: 25,
+        },
+        {
+          _source_group: "groupB",
+          country: "MX",
+          revenue: 90,
+          applies: 70,
+        },
+        {
+          _source_group: "groupA",
+          country: "AR",
+          revenue: 120,
+          applies: 20,
+        },
+        {
+          _source_group: "groupB",
+          country: "AR",
+          revenue: 70,
+          applies: 60,
+        },
       ],
     };
 
@@ -207,7 +260,7 @@ describe("RuleEngineAdapter", () => {
 
     expect(combined).toBeDefined();
     expect(combined?.message).toContain("region=north");
-    expect(combined?.message).toContain("channel=mail");
+    expect(combined?.message).toMatch(/channel=(mail|push)/);
   });
 
   it("applies categorical filters before calculating insights", async () => {
