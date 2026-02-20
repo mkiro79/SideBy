@@ -92,4 +92,24 @@ describe("HybridInsightsCacheRepository", () => {
     expect(memoryCache.saveToCache).toHaveBeenCalledTimes(1);
     expect(persistentCache.saveToCache).toHaveBeenCalledTimes(1);
   });
+
+  it("still saves to memory cache when persistent cache throws", async () => {
+    vi.mocked(persistentCache.saveToCache).mockRejectedValueOnce(
+      new Error("MongoDB connection failed"),
+    );
+
+    const repository = new HybridInsightsCacheRepository(
+      memoryCache,
+      persistentCache,
+    );
+
+    await expect(
+      repository.saveToCache("dataset-1", filters, payload, {
+        language: "es",
+        promptVersion: "v1",
+      }),
+    ).resolves.not.toThrow();
+
+    expect(memoryCache.saveToCache).toHaveBeenCalledTimes(1);
+  });
 });
