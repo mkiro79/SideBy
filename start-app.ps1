@@ -74,7 +74,7 @@ Start-Sleep -Seconds 15
 Write-Host ""
 
 # Verificar/descargar modelo de Ollama para Insights
-$insightsModel = if ($env:INSIGHTS_LLM_MODEL) { $env:INSIGHTS_LLM_MODEL } else { "qwen2.5:7b-instruct" }
+$insightsModel = if ($env:INSIGHTS_LLM_MODEL) { $env:INSIGHTS_LLM_MODEL } else { "gemma2:9b" }
 Write-Host "[*] Verificando modelo Ollama para Insights: $insightsModel" -ForegroundColor Yellow
 
 $ollamaModelList = docker compose exec -T ollama ollama list 2>$null

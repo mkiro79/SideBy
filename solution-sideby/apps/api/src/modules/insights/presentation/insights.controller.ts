@@ -52,7 +52,7 @@ export class InsightsController {
     const defaultApiKey = llmProvider === "openai-compatible" ? "" : "ollama";
 
     const llmBaseUrl = process.env.INSIGHTS_LLM_BASE_URL ?? defaultBaseUrl;
-    const llmModel = process.env.INSIGHTS_LLM_MODEL ?? "qwen2.5:7b-instruct";
+    const llmModel = process.env.INSIGHTS_LLM_MODEL ?? "gemma2:9b";
     const llmApiKey = process.env.INSIGHTS_LLM_API_KEY ?? defaultApiKey;
     const llmTimeoutMs = Number(process.env.INSIGHTS_LLM_TIMEOUT_MS ?? 120000);
 
