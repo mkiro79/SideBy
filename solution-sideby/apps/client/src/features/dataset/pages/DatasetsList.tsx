@@ -51,9 +51,15 @@ export const DatasetsList = () => {
   };
 
   /**
-   * Navega a la página de edición del dataset
+   * Navega a la página de edición del dataset.
+   * Si el dataset está en 'processing', lleva al wizard paso 2 para completar la definición.
    */
   const handleEdit = (id: string) => {
+    const dataset = datasets.find((d) => d.id === id);
+    if (dataset?.status === 'processing') {
+      navigate('/datasets/upload', { state: { datasetId: id, step: 2 } });
+      return;
+    }
     navigate(`/datasets/${id}`);
   };
 
