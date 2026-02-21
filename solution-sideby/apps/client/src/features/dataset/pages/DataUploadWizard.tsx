@@ -29,6 +29,7 @@ import {
 } from '@/shared/components/ui/alert-dialog.js';
 import { toast } from '@/shared/services/toast.js';
 import { useState, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useWizardState } from '../hooks/useWizardState.js';
 import { useDatasetUpload } from '../hooks/useDatasetUpload.js';
 import { useDatasetMapping } from '../hooks/useDatasetMapping.js';
@@ -43,6 +44,7 @@ export default function DataUploadWizard() {
   const navigate = useNavigate();
   const location = useLocation();
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
+  const queryClient = useQueryClient();
   
   // Wizard state (Zustand)
   const {
@@ -190,6 +192,9 @@ export default function DataUploadWizard() {
       // Guardar datasetId para FASE 2
       setDatasetId(result.datasetId);
       
+      // Invalidar lista para que aparezca el dataset en 'processing'
+      queryClient.invalidateQueries({ queryKey: ['datasets'] });
+      
       toast.success('Archivos subidos exitosamente', `${result.rowCount} filas procesadas`);
       
       // Avanzar a Step 2 (Mapping)
@@ -308,6 +313,8 @@ export default function DataUploadWizard() {
   const executeCancel = () => {
     setIsCancelDialogOpen(false);
     reset();
+    // Invalidar lista para reflejar cualquier dataset creado a medias
+    queryClient.invalidateQueries({ queryKey: ['datasets'] });
     navigate('/datasets');
   };
 
