@@ -9,9 +9,9 @@ import {
 } from "../../../schemas/datasetEdit.schema.js";
 
 /**
- * Wrapper component para proveer React Hook Form context
+ * Wrapper que provee el contexto de React Hook Form al componente
  */
-const FormWrapper = ({ disabled = true }: { disabled?: boolean }) => {
+const FormWrapper = () => {
   const {
     control,
     formState: { errors },
@@ -49,122 +49,94 @@ const FormWrapper = ({ disabled = true }: { disabled?: boolean }) => {
     },
   });
 
-  return <GroupConfigFields control={control} errors={errors} disabled={disabled} />;
+  return <GroupConfigFields control={control} errors={errors} />;
 };
 
 describe("GroupConfigFields", () => {
   describe("Renderizado", () => {
-    it("Renderiza el card con t铆tulo correcto", () => {
+    it("Renderiza el card con t韙ulo correcto", () => {
       render(<FormWrapper />);
 
-      expect(screen.getByText("Configuraci贸n de Grupos")).toBeInTheDocument();
+      expect(screen.getByText("Configuraci髇 de grupos")).toBeInTheDocument();
     });
 
-    it("Muestra el Alert informativo cuando est谩 disabled", () => {
-      render(<FormWrapper disabled={true} />);
+    it("Muestra el subt韙ulo descriptivo", () => {
+      render(<FormWrapper />);
 
       expect(
-        screen.getByText(/disponible pr贸ximamente/i),
+        screen.getByText(/Personaliza etiquetas y colores/i),
       ).toBeInTheDocument();
     });
 
-    it("No muestra el Alert cuando no est谩 disabled", () => {
-      render(<FormWrapper disabled={false} />);
-
-      expect(
-        screen.queryByText(/disponible pr贸ximamente/i),
-      ).not.toBeInTheDocument();
-    });
-
-    it("Renderiza la secci贸n de Grupo A con sus campos", () => {
+    it("Renderiza la secci髇 de Grupo A con sus campos", () => {
       render(<FormWrapper />);
 
       expect(screen.getByText("Grupo A")).toBeInTheDocument();
-      
-      // Label field - usar querySelector porque el label solo dice "Label"
-      const groupALabelInput = document.querySelector('#groupA-label') as HTMLInputElement;
+
+      const groupALabelInput = document.querySelector("#groupA-label") as HTMLInputElement;
       expect(groupALabelInput).toBeInTheDocument();
-      expect(groupALabelInput.tagName).toBe("INPUT");
       expect(groupALabelInput.value).toBe("Grupo A");
 
-      // Color field (hay 2 inputs: color picker + text input)
-      // Buscamos por el id del color picker
-      const groupAColorPicker = document.querySelector('#groupA-color') as HTMLInputElement;
+      const groupAColorPicker = document.querySelector("#groupA-color") as HTMLInputElement;
       expect(groupAColorPicker).toBeInTheDocument();
       expect(groupAColorPicker.value).toBe("#3b82f6");
     });
 
-    it("Renderiza la secci贸n de Grupo B con sus campos", () => {
+    it("Renderiza la secci髇 de Grupo B con sus campos", () => {
       render(<FormWrapper />);
 
       expect(screen.getByText("Grupo B")).toBeInTheDocument();
-      
-      // Label field - usar querySelector porque el label solo dice "Label"
-      const groupBLabelInput = document.querySelector('#groupB-label') as HTMLInputElement;
+
+      const groupBLabelInput = document.querySelector("#groupB-label") as HTMLInputElement;
       expect(groupBLabelInput).toBeInTheDocument();
       expect(groupBLabelInput.value).toBe("Grupo B");
 
-      // Color field
-      const groupBColorPicker = document.querySelector('#groupB-color') as HTMLInputElement;
+      const groupBColorPicker = document.querySelector("#groupB-color") as HTMLInputElement;
       expect(groupBColorPicker).toBeInTheDocument();
       expect(groupBColorPicker.value).toBe("#ef4444");
     });
   });
 
-  describe("Estado Disabled", () => {
-    it("Los campos est谩n disabled por defecto", () => {
-      render(<FormWrapper disabled={true} />);
+  describe("Estado habilitado", () => {
+    it("Los campos de label est醤 habilitados", () => {
+      render(<FormWrapper />);
 
-      const groupALabelInput = document.querySelector(
-        '#groupA-label',
-      ) as HTMLInputElement;
-      const groupAColorPicker = document.querySelector(
-        '#groupA-color',
-      ) as HTMLInputElement;
-      const groupBLabelInput = document.querySelector(
-        '#groupB-label',
-      ) as HTMLInputElement;
-      const groupBColorPicker = document.querySelector(
-        '#groupB-color',
-      ) as HTMLInputElement;
-
-      expect(groupALabelInput.disabled).toBe(true);
-      expect(groupAColorPicker.disabled).toBe(true);
-      expect(groupBLabelInput.disabled).toBe(true);
-      expect(groupBColorPicker.disabled).toBe(true);
-    });
-
-    it("Los campos est谩n habilitados cuando disabled=false", () => {
-      render(<FormWrapper disabled={false} />);
-
-      const groupALabelInput = document.querySelector(
-        '#groupA-label',
-      ) as HTMLInputElement;
-      const groupAColorPicker = document.querySelector(
-        '#groupA-color',
-      ) as HTMLInputElement;
+      const groupALabelInput = document.querySelector("#groupA-label") as HTMLInputElement;
+      const groupBLabelInput = document.querySelector("#groupB-label") as HTMLInputElement;
 
       expect(groupALabelInput.disabled).toBe(false);
+      expect(groupBLabelInput.disabled).toBe(false);
+    });
+
+    it("Los color pickers est醤 habilitados", () => {
+      render(<FormWrapper />);
+
+      const groupAColorPicker = document.querySelector("#groupA-color") as HTMLInputElement;
+      const groupBColorPicker = document.querySelector("#groupB-color") as HTMLInputElement;
+
       expect(groupAColorPicker.disabled).toBe(false);
+      expect(groupBColorPicker.disabled).toBe(false);
+    });
+  });
+
+  describe("Contador de caracteres", () => {
+    it("Muestra el contador de caracteres para Grupo A y B", () => {
+      render(<FormWrapper />);
+
+      // "Grupo A" = 7 chars, "Grupo B" = 7 chars  "7/50 caracteres"
+      const counters = screen.getAllByText(/\/50 caracteres/);
+      expect(counters.length).toBeGreaterThanOrEqual(2);
     });
   });
 
   describe("Valores por defecto", () => {
-    it("Muestra los valores iniciales correctos", () => {
+    it("Muestra los valores iniciales correctos en todos los campos", () => {
       render(<FormWrapper />);
 
-      const groupALabelInput = document.querySelector(
-        '#groupA-label',
-      ) as HTMLInputElement;
-      const groupAColorPicker = document.querySelector(
-        '#groupA-color',
-      ) as HTMLInputElement;
-      const groupBLabelInput = document.querySelector(
-        '#groupB-label',
-      ) as HTMLInputElement;
-      const groupBColorPicker = document.querySelector(
-        '#groupB-color',
-      ) as HTMLInputElement;
+      const groupALabelInput = document.querySelector("#groupA-label") as HTMLInputElement;
+      const groupAColorPicker = document.querySelector("#groupA-color") as HTMLInputElement;
+      const groupBLabelInput = document.querySelector("#groupB-label") as HTMLInputElement;
+      const groupBColorPicker = document.querySelector("#groupB-color") as HTMLInputElement;
 
       expect(groupALabelInput.value).toBe("Grupo A");
       expect(groupAColorPicker.value).toBe("#3b82f6");
@@ -174,32 +146,20 @@ describe("GroupConfigFields", () => {
   });
 
   describe("Accesibilidad", () => {
-    it("Todos los inputs tienen labels asociados", () => {
+    it("Todos los inputs principales existen en el DOM", () => {
       render(<FormWrapper />);
 
-      // Label inputs por ID
-      const groupALabelInput = document.querySelector('#groupA-label');
-      const groupBLabelInput = document.querySelector('#groupB-label');
-      
-      // Color pickers por ID
-      const groupAColorPicker = document.querySelector('#groupA-color');
-      const groupBColorPicker = document.querySelector('#groupB-color');
-
-      expect(groupALabelInput).toBeInTheDocument();
-      expect(groupAColorPicker).toBeInTheDocument();
-      expect(groupBLabelInput).toBeInTheDocument();
-      expect(groupBColorPicker).toBeInTheDocument();
+      expect(document.querySelector("#groupA-label")).toBeInTheDocument();
+      expect(document.querySelector("#groupB-label")).toBeInTheDocument();
+      expect(document.querySelector("#groupA-color")).toBeInTheDocument();
+      expect(document.querySelector("#groupB-color")).toBeInTheDocument();
     });
 
     it("Los color inputs tienen el type correcto", () => {
       render(<FormWrapper />);
 
-      const groupAColorPicker = document.querySelector(
-        '#groupA-color',
-      ) as HTMLInputElement;
-      const groupBColorPicker = document.querySelector(
-        '#groupB-color',
-      ) as HTMLInputElement;
+      const groupAColorPicker = document.querySelector("#groupA-color") as HTMLInputElement;
+      const groupBColorPicker = document.querySelector("#groupB-color") as HTMLInputElement;
 
       expect(groupAColorPicker.type).toBe("color");
       expect(groupBColorPicker.type).toBe("color");

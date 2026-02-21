@@ -42,6 +42,7 @@ import { GeneralInfoFields } from "../components/edit/GeneralInfoFields.js";
 import { GroupConfigFields } from "../components/edit/GroupConfigFields.js";
 import { KPIFieldsSection } from "../components/edit/KPIFieldsSection.js";
 import { AIConfigFields } from "../components/edit/AIConfigFields.js";
+import { DatasetSummarySection } from "../components/edit/DatasetSummarySection.js";
 
 // ============================================================================
 // HELPER FUNCTIONS
@@ -187,7 +188,6 @@ const DatasetDetail = () => {
     if (!id) return;
 
     try {
-      // Construir payload para backend (SIN sourceConfig por limitación)
       await updateMutation.mutateAsync({
         id,
         payload: {
@@ -195,6 +195,18 @@ const DatasetDetail = () => {
             name: formData.meta.name,
             description: formData.meta.description || undefined,
           },
+          sourceConfig: formData.sourceConfig
+            ? {
+                groupA: {
+                  label: formData.sourceConfig.groupA?.label || undefined,
+                  color: formData.sourceConfig.groupA?.color || undefined,
+                },
+                groupB: {
+                  label: formData.sourceConfig.groupB?.label || undefined,
+                  color: formData.sourceConfig.groupB?.color || undefined,
+                },
+              }
+            : undefined,
           schemaMapping: formData.schemaMapping,
           dashboardLayout: formData.dashboardLayout,
           aiConfig: formData.aiConfig
@@ -345,17 +357,19 @@ const DatasetDetail = () => {
         </div>
 
         {/* Form Sections */}
+        {/* Resumen visual de los archivos originales */}
+        <DatasetSummarySection
+          dataset={dataset}
+          columnCount={availableColumns.length}
+        />
+
         <GeneralInfoFields control={control} errors={errors} />
 
-        {/* FIX-02c: Ocultar campos de configuración estructural (dimensión/fecha/grupos)
-            cuando el dataset ya está en estado 'ready'. Solo se muestran KPIs, metadata y AI. */}
-        {dataset.status !== 'ready' && (
-          <GroupConfigFields
-            control={control}
-            errors={errors}
-            disabled={true} // Disabled por limitación backend
-          />
-        )}
+        {/* Configuración de grupos: labels y colores editables */}
+        <GroupConfigFields
+          control={control}
+          errors={errors}
+        />
 
         <KPIFieldsSection
           control={control}
