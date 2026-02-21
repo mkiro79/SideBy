@@ -14,6 +14,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
 import { SidebarProvider } from '@/shared/components/ui/sidebar.js';
 import { AppSidebar } from '@/shared/components/AppSidebar.js';
+import { getDataset } from '../services/datasets.api.js';
 import { Button } from '@/shared/components/ui/button.js';
 import { Card } from '@/shared/components/ui/card.js';
 import { Separator } from '@/shared/components/ui/Separator.js';
@@ -61,6 +62,8 @@ export default function DataUploadWizard() {
     setLoading,
     setError,
     goToStep,
+    setFileA,
+    setFileB,
     canProceedToStep2,
     canProceedToStep3,
     canSubmit,
@@ -70,15 +73,49 @@ export default function DataUploadWizard() {
   const routerState = location.state as { datasetId?: string; step?: number } | null;
 
   // Inicializar wizard si venimos de un dataset en estado 'processing'.
-  // useEffect se ejecuta solo una vez al montar, evitando side effects en render.
+  // Hace fetch del dataset para reconstruir parsedData con los headers reales de la API.
   useEffect(() => {
-    if (routerState?.datasetId) {
-      reset();
-      setDatasetId(routerState.datasetId);
-      if (routerState.step === 2) {
-        goToStep(2);
-      }
-    }
+    if (!routerState?.datasetId) return;
+
+    const datasetIdToLoad = routerState.datasetId;
+    reset();
+    setDatasetId(datasetIdToLoad);
+    setLoading(true);
+
+    getDataset(datasetIdToLoad)
+      .then((dataset) => {
+        const rows = dataset.data ?? [];
+        const allKeys = rows.length > 0 ? Object.keys(rows[0]) : [];
+        const headers = allKeys.filter((k) => k !== '_source_group');
+
+        const rowsA = rows
+          .filter((r) => r._source_group === 'groupA')
+          .map((r) => headers.reduce<Record<string, unknown>>((acc, h) => { acc[h] = r[h]; return acc; }, {}));
+
+        const rowsB = rows
+          .filter((r) => r._source_group === 'groupB')
+          .map((r) => headers.reduce<Record<string, unknown>>((acc, h) => { acc[h] = r[h]; return acc; }, {}));
+
+        setFileA({
+          parsedData: { headers, rows: rowsA, rowCount: rowsA.length },
+          isValid: true,
+          error: null,
+        });
+        setFileB({
+          parsedData: { headers, rows: rowsB, rowCount: rowsB.length },
+          isValid: true,
+          error: null,
+        });
+      })
+      .catch(() => {
+        setError('No se pudieron cargar los datos del dataset. Intenta de nuevo.');
+      })
+      .finally(() => {
+        setLoading(false);
+        if (routerState.step === 2) {
+          goToStep(2);
+        }
+      });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Intencionalmente vacío: solo ejecutar al montar
 
