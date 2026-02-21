@@ -152,7 +152,7 @@ export default function DatasetDashboard() {
     void insightsQuery.fetchInsights().finally(() => {
       setPendingInsightsRequest(0);
     });
-  }, [pendingInsightsRequest, insightsQuery]);
+  }, [pendingInsightsRequest, insightsQuery.fetchInsights]);
 
   React.useEffect(() => {
     if (!insightsQuery.data) {
@@ -165,7 +165,7 @@ export default function DatasetDashboard() {
       ...previousCache,
       [currentRequestKey]: insightsQuery.data,
     }));
-  }, [insightsQuery.data, insightsRequestFilters.categorical]);
+  }, [insightsQuery.data, buildInsightsCategoricalKey(insightsRequestFilters.categorical)]);
 
   React.useEffect(() => {
     setInsightsData(undefined);
