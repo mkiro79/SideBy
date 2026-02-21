@@ -10,6 +10,7 @@ import { ProtectedRoute } from './ProtectedRoute.js';
 // Public pages
 const Landing = lazy(() => import('@/features/public/pages/Landing.js'));
 const LoginPage = lazy(() => import('@/features/auth/pages/LoginPage.js').then(m => ({ default: m.LoginPage })));
+const ErrorPage = lazy(() => import('@/features/public/pages/ErrorPage.js').then(m => ({ default: m.ErrorPage })));
 
 // Protected pages  
 const Home = lazy(() => import('@/features/home/pages/Home.js'));
@@ -32,12 +33,23 @@ const PageLoader = () => (
 );
 
 // ============================================================================
+// ERROR FALLBACK ELEMENT
+// ============================================================================
+
+const RouterErrorElement = (
+  <Suspense fallback={<PageLoader />}>
+    <ErrorPage />
+  </Suspense>
+);
+
+// ============================================================================
 // APP ROUTER CONFIGURATION
 // ============================================================================
 
 export const appRouter = createBrowserRouter([
   {
     path: '/',
+    errorElement: RouterErrorElement,
     element: (
       <Suspense fallback={<PageLoader />}>
         <Landing />
@@ -46,6 +58,7 @@ export const appRouter = createBrowserRouter([
   },
   {
     path: '/home',
+    errorElement: RouterErrorElement,
     element: <ProtectedRoute />,
     children: [
       {
@@ -60,6 +73,7 @@ export const appRouter = createBrowserRouter([
   },
   {
     path: '/datasets',
+    errorElement: RouterErrorElement,
     element: <ProtectedRoute />,
     children: [
       {
@@ -98,6 +112,7 @@ export const appRouter = createBrowserRouter([
   },
   {
     path: '/login',
+    errorElement: RouterErrorElement,
     element: (
       <Suspense fallback={<PageLoader />}>
         <LoginPage />

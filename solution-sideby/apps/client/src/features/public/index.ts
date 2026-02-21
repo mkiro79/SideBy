@@ -4,4 +4,5 @@
  */
 
 export { Landing } from "./pages/Landing.js";
+export { ErrorPage } from "./pages/ErrorPage.js";
 export * from "./services/mockServices.js";

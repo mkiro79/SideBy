@@ -36,16 +36,30 @@ export const DatasetsList = () => {
   const deleteMutation = useDeleteDataset();
 
   /**
-   * Navega al dashboard de un dataset específico
+   * Navega al dashboard de un dataset específico.
+   * Si el dataset está en estado 'processing', redirige al wizard paso 2
+   * para que el usuario termine de completar el alta.
    */
   const handleOpenDashboard = (id: string) => {
+    const dataset = datasets.find((d) => d.id === id);
+    if (dataset?.status === 'processing') {
+      // Llevar al wizard paso 2 con el datasetId preconfigurado
+      navigate('/datasets/upload', { state: { datasetId: id, step: 2 } });
+      return;
+    }
     navigate(`/datasets/${id}/dashboard`);
   };
 
   /**
-   * Navega a la página de edición del dataset
+   * Navega a la página de edición del dataset.
+   * Si el dataset está en 'processing', lleva al wizard paso 2 para completar la definición.
    */
   const handleEdit = (id: string) => {
+    const dataset = datasets.find((d) => d.id === id);
+    if (dataset?.status === 'processing') {
+      navigate('/datasets/upload', { state: { datasetId: id, step: 2 } });
+      return;
+    }
     navigate(`/datasets/${id}`);
   };
 
@@ -76,7 +90,7 @@ export const DatasetsList = () => {
         <AppSidebar />
 
         <main className="flex-1 overflow-auto">
-          <div className="mx-auto w-full max-w-5xl py-6 space-y-6 px-4">
+          <div className="mx-auto w-full max-w-5xl pt-16 pb-6 md:py-6 space-y-6 px-4">
             
             {/* ================================================================
                 HEADER - Título y botón de crear
