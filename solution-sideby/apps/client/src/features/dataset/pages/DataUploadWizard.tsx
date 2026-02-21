@@ -44,6 +44,9 @@ export default function DataUploadWizard() {
   const navigate = useNavigate();
   const location = useLocation();
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
+  // Indica que venimos del listado retomando un dataset en 'processing'.
+  // En este caso el paso 1 (upload) ya se completó y no se puede volver a él.
+  const [isResumingFromList, setIsResumingFromList] = useState(false);
   const queryClient = useQueryClient();
   
   // Wizard state (Zustand)
@@ -80,6 +83,7 @@ export default function DataUploadWizard() {
     if (!routerState?.datasetId) return;
 
     const datasetIdToLoad = routerState.datasetId;
+    setIsResumingFromList(true);
     reset();
     setDatasetId(datasetIdToLoad);
     setLoading(true);
@@ -392,7 +396,7 @@ export default function DataUploadWizard() {
               <Button
                 variant="outline"
                 onClick={prevStep}
-                disabled={currentStep === 1 || isBusy}
+                disabled={currentStep === 1 || isBusy || (isResumingFromList && currentStep === 2)}
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 {' '}
