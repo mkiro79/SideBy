@@ -523,6 +523,7 @@ export default function DatasetDashboard() {
                 isLoading={insightsQuery.isLoading || insightsQuery.isFetching}
                 isError={insightsQuery.isError}
                 onGenerate={handleGenerateInsights}
+                onRetry={() => insightsQuery.refetch()}
                 data={insightsData}
                 resetReason={resetReason}
               />

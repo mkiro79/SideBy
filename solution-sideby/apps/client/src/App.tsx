@@ -5,6 +5,7 @@ import { lazy, Suspense } from 'react';
 import { appRouter } from './router/AppRouter.js';
 import { Toaster } from '@/shared/components/Toaster.js';
 import { queryClient } from '@/infrastructure/api/queryClient.js';
+import { ErrorBoundary } from '@/shared/components/ErrorBoundary.js';
 
 // Lazy load DevTools solo en desarrollo
 const ReactQueryDevtools = import.meta.env.DEV
@@ -36,19 +37,21 @@ function App() {
   }
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <GoogleOAuthProvider clientId={googleClientId}>
-        <RouterProvider router={appRouter} />
-        <Toaster />
-      </GoogleOAuthProvider>
-      
-      {/* React Query DevTools - Lazy loaded solo en modo desarrollo */}
-      {ReactQueryDevtools && (
-        <Suspense fallback={null}>
-          <ReactQueryDevtools initialIsOpen={false} />
-        </Suspense>
-      )}
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <GoogleOAuthProvider clientId={googleClientId}>
+          <RouterProvider router={appRouter} />
+          <Toaster />
+        </GoogleOAuthProvider>
+        
+        {/* React Query DevTools - Lazy loaded solo en modo desarrollo */}
+        {ReactQueryDevtools && (
+          <Suspense fallback={null}>
+            <ReactQueryDevtools initialIsOpen={false} />
+          </Suspense>
+        )}
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 

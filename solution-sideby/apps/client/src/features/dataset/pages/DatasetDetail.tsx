@@ -136,6 +136,9 @@ const DatasetDetail = () => {
     return dataset ? getAvailableColumns(dataset) : [];
   }, [dataset]);
 
+  // FIX-02c: En modo update (dataset 'ready'), ocultar campos estructurales
+  const isUpdateMode = dataset?.status === 'ready';
+
   // React Hook Form
   const {
     control,
@@ -307,11 +310,14 @@ const DatasetDetail = () => {
         {/* Form Sections */}
         <GeneralInfoFields control={control} errors={errors} />
 
-        <GroupConfigFields
-          control={control}
-          errors={errors}
-          disabled={true} // Disabled por limitación backend
-        />
+        {/* FIX-02c: Ocultar campos estructurales en modo update (dataset ready) */}
+        {!isUpdateMode && (
+          <GroupConfigFields
+            control={control}
+            errors={errors}
+            disabled={true} // Disabled por limitación backend
+          />
+        )}
 
         <KPIFieldsSection
           control={control}

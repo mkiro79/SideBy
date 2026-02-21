@@ -27,7 +27,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/shared/components/ui/alert-dialog.js";
-import { FileSpreadsheet, Calendar, BarChart3, Trash2, Loader2, Edit2, LayoutDashboard, Bot, Sparkles } from "lucide-react";
+import { FileSpreadsheet, Calendar, BarChart3, BarChart2, Trash2, Loader2, Edit2, Bot, Sparkles } from "lucide-react";
 import type { DatasetSummary } from "../types/api.types.js";
 import { FEATURES } from "@/config/features.js";
 
@@ -171,7 +171,7 @@ export const DatasetCard = ({
                 className="text-muted-foreground hover:text-primary"
                 aria-label="Abrir dashboard"
               >
-                <LayoutDashboard className="h-4 w-4" />
+                <BarChart2 className="h-4 w-4" />
               </Button>
             </Tooltip>
 

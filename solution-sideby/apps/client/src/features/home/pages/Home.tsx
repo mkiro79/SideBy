@@ -1,5 +1,6 @@
 import { SidebarProvider } from "@/shared/components/ui/sidebar";
 import { AppSidebar } from "@/shared/components/AppSidebar";
+import { MobileSidebarTrigger } from "@/shared/components/MobileSidebarTrigger.js";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
 import { Badge } from "@/shared/components/ui/badge";
@@ -28,7 +29,8 @@ const Home = () => {
         <AppSidebar />
         <main className="flex-1 overflow-auto">
           <div className="mx-auto w-full max-w-6xl px-6 py-8 space-y-8">
-            
+            {/* Botón hamburguesa — solo en móvil */}
+            <MobileSidebarTrigger />
             {/* Header */}
             <div className="flex items-start justify-between">
               <div className="space-y-2">

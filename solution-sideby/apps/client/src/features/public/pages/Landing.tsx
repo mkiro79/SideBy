@@ -25,18 +25,18 @@ import { useEffect } from "react";
 const features = [
   {
     icon: FileSpreadsheet,
-    title: "Upload CSV",
-    description: "Import your datasets in seconds. Just drag and drop your CSV files to get started.",
+    title: "Carga de datos",
+    description: "Importa tus datasets en segundos. Arrastra y suelta tus archivos CSV para empezar.",
   },
   {
     icon: Columns,
-    title: "Map Columns",
-    description: "Intuitive column mapping to align your data for accurate side-by-side comparison.",
+    title: "Mapeo de columnas",
+    description: "Alineación intuitiva de columnas para comparaciones precisas entre tus datasets.",
   },
   {
     icon: Bot,
-    title: "AI Insights",
-    description: "Get intelligent analysis and actionable recommendations powered by AI.",
+    title: "IA Insights",
+    description: "Obtén análisis inteligentes y recomendaciones accionables impulsadas por inteligencia artificial.",
   },
 ];
 
@@ -81,10 +81,10 @@ export const Landing = () => {
 
           <nav className="flex items-center gap-3">
             <Button variant="outline" asChild>
-              <Link to="/login">Log In</Link>
+              <Link to="/login">Iniciar sesión</Link>
             </Button>
             <Button asChild>
-              <Link to="/login">Start Free</Link>
+              <Link to="/login">Comenzar gratis</Link>
             </Button>
           </nav>
         </div>
@@ -99,28 +99,28 @@ export const Landing = () => {
             {/* Hero Text */}
             <div className="space-y-6 text-center lg:text-left">
               <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
-                Compare anything,{" "}
-                <span className="text-primary">SideBy</span> Side
+                Compara cualquier dato,{" "}
+                <span className="text-primary">SideBy</span> lado a lado
               </h1>
               <p className="text-lg text-muted-foreground max-w-xl mx-auto lg:mx-0">
-                Upload your datasets, map your metrics, and let AI uncover the insights. 
-                The fastest way to benchmark performance across periods, regions, or segments.
+                Sube tus datasets, mapea tus métricas y deja que la IA descubra los insights.
+                La forma más rápida de comparar rendimiento entre periodos, regiones o segmentos.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                 <Button 
                   size="lg" 
                   className="text-base px-8"
-                  onClick={() => handleCTAClick("Hero - Get Started")}
+                  onClick={() => handleCTAClick("Hero - Comenzar gratis")}
                 >
-                  Get Started — It's Free
+                  Comenzar — Es Gratis
                 </Button>
                 <Button 
                   size="lg" 
                   variant="outline" 
                   className="text-base"
-                  onClick={() => handleCTAClick("Hero - See Demo")}
+                  onClick={() => handleCTAClick("Hero - Ver demo")}
                 >
-                  See Demo
+                  Ver demo
                 </Button>
               </div>
             </div>
@@ -131,7 +131,7 @@ export const Landing = () => {
                 {/* Split gradient representing A/B comparison */}
                 <div className="absolute inset-0 flex">
                   <div className="w-1/2 bg-gradient-to-br from-blue-500/20 via-blue-500/40 to-blue-500/60" />
-                  <div className="w-1/2 bg-gradient-to-bl from-indigo-500/20 via-indigo-500/40 to-indigo-500/60" />
+                  <div className="w-1/2" style={{ background: 'linear-gradient(to bottom left, color-mix(in srgb, #f97415 20%, transparent), color-mix(in srgb, #f97415 40%, transparent), color-mix(in srgb, #f97415 60%, transparent))' }} />
                 </div>
                 
                 {/* Overlay content */}
@@ -143,7 +143,7 @@ export const Landing = () => {
                         <span className="text-2xl font-bold text-data-primary">A</span>
                       </div>
                       <span className="text-sm font-medium">Dataset A</span>
-                      <span className="text-xs text-muted-foreground">Current</span>
+                      <span className="text-xs text-muted-foreground">Actual</span>
                     </div>
                     
                     {/* VS Separator */}
@@ -159,7 +159,7 @@ export const Landing = () => {
                         <span className="text-2xl font-bold text-data-comparative">B</span>
                       </div>
                       <span className="text-sm font-medium">Dataset B</span>
-                      <span className="text-xs text-muted-foreground">Comparative</span>
+                      <span className="text-xs text-muted-foreground">Comparativo</span>
                     </div>
                   </div>
                 </div>
@@ -178,10 +178,10 @@ export const Landing = () => {
         <section className="container mx-auto px-4 py-20 border-t border-border">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold tracking-tight mb-4">
-              How it works
+              Cómo funciona
             </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              Three simple steps to unlock powerful insights from your data
+              Tres pasos simples para obtener insights potentes de tus datos
             </p>
           </div>
 
@@ -212,17 +212,17 @@ export const Landing = () => {
           <div className="relative rounded-2xl bg-gradient-to-r from-data-primary/10 via-primary/5 to-data-comparative/10 p-12 text-center overflow-hidden">
             <div className="relative z-10">
               <h2 className="text-3xl font-bold tracking-tight mb-4">
-                Ready to compare?
+                ¿Listo para comparar?
               </h2>
               <p className="text-muted-foreground max-w-lg mx-auto mb-8">
-                Start benchmarking your data in minutes. No credit card required.
+                Empieza a comparar tus datos en minutos. Sin tarjeta de crédito.
               </p>
               <Button 
                 size="lg" 
                 className="text-base px-8"
-                onClick={() => handleCTAClick("CTA - Start Free Today")}
+                onClick={() => handleCTAClick("CTA - Empezar gratis ahora")}
               >
-                Start Free Today
+                Empezar gratis ahora
               </Button>
             </div>
           </div>
@@ -242,18 +242,18 @@ export const Landing = () => {
           </div>
           
           <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} SideBy. All rights reserved.
+            © {new Date().getFullYear()} SideBy. Todos los derechos reservados.
           </p>
           
           <nav className="flex items-center gap-6 text-sm text-muted-foreground">
-            <Link to="#" className="hover:text-foreground transition-colors" onClick={() => trackButtonClick("Footer - Privacy")}>
-              Privacy
+            <Link to="/privacy" className="hover:text-foreground transition-colors" onClick={() => trackButtonClick("Footer - Privacidad")}>
+              Privacidad
             </Link>
-            <Link to="#" className="hover:text-foreground transition-colors" onClick={() => trackButtonClick("Footer - Terms")}>
-              Terms
+            <Link to="/terms" className="hover:text-foreground transition-colors" onClick={() => trackButtonClick("Footer - Términos")}>
+              Términos
             </Link>
-            <Link to="#" className="hover:text-foreground transition-colors" onClick={() => trackButtonClick("Footer - Contact")}>
-              Contact
+            <Link to="/contact" className="hover:text-foreground transition-colors" onClick={() => trackButtonClick("Footer - Contacto")}>
+              Contacto
             </Link>
           </nav>
         </div>
