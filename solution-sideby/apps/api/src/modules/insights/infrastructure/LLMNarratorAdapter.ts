@@ -26,6 +26,13 @@ interface LLMResponse {
 export class LLMNarratorAdapter implements InsightsNarrator {
   private readonly timeoutMs: number;
 
+  /**
+   * Expresión regular para extraer el nombre de país desde mensajes de insights
+   * con formato "País <nombre>: ...". Se define como constante de clase para
+   * evitar recompilación en cada llamada a `extractTopCountries`.
+   */
+  private static readonly COUNTRY_PATTERN = /País\s+([^:]+)/;
+
   constructor(private readonly config: LLMNarratorConfig) {
     this.timeoutMs = config.timeoutMs ?? 120000;
   }
@@ -46,8 +53,13 @@ export class LLMNarratorAdapter implements InsightsNarrator {
           messages: [
             {
               role: "system",
-              content:
-                "Eres un analista de negocio. Devuelve exclusivamente JSON válido.",
+              content: `
+Eres un Analista de Datos Senior para directiva C-Level.
+Responde con síntesis ejecutiva accionable, sin introducciones ni relleno.
+No repitas números sin interpretación de impacto.
+Agrupa anomalías relacionadas en conclusiones únicas.
+Devuelve exclusivamente JSON válido.
+`,
             },
             {
               role: "user",
@@ -132,7 +144,7 @@ export class LLMNarratorAdapter implements InsightsNarrator {
     }));
 
     return `
-Convierte insights por reglas en narrativa ejecutiva y acciones de negocio.
+  Genera un resumen ejecutivo de alto nivel a partir de insights por reglas.
 
 Dataset: ${dataset.meta.name}
 Descripción: ${dataset.meta.description ?? "N/A"}
@@ -150,13 +162,12 @@ ${JSON.stringify(digest, null, 2)}
 
 Instrucciones:
 1) No inventes datos fuera de los insights fuente.
-2) Evita frases genéricas como "hay oportunidades" o "se observa una tendencia" sin datos.
-3) Entrega un summary con esta estructura exacta:
-  - Línea 1: "Top 3 países con mejor desempeño:" + lista (país, métrica, cambio).
-  - Línea 2: "Top 3 métricas a mejorar:" + lista (métrica, cambio).
-4) Entrega entre 4 y 6 acciones concretas y priorizadas.
-5) Las acciones deben referenciar países o métricas concretas de las listas 3/3.
-4) Responde SOLO JSON con esta forma:
+2) Cero introducciones; ve directo al hallazgo de negocio.
+3) Evita redundancias y evita listar métricas sin interpretación.
+4) Entrega summary en máximo 3 frases, con foco en impacto.
+5) Entrega entre 3 y 5 acciones concretas, priorizadas y verificables.
+6) Las acciones deben referenciar países o métricas concretas cuando existan.
+7) Responde SOLO JSON con esta forma:
 {
   "summary": "...",
   "recommendedActions": ["...", "..."],
@@ -185,11 +196,15 @@ Instrucciones:
           typeof insight.metadata.change === "number" &&
           insight.metadata.change > 0,
       )
-      .map((insight) => ({
-        country: String(insight.message.match(/País\s+([^:]+)/)?.[1] ?? "N/A"),
-        kpi: insight.metadata.kpi ?? "unknown",
-        change: insight.metadata.change ?? 0,
-      }))
+      .map((insight) => {
+        const countryMatch = LLMNarratorAdapter.COUNTRY_PATTERN.exec(insight.message);
+
+        return {
+          country: String(countryMatch?.[1] ?? "N/A"),
+          kpi: insight.metadata.kpi ?? "unknown",
+          change: insight.metadata.change ?? 0,
+        };
+      })
       .sort((a, b) => b.change - a.change);
 
     const uniqueCountries = new Map<

@@ -7,9 +7,11 @@ import {
   GenerateInsightsUseCase,
   type GenerateInsightsCommand,
 } from "@/modules/insights/application/use-cases/GenerateInsightsUseCase.js";
+import { HybridInsightsCacheRepository } from "@/modules/insights/infrastructure/HybridInsightsCacheRepository.js";
 import { InMemoryInsightsCacheRepository } from "@/modules/insights/infrastructure/InMemoryInsightsCacheRepository.js";
 import { RuleEngineAdapter } from "@/modules/insights/infrastructure/RuleEngineAdapter.js";
 import { LLMNarratorAdapter } from "@/modules/insights/infrastructure/LLMNarratorAdapter.js";
+import { MongoInsightsCacheRepository } from "@/modules/insights/infrastructure/MongoInsightsCacheRepository.js";
 import type {
   BusinessNarrative,
   DashboardFilters,
@@ -28,7 +30,10 @@ interface InsightsUseCase {
 type InsightSource = "rule-engine" | "ai-model";
 type InsightsGenerationSource = InsightSource | "mixed" | "unknown";
 
-const defaultCacheRepository = new InMemoryInsightsCacheRepository(300);
+const defaultCacheRepository = new HybridInsightsCacheRepository(
+  new InMemoryInsightsCacheRepository(300),
+  new MongoInsightsCacheRepository(),
+);
 
 type LlmProvider = "ollama" | "openai-compatible";
 
@@ -55,6 +60,7 @@ export class InsightsController {
     const llmModel = process.env.INSIGHTS_LLM_MODEL ?? "gemma2:9b";
     const llmApiKey = process.env.INSIGHTS_LLM_API_KEY ?? defaultApiKey;
     const llmTimeoutMs = Number(process.env.INSIGHTS_LLM_TIMEOUT_MS ?? 120000);
+    const promptVersion = process.env.INSIGHTS_LLM_PROMPT_VERSION ?? "v1";
 
     this.generateInsightsUseCase = new GenerateInsightsUseCase(
       new MongoDatasetRepository(),
@@ -70,6 +76,7 @@ export class InsightsController {
             : 120000,
       }),
       llmEnabled,
+      promptVersion,
     );
   }
 

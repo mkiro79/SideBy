@@ -1,6 +1,7 @@
 import type {
   CachedInsightsPayload,
   DashboardFilters,
+  InsightCacheContext,
 } from "@/modules/insights/domain/DatasetInsight.js";
 import type { InsightsCacheRepository } from "@/modules/insights/application/ports/InsightsCacheRepository.js";
 
@@ -17,8 +18,9 @@ export class InMemoryInsightsCacheRepository implements InsightsCacheRepository 
   async findCached(
     datasetId: string,
     filters: DashboardFilters,
+    context?: InsightCacheContext,
   ): Promise<CachedInsightsPayload | null> {
-    const key = this.generateCacheKey(datasetId, filters);
+    const key = this.generateCacheKey(datasetId, filters, context);
     const cached = this.cache.get(key);
 
     if (!cached) {
@@ -37,8 +39,9 @@ export class InMemoryInsightsCacheRepository implements InsightsCacheRepository 
     datasetId: string,
     filters: DashboardFilters,
     payload: CachedInsightsPayload,
+    context?: InsightCacheContext,
   ): Promise<void> {
-    const key = this.generateCacheKey(datasetId, filters);
+    const key = this.generateCacheKey(datasetId, filters, context);
 
     this.cache.set(key, {
       payload,
@@ -57,7 +60,10 @@ export class InMemoryInsightsCacheRepository implements InsightsCacheRepository 
   private generateCacheKey(
     datasetId: string,
     filters: DashboardFilters,
+    context?: InsightCacheContext,
   ): string {
-    return `insights:${datasetId}:${JSON.stringify(filters)}`;
+    const language = context?.language ?? "es";
+    const promptVersion = context?.promptVersion ?? "v1";
+    return `insights:${datasetId}:${language}:${promptVersion}:${JSON.stringify(filters)}`;
   }
 }

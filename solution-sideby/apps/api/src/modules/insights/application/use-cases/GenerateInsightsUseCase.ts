@@ -8,6 +8,7 @@ import type {
   BusinessNarrative,
   DashboardFilters,
   DatasetInsight,
+  InsightCacheContext,
   NarrativeStatus,
 } from "@/modules/insights/domain/DatasetInsight.js";
 import logger from "@/utils/logger.js";
@@ -33,6 +34,7 @@ export class GenerateInsightsUseCase {
     private readonly ruleEngineAdapter: InsightsGenerator,
     private readonly llmNarrator: InsightsNarrator | null,
     private readonly llmEnabled: boolean,
+    private readonly promptVersion = "v1",
   ) {}
 
   async execute(
@@ -47,9 +49,11 @@ export class GenerateInsightsUseCase {
     }
 
     if (!forceRefresh) {
+      const cacheContext = this.resolveCacheContext(dataset.aiConfig);
       const cached = await this.insightRepository.findCached(
         datasetId,
         filters,
+        cacheContext,
       );
       if (cached) {
         return {
@@ -90,10 +94,23 @@ export class GenerateInsightsUseCase {
       }
     }
 
-    await this.insightRepository.saveToCache(datasetId, filters, {
-      insights,
-      businessNarrative,
-      narrativeStatus,
+    const cacheContext = this.resolveCacheContext(dataset.aiConfig);
+    const saveCachePromise = this.insightRepository.saveToCache(
+      datasetId,
+      filters,
+      {
+        insights,
+        businessNarrative,
+        narrativeStatus,
+      },
+      cacheContext,
+    );
+
+    void saveCachePromise.catch((error) => {
+      logger.warn(
+        { err: error, datasetId },
+        "Insight snapshot persistence failed",
+      );
     });
 
     return { insights, businessNarrative, narrativeStatus, fromCache: false };
@@ -136,5 +153,12 @@ export class GenerateInsightsUseCase {
     } catch {
       return "es";
     }
+  }
+
+  private resolveCacheContext(aiConfig?: AIConfig): InsightCacheContext {
+    return {
+      language: this.resolveLanguage(aiConfig),
+      promptVersion: this.promptVersion,
+    };
   }
 }

@@ -17,6 +17,29 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 **🧪 Tests:**
 - Nuevos tests unitarios para `insightsFilters` y cobertura del mensaje de reset en `AIInsights`
+### [RFC-010] AI Insights Semantic Cache (Backend) (2026-02-20)
+
+**⚙️ Backend (`apps/api`):**
+- Implementada caché semántica persistente con TTL en MongoDB (`InsightCache`) para snapshot completo (`insights` + `businessNarrative`)
+- Añadido `InsightCacheManager` con hash SHA-256 determinista y orden recursivo de claves
+- Integrada estrategia híbrida de caché (`memoria + Mongo`) con warm-up desde persistencia
+- Actualizado `GenerateInsightsUseCase` para persistencia asíncrona no bloqueante con logging silencioso ante fallos de guardado
+- Corregido cálculo de delta en `RuleEngineAdapter` usando baseline de grupo B: `(A-B)/B`
+- Prompt del `LLMNarratorAdapter` reforzado para salidas más ejecutivas, accionables y sin redundancias
+
+**🐳 Infra/Docker:**
+- Variables nuevas en compose/env para esta capa:
+  - `INSIGHTS_LLM_PROMPT_VERSION`
+  - `INSIGHTS_SUMMARY_CACHE_TTL_SECONDS`
+
+**🧪 Tests y validación:**
+- Nuevos tests unitarios para:
+  - `InsightCacheManager`
+  - `HybridInsightsCacheRepository`
+  - `MongoInsightsCacheRepository`
+- Ajustes de tests de `GenerateInsightsUseCase` y `RuleEngineAdapter` para cubrir persistencia asíncrona y signo de delta
+- Build backend en verde (`npm run build:api`)
+- Cobertura del use case principal por encima del 80%
 
 ### [RFC-008] AI Insights Service - Frontend Integration (2026-02-20)
 

@@ -31,7 +31,7 @@ interface DimensionalOutlier {
 export class RuleEngineAdapter implements InsightsGenerator {
   private static readonly GLOBAL_CHANGE_THRESHOLD = 20;
   private static readonly DIMENSION_CHANGE_THRESHOLD = 15;
-  private static readonly MAX_DIMENSION_INSIGHTS = 10;
+  private static readonly MAX_DIMENSION_INSIGHTS = 5;
   private static readonly TOP_ITEMS_LIMIT = 3;
 
   async generateInsights(
@@ -375,14 +375,14 @@ export class RuleEngineAdapter implements InsightsGenerator {
   }
 
   private calculatePercentChange(
-    baseValue: number,
-    comparedValue: number,
+    currentValue: number,
+    referenceValue: number,
   ): number {
-    if (baseValue > 0) {
-      return ((comparedValue - baseValue) / baseValue) * 100;
+    if (referenceValue > 0) {
+      return ((currentValue - referenceValue) / referenceValue) * 100;
     }
 
-    if (comparedValue > 0) {
+    if (currentValue > 0) {
       return 100;
     }
 
