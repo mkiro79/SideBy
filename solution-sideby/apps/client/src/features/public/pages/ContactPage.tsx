@@ -146,7 +146,7 @@ export const ContactPage = () => {
                 <p className="text-sm font-medium">Correo electrónico</p>
                 <a
                   href="mailto:maribel.quiros.formacion@gmail.com"
-                  className="text-sm text-primary underline underline-offset-4 break-all"
+                  className="text-sm text-primary underline underline-offset-4 break-words hyphens-auto"
                 >
                   maribel.quiros.formacion@gmail.com
                 </a>
