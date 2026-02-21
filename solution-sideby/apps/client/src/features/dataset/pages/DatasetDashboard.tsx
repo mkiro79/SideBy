@@ -77,6 +77,23 @@ export default function DatasetDashboard() {
   const insightsQuery = useDatasetInsights(id || '', insightsRequestFilters, {
     enabled: false,
   });
+  const insightsQueryData = insightsQuery.data;
+  const fetchInsights = insightsQuery.fetchInsights;
+
+  const currentFilterKey = React.useMemo(
+    () => buildInsightsCategoricalKey(filters.categorical),
+    [filters.categorical],
+  );
+
+  const nextInsightsRequestFilters = React.useMemo(
+    () => buildInsightsRequestFilters(filters),
+    [filters],
+  );
+
+  const insightsRequestFilterKey = React.useMemo(
+    () => buildInsightsCategoricalKey(insightsRequestFilters.categorical),
+    [insightsRequestFilters.categorical],
+  );
   
   // State para granularidad temporal (usado en filtro de período)
   const [granularity, setGranularity] = useState<'days' | 'weeks' | 'months' | 'quarters'>('months');
@@ -118,20 +135,18 @@ export default function DatasetDashboard() {
   const handleGenerateInsights = () => {
     setHasRequestedInsights(true);
     setResetReason(undefined);
-    setInsightsRequestFilters(buildInsightsRequestFilters(filters));
+    setInsightsRequestFilters(nextInsightsRequestFilters);
     setPendingInsightsRequest((previousValue) => previousValue + 1);
   };
 
   React.useEffect(() => {
-    const nextFilterKey = buildInsightsCategoricalKey(filters.categorical);
-
-    if (nextFilterKey === requestedFilterKey) {
+    if (currentFilterKey === requestedFilterKey) {
       return;
     }
 
-    setRequestedFilterKey(nextFilterKey);
+    setRequestedFilterKey(currentFilterKey);
 
-    const cachedInsights = insightsCache[nextFilterKey];
+    const cachedInsights = insightsCache[currentFilterKey];
     if (cachedInsights) {
       setInsightsData(cachedInsights);
       setHasRequestedInsights(true);
@@ -142,38 +157,38 @@ export default function DatasetDashboard() {
     setInsightsData(undefined);
     setHasRequestedInsights(false);
     setResetReason('Los filtros cambiaron, vuelve a generar el resumen.');
-  }, [filters.categorical, insightsCache, requestedFilterKey]);
+  }, [currentFilterKey, insightsCache, requestedFilterKey]);
 
   React.useEffect(() => {
     if (pendingInsightsRequest === 0) {
       return;
     }
 
-    void insightsQuery.fetchInsights().finally(() => {
+    void fetchInsights().finally(() => {
       setPendingInsightsRequest(0);
     });
-  }, [pendingInsightsRequest, insightsQuery.fetchInsights]);
+  }, [fetchInsights, pendingInsightsRequest]);
 
   React.useEffect(() => {
-    if (!insightsQuery.data) {
+    if (!insightsQueryData) {
       return;
     }
 
-    const currentRequestKey = buildInsightsCategoricalKey(insightsRequestFilters.categorical);
-    setInsightsData(insightsQuery.data);
+    setInsightsData(insightsQueryData);
     setInsightsCache((previousCache) => ({
       ...previousCache,
-      [currentRequestKey]: insightsQuery.data,
+      [insightsRequestFilterKey]: insightsQueryData,
     }));
-  }, [insightsQuery.data, buildInsightsCategoricalKey(insightsRequestFilters.categorical)]);
+  }, [insightsQueryData, insightsRequestFilterKey]);
 
   React.useEffect(() => {
     setInsightsData(undefined);
     setHasRequestedInsights(false);
     setResetReason(undefined);
     setInsightsCache({});
-    setRequestedFilterKey(buildInsightsCategoricalKey(filters.categorical));
-    setInsightsRequestFilters(buildInsightsRequestFilters(filters));
+    setFilters({ categorical: {}, periodFilter: undefined });
+    setRequestedFilterKey(buildInsightsCategoricalKey({}));
+    setInsightsRequestFilters({ categorical: {}, periodFilter: undefined });
     setPendingInsightsRequest(0);
   }, [id]);
 
