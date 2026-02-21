@@ -10,7 +10,7 @@
  * @updated 2026-02-13 - Refactored for 2-phase API integration
  */
 
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
 import { SidebarProvider } from '@/shared/components/ui/sidebar.js';
 import { AppSidebar } from '@/shared/components/AppSidebar.js';
@@ -27,7 +27,7 @@ import {
   AlertDialogTitle,
 } from '@/shared/components/ui/alert-dialog.js';
 import { toast } from '@/shared/services/toast.js';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useWizardState } from '../hooks/useWizardState.js';
 import { useDatasetUpload } from '../hooks/useDatasetUpload.js';
 import { useDatasetMapping } from '../hooks/useDatasetMapping.js';
@@ -40,6 +40,7 @@ import type { UpdateMappingRequest } from '../types/api.types.js';
 
 export default function DataUploadWizard() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
   
   // Wizard state (Zustand)
@@ -63,6 +64,32 @@ export default function DataUploadWizard() {
     canProceedToStep3,
     canSubmit,
   } = useWizardState();
+
+  /**
+   * FIX-02: Limpiar estado del wizard al montar si es un flujo nuevo.
+   * Si llegan query params ?step=2&datasetId=xxx (FIX-02b - resume), 
+   * se inicializa en ese paso en lugar de resetear.
+   */
+  useEffect(() => {
+    const resumeStep = searchParams.get('step');
+    const resumeDatasetId = searchParams.get('datasetId');
+
+    if (resumeStep && resumeDatasetId) {
+      // Flujo de reanudación: inicializar con el dataset existente
+      reset();
+      setDatasetId(resumeDatasetId);
+      // Avanzar al paso indicado (step 2 = mapping)
+      const targetStep = parseInt(resumeStep, 10);
+      if (targetStep === 2) {
+        nextStep(); // step 1 → step 2
+      }
+    } else {
+      // Flujo nuevo: resetear siempre para evitar datos contaminados del wizard anterior
+      reset();
+    }
+    // Solo ejecutar al montar
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   
   // API hooks
   const { upload, isLoading: isUploading } = useDatasetUpload();

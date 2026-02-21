@@ -13,10 +13,10 @@
  * Estilos adaptados a variables CSS de Tailwind 4
  */
 
-import { SidebarProvider } from "@/shared/components/ui/sidebar.js";
+import { SidebarProvider, useSidebar } from "@/shared/components/ui/sidebar.js";
 import { AppSidebar } from "@/shared/components/AppSidebar.js";
 import { Button } from "@/shared/components/ui/button.js";
-import { Plus } from "lucide-react";
+import { Plus, Menu } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useDatasets } from "../hooks/useDatasets.js";
 import { useDeleteDataset } from "../hooks/useDeleteDataset.js";
@@ -29,6 +29,7 @@ import { EmptyDatasets } from "../components/EmptyDatasets.js";
 
 export const DatasetsList = () => {
   const navigate = useNavigate();
+  const { toggleSidebar, isMobile } = useSidebar();
   
   // ✅ React Query hooks
   const { data: datasetsResponse, isLoading, error, refetch } = useDatasets();
@@ -36,10 +37,17 @@ export const DatasetsList = () => {
   const deleteMutation = useDeleteDataset();
 
   /**
-   * Navega al dashboard de un dataset específico
+   * FIX-02b: Navega al dashboard o al wizard según estado del dataset.
+   * Si el dataset sigue en 'processing', lo redirige al Wizard paso 2
+   * para que el usuario pueda completar la configuración.
    */
   const handleOpenDashboard = (id: string) => {
-    navigate(`/datasets/${id}/dashboard`);
+    const dataset = datasets.find((d) => d.id === id);
+    if (dataset?.status === 'processing') {
+      navigate(`/datasets/upload?step=2&datasetId=${id}`);
+    } else {
+      navigate(`/datasets/${id}/dashboard`);
+    }
   };
 
   /**
@@ -78,6 +86,18 @@ export const DatasetsList = () => {
         <main className="flex-1 overflow-auto">
           <div className="mx-auto w-full max-w-5xl py-6 space-y-6 px-4">
             
+            {/* Botón hamburguesa — solo en móvil */}
+            {isMobile && (
+              <button
+                type="button"
+                onClick={toggleSidebar}
+                className="flex items-center gap-2 text-foreground"
+                aria-label="Abrir menú"
+              >
+                <Menu className="h-5 w-5" />
+              </button>
+            )}
+
             {/* ================================================================
                 HEADER - Título y botón de crear
             ================================================================ */}

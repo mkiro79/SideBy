@@ -2,6 +2,7 @@
 import { lazy, Suspense } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { ProtectedRoute } from './ProtectedRoute.js';
+import { ErrorPage } from '@/features/public/pages/ErrorPage.js';
 
 // ============================================================================
 // LAZY LOADED PAGES
@@ -41,6 +42,7 @@ const PageLoader = () => (
 export const appRouter = createBrowserRouter([
   {
     path: '/',
+    errorElement: <ErrorPage />,
     element: (
       <Suspense fallback={<PageLoader />}>
         <Landing />
@@ -49,6 +51,7 @@ export const appRouter = createBrowserRouter([
   },
   {
     path: '/home',
+    errorElement: <ErrorPage />,
     element: <ProtectedRoute />,
     children: [
       {
@@ -63,6 +66,7 @@ export const appRouter = createBrowserRouter([
   },
   {
     path: '/datasets',
+    errorElement: <ErrorPage />,
     element: <ProtectedRoute />,
     children: [
       {
