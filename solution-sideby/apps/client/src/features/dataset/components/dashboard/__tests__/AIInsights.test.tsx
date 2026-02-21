@@ -5,6 +5,23 @@ import { AIInsights } from "../AIInsights.js";
 import type { DatasetInsightsResponse } from "../../../types/api.types.js";
 
 describe("AIInsights", () => {
+  it("debe mostrar mensaje cuando los filtros cambian y requiere regenerar", () => {
+    render(
+      <AIInsights
+        enabled={true}
+        hasRequested={false}
+        isLoading={false}
+        isError={false}
+        onGenerate={vi.fn()}
+        resetReason="Los filtros cambiaron, vuelve a generar el resumen."
+      />,
+    );
+
+    expect(
+      screen.getByText(/los filtros cambiaron, vuelve a generar el resumen/i),
+    ).toBeInTheDocument();
+  });
+
   it("debe mostrar botón para generar insights cuando aún no se solicitó", () => {
     render(
       <AIInsights

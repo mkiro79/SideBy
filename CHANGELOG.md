@@ -7,6 +7,16 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### [RFC-010] AI Insights Summary - Trigger Control & Local Reuse (2026-02-20)
+
+**🎨 Frontend (`apps/client`):**
+- El bloque de insights vuelve al estado inicial con botón cuando cambian filtros categóricos
+- Se evita relanzar consultas de insights por cambios de `periodFilter` o granularidad temporal
+- Reuso local de respuestas previas por key estable de filtros categóricos para evitar consumo innecesario de LLM
+- Nuevo util `insightsFilters` para normalización de filtros y construcción determinista de keys/request filters
+
+**🧪 Tests:**
+- Nuevos tests unitarios para `insightsFilters` y cobertura del mensaje de reset en `AIInsights`
 ### [RFC-010] AI Insights Semantic Cache (Backend) (2026-02-20)
 
 **⚙️ Backend (`apps/api`):**
