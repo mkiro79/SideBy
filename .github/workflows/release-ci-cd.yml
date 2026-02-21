@@ -1,0 +1,105 @@
+name: Release CI/CD
+
+on:
+  push:
+    branches:
+      - main
+      - release/**
+  pull_request:
+    branches:
+      - main
+      - release/**
+  workflow_dispatch:
+    inputs:
+      create_release_branch:
+        description: "Crear rama release"
+        required: true
+        type: boolean
+        default: false
+      release_branch_name:
+        description: "Nombre de la rama release (ej: release/1.2.0)"
+        required: false
+        type: string
+      source_branch:
+        description: "Rama origen para crear release"
+        required: false
+        type: string
+        default: main
+
+concurrency:
+  group: release-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  create-release-branch:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.create_release_branch }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout source branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source_branch }}
+          fetch-depth: 0
+
+      - name: Validate release branch name
+        run: |
+          BRANCH_NAME="${{ inputs.release_branch_name }}"
+          if [ -z "$BRANCH_NAME" ]; then
+            echo "release_branch_name es obligatorio cuando create_release_branch=true"
+            exit 1
+          fi
+
+          if [[ ! "$BRANCH_NAME" =~ ^release\/.+ ]]; then
+            echo "El nombre de rama debe iniciar con release/"
+            exit 1
+          fi
+
+      - name: Create release branch
+        run: |
+          BRANCH_NAME="${{ inputs.release_branch_name }}"
+
+          if git ls-remote --heads origin "$BRANCH_NAME" | grep -q "$BRANCH_NAME"; then
+            echo "La rama $BRANCH_NAME ya existe en remoto"
+            exit 1
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$BRANCH_NAME"
+          git push origin "$BRANCH_NAME"
+
+  quality-gates:
+    name: Quality Gates
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint API
+        run: npm run lint:api
+
+      - name: Lint Client
+        run: npm run lint:client
+
+      - name: Test API
+        run: npm run test:run --prefix solution-sideby/apps/api
+
+      - name: Test Client
+        run: npm run test:run --prefix solution-sideby/apps/client
+
+      - name: Build API
+        run: npm run build:api
+
+      - name: Build Client
+        run: npm run build:client
