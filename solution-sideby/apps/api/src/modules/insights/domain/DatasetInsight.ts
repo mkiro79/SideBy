@@ -51,3 +51,8 @@ export interface CachedInsightsPayload {
 export interface DashboardFilters {
   categorical?: Record<string, string[]>;
 }
+
+export interface InsightCacheContext {
+  language: "es" | "en";
+  promptVersion: string;
+}
