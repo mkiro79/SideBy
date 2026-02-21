@@ -9,6 +9,9 @@ import { ProtectedRoute } from './ProtectedRoute.js';
 
 // Public pages
 const Landing = lazy(() => import('@/features/public/pages/Landing.js'));
+const PrivacyPage = lazy(() => import('@/features/public/pages/PrivacyPage.js').then(m => ({ default: m.PrivacyPage })));
+const TermsPage = lazy(() => import('@/features/public/pages/TermsPage.js').then(m => ({ default: m.TermsPage })));
+const ContactPage = lazy(() => import('@/features/public/pages/ContactPage.js').then(m => ({ default: m.ContactPage })));
 const LoginPage = lazy(() => import('@/features/auth/pages/LoginPage.js').then(m => ({ default: m.LoginPage })));
 
 // Protected pages  
@@ -95,6 +98,30 @@ export const appRouter = createBrowserRouter([
         ),
       },
     ],
+  },
+  {
+    path: '/privacy',
+    element: (
+      <Suspense fallback={<PageLoader />}>
+        <PrivacyPage />
+      </Suspense>
+    ),
+  },
+  {
+    path: '/terms',
+    element: (
+      <Suspense fallback={<PageLoader />}>
+        <TermsPage />
+      </Suspense>
+    ),
+  },
+  {
+    path: '/contact',
+    element: (
+      <Suspense fallback={<PageLoader />}>
+        <ContactPage />
+      </Suspense>
+    ),
   },
   {
     path: '/login',
