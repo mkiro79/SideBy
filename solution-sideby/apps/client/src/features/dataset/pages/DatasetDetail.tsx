@@ -14,13 +14,22 @@
  * Ver: docs/ROADMAP.md → RFC-004 → Backend: Soportar edición de sourceConfig
  */
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Save, Loader2 } from "lucide-react";
 
 import { Button } from "@/shared/components/ui/button.js";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/shared/components/ui/alert-dialog.js";
 import { toast } from "@/shared/services/toast.js";
 
 import { useDataset } from "../hooks/useDataset.js";
@@ -126,6 +135,7 @@ const getAvailableColumns = (dataset: Dataset): string[] => {
 const DatasetDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [isUnsavedChangesDialogOpen, setIsUnsavedChangesDialogOpen] = useState(false);
 
   // React Query hooks
   const { dataset, isLoading, error } = useDataset(id || null);
@@ -212,15 +222,22 @@ const DatasetDetail = () => {
   };
 
   /**
-   * Navega de regreso a la lista
+   * Navega de regreso a la lista.
+   * Si hay cambios sin guardar, muestra un AlertDialog de confirmación.
    */
   const handleBack = () => {
     if (isDirty) {
-      const confirmed = globalThis.confirm(
-        "Tienes cambios sin guardar. ¿Estás seguro de salir?",
-      );
-      if (!confirmed) return;
+      setIsUnsavedChangesDialogOpen(true);
+      return;
     }
+    navigate("/datasets");
+  };
+
+  /**
+   * Confirma la navegación descartando cambios
+   */
+  const handleConfirmBack = () => {
+    setIsUnsavedChangesDialogOpen(false);
     navigate("/datasets");
   };
 
@@ -254,6 +271,29 @@ const DatasetDetail = () => {
 
   return (
     <div className="min-h-screen bg-background p-6">
+      {/* ================================================================
+          DIALOG - Confirmar salir con cambios sin guardar
+      ================================================================ */}
+      <AlertDialog open={isUnsavedChangesDialogOpen} onOpenChange={setIsUnsavedChangesDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Salir sin guardar?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tienes cambios sin guardar. Si sales ahora, se perderán todos los cambios realizados.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Seguir editando</AlertDialogCancel>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmBack}
+            >
+              Salir sin guardar
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <form onSubmit={handleSubmit(onSubmit)} className="container max-w-4xl space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
