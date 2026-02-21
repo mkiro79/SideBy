@@ -1,3 +1,12 @@
+/**
+ * Tests para utilidades de filtros de insights (insightsFilters)
+ *
+ * Verifica:
+ * - Generación de claves de caché estables independientes del orden de filtros categóricos
+ * - Construcción de filtros de request que incluyen solo filtros categóricos (excluyendo periodFilter)
+ * - Detección de cambios en filtros categóricos, incluyendo casos donde el orden varía pero los valores son idénticos
+ */
+
 import { describe, it, expect } from "vitest";
 import {
   buildInsightsCategoricalKey,
@@ -36,6 +45,7 @@ describe("insightsFilters", () => {
         region: ["Norte"],
       },
     });
+    expect(requestFilters).not.toHaveProperty("periodFilter");
   });
 
   it("hasCategoricalFiltersChanged detecta cambios reales", () => {
@@ -49,5 +59,12 @@ describe("insightsFilters", () => {
     expect(
       hasCategoricalFiltersChanged({ region: ["Norte"] }, { region: ["Sur"] }),
     ).toBe(true);
+
+    expect(
+      hasCategoricalFiltersChanged(
+        { region: ["Sur", "Norte"] },
+        { region: ["Norte", "Sur"] },
+      ),
+    ).toBe(false);
   });
 });
