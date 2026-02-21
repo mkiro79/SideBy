@@ -26,6 +26,13 @@ interface LLMResponse {
 export class LLMNarratorAdapter implements InsightsNarrator {
   private readonly timeoutMs: number;
 
+  /**
+   * Expresión regular para extraer el nombre de país desde mensajes de insights
+   * con formato "País <nombre>: ...". Se define como constante de clase para
+   * evitar recompilación en cada llamada a `extractTopCountries`.
+   */
+  private static readonly COUNTRY_PATTERN = /País\s+([^:]+)/;
+
   constructor(private readonly config: LLMNarratorConfig) {
     this.timeoutMs = config.timeoutMs ?? 120000;
   }
@@ -182,8 +189,6 @@ Instrucciones:
     kpi: string;
     change: number;
   }> {
-    const countryRegex = /País\s+([^:]+)/;
-
     const countries = insights
       .filter(
         (insight) =>
@@ -192,7 +197,7 @@ Instrucciones:
           insight.metadata.change > 0,
       )
       .map((insight) => {
-        const countryMatch = countryRegex.exec(insight.message);
+        const countryMatch = LLMNarratorAdapter.COUNTRY_PATTERN.exec(insight.message);
 
         return {
           country: String(countryMatch?.[1] ?? "N/A"),

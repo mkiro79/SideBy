@@ -32,6 +32,32 @@ describe("InsightCacheManager", () => {
     expect(keyA).toBe(keyB);
   });
 
+  it("generates same key when array filter values are in different order", () => {
+    const datasetId = "65f8cc5b06fcd02b3f7c9123";
+
+    const keyA = manager.generateCacheKey(datasetId, {
+      filters: {
+        categorical: {
+          country: ["CO", "MX"],
+        },
+      },
+      language: "es",
+      promptVersion: "v1",
+    });
+
+    const keyB = manager.generateCacheKey(datasetId, {
+      filters: {
+        categorical: {
+          country: ["MX", "CO"],
+        },
+      },
+      language: "es",
+      promptVersion: "v1",
+    });
+
+    expect(keyA).toBe(keyB);
+  });
+
   it("generates different keys for different language or prompt version", () => {
     const datasetId = "65f8cc5b06fcd02b3f7c9123";
     const filters = {
