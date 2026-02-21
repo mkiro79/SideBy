@@ -7,7 +7,7 @@
  * @see {@link ../types/api.types.ts} - Tipos de Request/Response
  */
 
-import axios, { type AxiosInstance, type AxiosError } from "axios";
+import axios, { type AxiosInstance } from "axios";
 import type {
   UploadFilesRequest,
   UploadFilesResponse,
@@ -16,7 +16,6 @@ import type {
   Dataset,
   ListDatasetsResponse,
   DeleteDatasetResponse,
-  ApiError,
   DatasetInsightsResponse,
 } from "../types/api.types.js";
 import type { DashboardFilters } from "../types/dashboard.types.js";
@@ -87,26 +86,42 @@ apiClient.interceptors.request.use(
 );
 
 /**
- * Extrae mensaje de error de la respuesta del backend
+ * Extrae mensaje de error de la respuesta del backend.
+ * Siempre devuelve un string, nunca un objeto, para evitar [object Object] en toasts.
  */
 const extractErrorMessage = (error: unknown): string => {
   if (axios.isAxiosError(error)) {
-    const axiosError = error as AxiosError<ApiError>;
-    const apiError = axiosError.response?.data;
+    const data = error.response?.data as Record<string, unknown> | undefined;
 
-    if (apiError && "error" in apiError) {
-      return apiError.error;
+    if (data && typeof data === 'object') {
+      // Estructura estándar: { error: "string" }
+      if ('error' in data && typeof data.error === 'string' && data.error) {
+        return data.error;
+      }
+      // Alternativa: { message: "string" }
+      if ('message' in data && typeof data.message === 'string' && data.message) {
+        return data.message;
+      }
+      // Zod/Express-validator: { errors: [...] }
+      if ('errors' in data && Array.isArray(data.errors) && data.errors.length > 0) {
+        const first = data.errors[0];
+        if (typeof first === 'string') return first;
+        if (typeof first === 'object' && first !== null) {
+          const f = first as Record<string, unknown>;
+          return (typeof f.message === 'string' ? f.message : null)
+            ?? (typeof f.msg === 'string' ? f.msg : null)
+            ?? JSON.stringify(first);
+        }
+      }
+      // Fallback: serializar el objeto completo para debugging
+      try { return JSON.stringify(data); } catch { /* ignore */ }
     }
 
-    // Fallback para respuestas sin estructura ApiError
-    if (axiosError.response?.statusText) {
-      return axiosError.response.statusText;
-    }
-
-    return axiosError.message || "Error desconocido";
+    if (error.response?.statusText) return error.response.statusText;
+    return error.message || 'Error desconocido';
   }
 
-  return error instanceof Error ? error.message : "Error desconocido";
+  return error instanceof Error ? error.message : 'Error desconocido';
 };
 
 // ============================================================================
