@@ -292,7 +292,7 @@ export default function DataUploadWizard() {
         <AppSidebar />
         
         <main className="flex-1 overflow-auto">
-          <div className="container max-w-5xl mx-auto py-8 px-6 space-y-8">
+            <div className="container max-w-5xl mx-auto pt-16 pb-8 md:py-8 px-6 space-y-8">
             {/* Header */}
             <div className="flex items-center justify-between">
               <div>

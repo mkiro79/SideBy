@@ -84,7 +84,7 @@ export const DatasetsList = () => {
         <AppSidebar />
 
         <main className="flex-1 overflow-auto">
-          <div className="mx-auto w-full max-w-5xl py-6 space-y-6 px-4">
+          <div className="mx-auto w-full max-w-5xl pt-16 pb-6 md:py-6 space-y-6 px-4">
             
             {/* ================================================================
                 HEADER - Título y botón de crear

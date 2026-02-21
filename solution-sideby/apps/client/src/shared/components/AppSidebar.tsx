@@ -37,28 +37,26 @@ export function AppSidebar() {
 
   return (
     <>
-      {/* Botón hamburguesa - solo visible en móvil cuando el sidebar está cerrado */}
-      {isMobile && !openMobile && (
-        <button
-          type="button"
-          onClick={toggleSidebar}
-          aria-label="Abrir menú de navegación"
-          className="fixed left-4 top-4 z-50 flex h-10 w-10 items-center justify-center rounded-lg bg-sidebar text-sidebar-foreground border border-sidebar-border shadow-md md:hidden"
-        >
-          <Menu className="h-5 w-5" />
-        </button>
-      )}
-
-      {/* Botón de cierre - visible en móvil cuando el sidebar está abierto */}
-      {isMobile && openMobile && (
-        <button
-          type="button"
-          onClick={toggleSidebar}
-          aria-label="Cerrar menú de navegación"
-          className="fixed right-4 top-4 z-[60] flex h-10 w-10 items-center justify-center rounded-lg bg-sidebar text-sidebar-foreground border border-sidebar-border shadow-md md:hidden"
-        >
-          <X className="h-5 w-5" />
-        </button>
+      {/* Barra superior móvil - sticky, no tapa el contenido */}
+      {isMobile && (
+        <div className="fixed top-0 left-0 right-0 z-40 flex h-14 items-center justify-between px-4 bg-sidebar border-b border-sidebar-border md:hidden">
+          {/* Marca */}
+          <div className="flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+              <BarChart3 className="h-4 w-4" />
+            </div>
+            <span className="font-bold text-base">SideBy</span>
+          </div>
+          {/* Toggle */}
+          <button
+            type="button"
+            onClick={toggleSidebar}
+            aria-label={openMobile ? 'Cerrar menú' : 'Abrir menú de navegación'}
+            className="flex h-9 w-9 items-center justify-center rounded-lg hover:bg-sidebar-accent transition-colors"
+          >
+            {openMobile ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
       )}
 
       <Sidebar collapsible="offcanvas">

@@ -376,7 +376,7 @@ export default function DatasetDashboard() {
         <AppSidebar />
         
         <main className="flex-1 overflow-auto">
-          <div className="container max-w-7xl mx-auto py-8 px-6 space-y-8">
+          <div className="container max-w-7xl mx-auto pt-16 pb-8 md:py-8 px-6 space-y-8">
             {/* Header */}
             <div className="flex items-center justify-between flex-wrap gap-4">
               <div className="flex items-center gap-4">
