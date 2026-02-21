@@ -20,6 +20,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Save, Loader2 } from "lucide-react";
 
+import { SidebarProvider } from "@/shared/components/ui/sidebar.js";
+import { AppSidebar } from "@/shared/components/AppSidebar.js";
 import { Button } from "@/shared/components/ui/button.js";
 import {
   AlertDialog,
@@ -282,7 +284,10 @@ const DatasetDetail = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background p-6">
+    <SidebarProvider defaultOpen={true}>
+      <div className="flex min-h-screen w-full">
+        <AppSidebar />
+        <main className="flex-1 overflow-auto">
       {/* ================================================================
           DIALOG - Confirmar salir con cambios sin guardar
       ================================================================ */}
@@ -306,7 +311,8 @@ const DatasetDetail = () => {
         </AlertDialogContent>
       </AlertDialog>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="container max-w-4xl space-y-6">
+      <div className="mx-auto w-full max-w-4xl pt-16 pb-6 md:py-6 space-y-6 px-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -408,7 +414,10 @@ const DatasetDetail = () => {
           </Button>
         </div>
       </form>
-    </div>
+      </div>
+        </main>
+      </div>
+    </SidebarProvider>
   );
 };
 

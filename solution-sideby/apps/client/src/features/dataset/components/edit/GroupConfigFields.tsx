@@ -1,5 +1,5 @@
 /**
- * GroupConfigFields - Configuración editable de grupos comparativos
+ * GroupConfigFields - ConfiguraciÃ³n editable de grupos comparativos
  *
  * Campos:
  * - sourceConfig.groupA.label (Input text, max 50 chars, contador)
@@ -24,7 +24,7 @@ interface GroupConfigFieldsProps {
 }
 
 // ============================================================================
-// SUBCOMPONENT - Bloque de configuración de un grupo
+// SUBCOMPONENT - Bloque de configuraciÃ³n de un grupo
 // ============================================================================
 
 interface GroupBlockProps {
@@ -56,7 +56,7 @@ const GroupBlock = ({
 
   return (
     <div className="space-y-4">
-      {/* Título del grupo con color de acento */}
+      {/* Tï¿½tulo del grupo con color de acento */}
       <h3 className="font-semibold text-base" style={{ color: accentColor }}>
         {title}
       </h3>
@@ -148,7 +148,7 @@ export const GroupConfigFields = ({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Configuración de grupos</CardTitle>
+        <CardTitle>ConfiguraciÃ³n de grupos</CardTitle>
         <p className="text-sm text-muted-foreground">
           Personaliza etiquetas y colores para los grupos A y B.
         </p>
