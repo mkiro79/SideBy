@@ -307,11 +307,15 @@ const DatasetDetail = () => {
         {/* Form Sections */}
         <GeneralInfoFields control={control} errors={errors} />
 
-        <GroupConfigFields
-          control={control}
-          errors={errors}
-          disabled={true} // Disabled por limitación backend
-        />
+        {/* FIX-02c: Ocultar campos de configuración estructural (dimensión/fecha/grupos)
+            cuando el dataset ya está en estado 'ready'. Solo se muestran KPIs, metadata y AI. */}
+        {dataset.status !== 'ready' && (
+          <GroupConfigFields
+            control={control}
+            errors={errors}
+            disabled={true} // Disabled por limitación backend
+          />
+        )}
 
         <KPIFieldsSection
           control={control}

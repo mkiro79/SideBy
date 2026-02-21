@@ -36,9 +36,17 @@ export const DatasetsList = () => {
   const deleteMutation = useDeleteDataset();
 
   /**
-   * Navega al dashboard de un dataset específico
+   * Navega al dashboard de un dataset específico.
+   * Si el dataset está en estado 'processing', redirige al wizard paso 2
+   * para que el usuario termine de completar el alta.
    */
   const handleOpenDashboard = (id: string) => {
+    const dataset = datasets.find((d) => d.id === id);
+    if (dataset?.status === 'processing') {
+      // Llevar al wizard paso 2 con el datasetId preconfigurado
+      navigate('/datasets/upload', { state: { datasetId: id, step: 2 } });
+      return;
+    }
     navigate(`/datasets/${id}/dashboard`);
   };
 

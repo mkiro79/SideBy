@@ -10,7 +10,7 @@
  * @updated 2026-02-13 - Refactored for 2-phase API integration
  */
 
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
 import { SidebarProvider } from '@/shared/components/ui/sidebar.js';
 import { AppSidebar } from '@/shared/components/AppSidebar.js';
@@ -27,7 +27,7 @@ import {
   AlertDialogTitle,
 } from '@/shared/components/ui/alert-dialog.js';
 import { toast } from '@/shared/services/toast.js';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useWizardState } from '../hooks/useWizardState.js';
 import { useDatasetUpload } from '../hooks/useDatasetUpload.js';
 import { useDatasetMapping } from '../hooks/useDatasetMapping.js';
@@ -40,6 +40,7 @@ import type { UpdateMappingRequest } from '../types/api.types.js';
 
 export default function DataUploadWizard() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
   
   // Wizard state (Zustand)
@@ -59,10 +60,35 @@ export default function DataUploadWizard() {
     setDatasetId,
     setLoading,
     setError,
+    goToStep,
     canProceedToStep2,
     canProceedToStep3,
     canSubmit,
   } = useWizardState();
+
+  // Recuperar dataset en processing desde el router state (FIX-02b)
+  const routerState = location.state as { datasetId?: string; step?: number } | null;
+
+  // Inicializar wizard si venimos de un dataset en estado 'processing'.
+  // useEffect se ejecuta solo una vez al montar, evitando side effects en render.
+  useEffect(() => {
+    if (routerState?.datasetId) {
+      reset();
+      setDatasetId(routerState.datasetId);
+      if (routerState.step === 2) {
+        goToStep(2);
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Intencionalmente vacío: solo ejecutar al montar
+
+  // Limpiar el estado del wizard al desmontar (FIX-02: evitar estado residual)
+  useEffect(() => {
+    return () => {
+      reset();
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   
   // API hooks
   const { upload, isLoading: isUploading } = useDatasetUpload();

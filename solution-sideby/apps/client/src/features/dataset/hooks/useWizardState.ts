@@ -3,13 +3,16 @@
  *
  * Hook de Zustand que gestiona el estado completo del wizard de carga de datos.
  * Implementa navegación entre pasos, validación y reset.
- * Incluye persistencia en localStorage para mantener el estado entre sesiones.
+ *
+ * NOTA: Se eliminó la persistencia en localStorage (FIX-02) porque causaba
+ * que al volver al listado y crear un nuevo dataset se precargaran datos de
+ * la sesión anterior, dejando el listado inconsistente.
+ * El estado ahora vive solo en memoria y se resetea al desmontar el wizard.
  *
  * UPDATED: Fixed kpiFields optional chaining (2026-02-08)
  */
 
 import { create } from "zustand";
-import { persist, createJSONStorage } from "zustand/middleware";
 import type {
   WizardState,
   WizardStep,
@@ -111,9 +114,8 @@ interface WizardActions {
 }
 
 export const useWizardState = create<WizardState & WizardActions>()(
-  persist(
-    (set, get) => ({
-      ...initialState,
+  (set, get) => ({
+    ...initialState,
 
       // ============================================================================
       // NAVIGATION ACTIONS
@@ -274,30 +276,4 @@ export const useWizardState = create<WizardState & WizardActions>()(
         );
       },
     }),
-    {
-      name: "sideby-wizard-storage", // Nombre de la clave en localStorage
-      storage: createJSONStorage(() => localStorage),
-      // No persistir archivos File (binarios), solo metadatos
-      partialize: (state) => ({
-        currentStep: state.currentStep,
-        datasetId: state.datasetId, // NEW: Persist datasetId
-        fileA: {
-          file: null, // No persistir el objeto File
-          parsedData: null, // No persistir datos parseados (evita exceder cuota)
-          error: state.fileA.error,
-          isValid: state.fileA.isValid,
-        },
-        fileB: {
-          file: null, // No persistir el objeto File
-          parsedData: null, // No persistir datos parseados (evita exceder cuota)
-          error: state.fileB.error,
-          isValid: state.fileB.isValid,
-        },
-        mapping: state.mapping,
-        metadata: state.metadata,
-        aiConfig: state.aiConfig,
-        sourceConfig: state.sourceConfig,
-      }),
-    },
-  ),
 );
