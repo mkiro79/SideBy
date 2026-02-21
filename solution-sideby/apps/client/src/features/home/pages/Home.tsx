@@ -1,9 +1,10 @@
-import { SidebarProvider, useSidebar } from "@/shared/components/ui/sidebar";
+import { SidebarProvider } from "@/shared/components/ui/sidebar";
 import { AppSidebar } from "@/shared/components/AppSidebar";
+import { MobileSidebarTrigger } from "@/shared/components/MobileSidebarTrigger.js";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { Button } from "@/shared/components/ui/button";
 import { Badge } from "@/shared/components/ui/badge";
-import { FileSpreadsheet, BarChart3, Bot, Menu } from "lucide-react";
+import { FileSpreadsheet, BarChart3, Bot } from "lucide-react";
 import { useAuthStore } from "@/features/auth/store/auth.store.js";
 import { useNavigate } from "react-router-dom";
 
@@ -17,7 +18,6 @@ const Home = () => {
   const { user } = useAuthStore();
   const navigate = useNavigate();
   const userName = user?.name || user?.email?.split('@')[0] || "Usuario";
-  const { toggleSidebar, isMobile } = useSidebar();
 
   const goToDatasetUpload = () => {
     navigate('/datasets/upload');
@@ -30,16 +30,7 @@ const Home = () => {
         <main className="flex-1 overflow-auto">
           <div className="mx-auto w-full max-w-6xl px-6 py-8 space-y-8">
             {/* Botón hamburguesa — solo en móvil */}
-            {isMobile && (
-              <button
-                type="button"
-                onClick={toggleSidebar}
-                className="flex items-center gap-2 text-foreground"
-                aria-label="Abrir menú"
-              >
-                <Menu className="h-5 w-5" />
-              </button>
-            )}
+            <MobileSidebarTrigger />
             {/* Header */}
             <div className="flex items-start justify-between">
               <div className="space-y-2">

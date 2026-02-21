@@ -13,10 +13,11 @@
  * Estilos adaptados a variables CSS de Tailwind 4
  */
 
-import { SidebarProvider, useSidebar } from "@/shared/components/ui/sidebar.js";
+import { SidebarProvider } from "@/shared/components/ui/sidebar.js";
 import { AppSidebar } from "@/shared/components/AppSidebar.js";
+import { MobileSidebarTrigger } from "@/shared/components/MobileSidebarTrigger.js";
 import { Button } from "@/shared/components/ui/button.js";
-import { Plus, Menu } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useDatasets } from "../hooks/useDatasets.js";
 import { useDeleteDataset } from "../hooks/useDeleteDataset.js";
@@ -29,7 +30,6 @@ import { EmptyDatasets } from "../components/EmptyDatasets.js";
 
 export const DatasetsList = () => {
   const navigate = useNavigate();
-  const { toggleSidebar, isMobile } = useSidebar();
   
   // ✅ React Query hooks
   const { data: datasetsResponse, isLoading, error, refetch } = useDatasets();
@@ -87,16 +87,7 @@ export const DatasetsList = () => {
           <div className="mx-auto w-full max-w-5xl py-6 space-y-6 px-4">
             
             {/* Botón hamburguesa — solo en móvil */}
-            {isMobile && (
-              <button
-                type="button"
-                onClick={toggleSidebar}
-                className="flex items-center gap-2 text-foreground"
-                aria-label="Abrir menú"
-              >
-                <Menu className="h-5 w-5" />
-              </button>
-            )}
+            <MobileSidebarTrigger />
 
             {/* ================================================================
                 HEADER - Título y botón de crear
