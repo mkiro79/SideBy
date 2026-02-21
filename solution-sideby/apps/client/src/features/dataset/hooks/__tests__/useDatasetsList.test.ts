@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { renderHook, waitFor } from "@testing-library/react";
+import { renderHook, waitFor, act } from "@testing-library/react";
 import { useDatasetsList } from "../useDatasetsList.js";
 import * as datasetsApi from "../../services/datasets.api.js";
 import type {
@@ -177,16 +177,14 @@ describe("useDatasetsList", () => {
         new Promise((resolve) => setTimeout(() => resolve(mockResponse), 50)),
     );
 
-    // Act - Reload
-    result.current.reload();
+    // Act - Reload envuelto en act() para forzar flush de setIsLoading(true)
+    // antes de que React 18 lo batchee con setIsLoading(false)
+    act(() => {
+      result.current.reload();
+    });
 
-    // Assert - Should be loading
-    await waitFor(
-      () => {
-        expect(result.current.isLoading).toBe(true);
-      },
-      { timeout: 100 },
-    );
+    // Assert - isLoading ya fue flusheado sincronamente por act()
+    expect(result.current.isLoading).toBe(true);
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
