@@ -14,6 +14,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
 import { SidebarProvider } from '@/shared/components/ui/sidebar.js';
 import { AppSidebar } from '@/shared/components/AppSidebar.js';
+import { MobileSidebarTrigger } from '@/shared/components/MobileSidebarTrigger.js';
 import { Button } from '@/shared/components/ui/button.js';
 import { Card } from '@/shared/components/ui/card.js';
 import { Separator } from '@/shared/components/ui/Separator.js';
@@ -56,6 +57,7 @@ export default function DataUploadWizard() {
     isLoading,
     nextStep,
     prevStep,
+    goToStep,
     reset,
     setDatasetId,
     setLoading,
@@ -78,10 +80,10 @@ export default function DataUploadWizard() {
       // Flujo de reanudación: inicializar con el dataset existente
       reset();
       setDatasetId(resumeDatasetId);
-      // Avanzar al paso indicado (step 2 = mapping)
+      // Ir directamente al paso indicado sin pasar por validación de archivos
       const targetStep = parseInt(resumeStep, 10);
       if (targetStep === 2) {
-        nextStep(); // step 1 → step 2
+        goToStep(2);
       }
     } else {
       // Flujo nuevo: resetear siempre para evitar datos contaminados del wizard anterior
@@ -294,6 +296,8 @@ export default function DataUploadWizard() {
         
         <main className="flex-1 overflow-auto">
           <div className="container max-w-5xl mx-auto py-8 px-6 space-y-8">
+            {/* Botón hamburguesa — solo en móvil */}
+            <MobileSidebarTrigger />
             {/* Header */}
             <div className="flex items-center justify-between">
               <div>
