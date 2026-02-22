@@ -8,6 +8,7 @@
  */
 
 import axios, { type AxiosInstance } from "axios";
+import { useAuthStore } from "@/features/auth/store/auth.store.js";
 import type {
   UploadFilesRequest,
   UploadFilesResponse,
@@ -83,6 +84,21 @@ apiClient.interceptors.request.use(
     return config;
   },
   (error) => Promise.reject(error),
+);
+
+/**
+ * Interceptor de respuesta: redirige al login si el token es inválido o expiró.
+ * Acceso al store fuera de React via getState() — patrón oficial de Zustand.
+ */
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error: unknown) => {
+    if (axios.isAxiosError(error) && error.response?.status === 401) {
+      useAuthStore.getState().logout();
+      globalThis.location.href = "/login";
+    }
+    return Promise.reject(error);
+  },
 );
 
 /**

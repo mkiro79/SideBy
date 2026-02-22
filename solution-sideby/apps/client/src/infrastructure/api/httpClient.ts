@@ -15,6 +15,7 @@
  */
 
 import axios, { type AxiosInstance } from "axios";
+import { useAuthStore } from "@/features/auth/store/auth.store.js";
 
 // ============================================================================
 // TOKEN HELPER
@@ -78,4 +79,23 @@ httpClient.interceptors.request.use(
     return config;
   },
   (error) => Promise.reject(error),
+);
+
+// ============================================================================
+// INTERCEPTOR DE RESPUESTA — Manejo global de sesión expirada
+// ============================================================================
+
+/**
+ * Si el backend responde 401, la sesión es inválida (token expirado o revocado).
+ * Limpiamos el store de Zustand y redirigimos al login sin depender de React hooks.
+ */
+httpClient.interceptors.response.use(
+  (response) => response,
+  (error: unknown) => {
+    if (axios.isAxiosError(error) && error.response?.status === 401) {
+      useAuthStore.getState().logout();
+      globalThis.location.href = "/login";
+    }
+    return Promise.reject(error);
+  },
 );
