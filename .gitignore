@@ -158,3 +158,6 @@ vite.config.ts.timestamp-*
 *.old
 *.temp
 *.bak
+
+# Videos de demo (demasiado grandes para GitHub, >100MB)
+docs/video demo/

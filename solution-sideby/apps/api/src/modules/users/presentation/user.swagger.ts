@@ -24,7 +24,10 @@ const UserProfileResponseSchema = z
     name: z.string().openapi({ example: "John Doe" }),
     email: z.string().email().openapi({ example: "john.doe@gmail.com" }),
     isGoogleUser: z.boolean().openapi({ example: true }),
-    avatar: z.string().optional().openapi({ example: "https://cdn.example.com/avatar.jpg" }),
+    avatar: z
+      .string()
+      .optional()
+      .openapi({ example: "https://cdn.example.com/avatar.jpg" }),
     role: z.enum(["user", "admin"]).openapi({ example: "user" }),
     createdAt: z.string().openapi({ example: "2025-01-01T00:00:00.000Z" }),
   })
@@ -58,7 +61,8 @@ registry.registerPath({
   path: "/users/me",
   tags: ["Users"],
   summary: "Obtener perfil del usuario autenticado",
-  description: "Retorna la información pública del usuario autenticado via JWT.",
+  description:
+    "Retorna la información pública del usuario autenticado via JWT.",
   security: [{ bearerAuth: [] }],
   responses: {
     200: {
@@ -91,7 +95,8 @@ registry.registerPath({
   path: "/users/me/profile",
   tags: ["Users"],
   summary: "Actualizar perfil del usuario",
-  description: "Permite actualizar el nombre del usuario autenticado. El email es siempre read-only.",
+  description:
+    "Permite actualizar el nombre del usuario autenticado. El email es siempre read-only.",
   security: [{ bearerAuth: [] }],
   request: {
     body: {

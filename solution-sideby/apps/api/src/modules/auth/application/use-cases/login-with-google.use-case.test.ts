@@ -23,13 +23,13 @@ describe("LoginWithGoogleUseCase", () => {
       deleteById: vi.fn(),
     };
 
-   mockGoogleAuthService = {
-     verify: vi.fn().mockResolvedValue({
-       email: "test@example.com",
-       googleId: "google-id-123",
-       name: "Test User",
-     }),
-   };
+    mockGoogleAuthService = {
+      verify: vi.fn().mockResolvedValue({
+        email: "test@example.com",
+        googleId: "google-id-123",
+        name: "Test User",
+      }),
+    };
 
     mockTokenService = {
       sign: vi.fn(),
