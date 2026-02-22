@@ -1,5 +1,6 @@
-// NOTA: Las variables de entorno se cargan con --env-file en package.json
-// Esto es necesario porque con ESM los imports se ejecutan antes que cualquier código top-level
+// NOTA: dotenv/config carga .env en local sin romper produccion.
+// En Railway, las variables del entorno del contenedor tienen prioridad.
+import "dotenv/config";
 
 import express from "express";
 import cors from "cors";
