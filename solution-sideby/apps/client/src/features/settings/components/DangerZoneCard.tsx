@@ -1,6 +1,5 @@
 import { Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -13,7 +12,7 @@ import {
   AlertDialogTrigger,
 } from "@/shared/components/ui/alert-dialog.js";
 import { Button } from "@/shared/components/ui/button.js";
-import { useAuthStore } from "@/features/auth/store/auth.store.js";
+import { useLogout } from "@/features/auth/hooks/useLogout.js";
 import { useDeleteAccount } from "../hooks/useDeleteAccount.js";
 
 /**
@@ -22,15 +21,13 @@ import { useDeleteAccount } from "../hooks/useDeleteAccount.js";
  */
 export const DangerZoneCard = () => {
   const { mutate: deleteAccount, isPending } = useDeleteAccount();
-  const { logout } = useAuthStore();
-  const navigate = useNavigate();
+  const logout = useLogout();
 
   const handleDeleteAccount = () => {
     deleteAccount(undefined, {
       onSuccess: () => {
         toast.success("Cuenta eliminada. ¡Hasta luego!");
         logout();
-        navigate("/login");
       },
       onError: () => {
         toast.error("No se pudo eliminar la cuenta. Inténtalo de nuevo.");
