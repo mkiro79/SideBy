@@ -7,6 +7,15 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### [HOTFIX] API Logger - Pino LOG_LEVEL Normalization (2026-02-22)
+
+**⚙️ Backend (`apps/api`):**
+- Normalizado `LOG_LEVEL` para compatibilidad con Pino en producción (`warning` -> `warn`)
+- Añadido fallback seguro a `info` para valores inválidos de nivel
+
+**🧪 Validación:**
+- Build y lint de API en verde tras el ajuste
+
 ### [HOTFIX] API Railway Deploy - Env & Path Alias Resolution (2026-02-22)
 
 **⚙️ Backend (`apps/api`):**

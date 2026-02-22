@@ -1,7 +1,21 @@
 import pino from "pino";
 
+const validLevels = new Set([
+  "fatal",
+  "error",
+  "warn",
+  "info",
+  "debug",
+  "trace",
+  "silent",
+]);
+
+const rawLogLevel = (process.env.LOG_LEVEL || "info").toLowerCase().trim();
+const normalizedLogLevel = rawLogLevel === "warning" ? "warn" : rawLogLevel;
+const level = validLevels.has(normalizedLogLevel) ? normalizedLogLevel : "info";
+
 const logger = pino({
-  level: process.env.LOG_LEVEL || "info",
+  level,
   transport:
     process.env.NODE_ENV !== "production"
       ? {
