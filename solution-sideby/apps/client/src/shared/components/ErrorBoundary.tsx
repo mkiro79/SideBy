@@ -2,7 +2,8 @@
  * ErrorBoundary - Captura errores React no manejados a nivel de árbol de componentes.
  *
  * Envuelve el árbol de la aplicación para evitar pantallas en blanco.
- * Renderiza ErrorPage cuando un error de renderizado no se maneja.
+ * Cuando ocurre un error de renderizado, renderiza el `fallback` proporcionado o,
+ * en su defecto, una pantalla de error embebida con opción de volver al inicio.
  */
 
 import { Component, type ReactNode, type ErrorInfo } from "react";

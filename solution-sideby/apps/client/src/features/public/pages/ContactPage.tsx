@@ -14,22 +14,23 @@ import { BarChart3, Mail, Send, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/shared/components/ui/button.js";
 import { toast } from "@/shared/services/toast.js";
+import { CONTACT_EMAIL } from "@/config/contact.js";
 
 // ============================================================================
 // SCHEMA DE VALIDACIÓN
 // ============================================================================
 
 const contactSchema = z.object({
-  nombre: z
+  name: z
     .string()
     .min(2, "El nombre debe tener al menos 2 caracteres.")
     .max(80, "El nombre no puede superar los 80 caracteres."),
   email: z.string().email("Introduce un correo electrónico válido."),
-  asunto: z
+  subject: z
     .string()
     .min(3, "El asunto debe tener al menos 3 caracteres.")
     .max(120, "El asunto no puede superar los 120 caracteres."),
-  mensaje: z
+  message: z
     .string()
     .min(10, "El mensaje debe tener al menos 10 caracteres.")
     .max(2000, "El mensaje no puede superar los 2000 caracteres."),
@@ -78,11 +79,11 @@ export const ContactPage = () => {
         serviceId,
         templateId,
         {
-          from_name: data.nombre,
+          from_name: data.name,
           from_email: data.email,
-          subject: data.asunto,
-          message: data.mensaje,
-          to_email: "maribel.quiros.formacion@gmail.com",
+          subject: data.subject,
+          message: data.message,
+          to_email: CONTACT_EMAIL,
         },
         publicKey
       );
@@ -145,10 +146,10 @@ export const ContactPage = () => {
               <div>
                 <p className="text-sm font-medium">Correo electrónico</p>
                 <a
-                  href="mailto:maribel.quiros.formacion@gmail.com"
+                  href={`mailto:${CONTACT_EMAIL}`}
                   className="text-sm text-primary underline underline-offset-4 break-words hyphens-auto"
                 >
-                  maribel.quiros.formacion@gmail.com
+                  {CONTACT_EMAIL}
                 </a>
               </div>
             </div>
@@ -181,19 +182,19 @@ export const ContactPage = () => {
               >
                 {/* Nombre */}
                 <div className="space-y-1.5">
-                  <label htmlFor="nombre" className="text-sm font-medium">
+                  <label htmlFor="name" className="text-sm font-medium">
                     Nombre <span aria-hidden="true" className="text-destructive">*</span>
                   </label>
                   <input
-                    id="nombre"
+                    id="name"
                     type="text"
                     autoComplete="name"
                     placeholder="Tu nombre"
                     className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-50"
-                    {...register("nombre")}
+                    {...register("name")}
                   />
-                  {errors.nombre && (
-                    <p className="text-xs text-destructive">{errors.nombre.message}</p>
+                  {errors.name && (
+                    <p className="text-xs text-destructive">{errors.name.message}</p>
                   )}
                 </div>
 
@@ -217,35 +218,35 @@ export const ContactPage = () => {
 
                 {/* Asunto */}
                 <div className="space-y-1.5">
-                  <label htmlFor="asunto" className="text-sm font-medium">
+                  <label htmlFor="subject" className="text-sm font-medium">
                     Asunto <span aria-hidden="true" className="text-destructive">*</span>
                   </label>
                   <input
-                    id="asunto"
+                    id="subject"
                     type="text"
                     placeholder="¿Sobre qué quieres contactarnos?"
                     className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-50"
-                    {...register("asunto")}
+                    {...register("subject")}
                   />
-                  {errors.asunto && (
-                    <p className="text-xs text-destructive">{errors.asunto.message}</p>
+                  {errors.subject && (
+                    <p className="text-xs text-destructive">{errors.subject.message}</p>
                   )}
                 </div>
 
                 {/* Mensaje */}
                 <div className="space-y-1.5">
-                  <label htmlFor="mensaje" className="text-sm font-medium">
+                  <label htmlFor="message" className="text-sm font-medium">
                     Mensaje <span aria-hidden="true" className="text-destructive">*</span>
                   </label>
                   <textarea
-                    id="mensaje"
+                    id="message"
                     rows={6}
                     placeholder="Escribe tu mensaje aquí..."
                     className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-50 resize-none"
-                    {...register("mensaje")}
+                    {...register("message")}
                   />
-                  {errors.mensaje && (
-                    <p className="text-xs text-destructive">{errors.mensaje.message}</p>
+                  {errors.message && (
+                    <p className="text-xs text-destructive">{errors.message.message}</p>
                   )}
                 </div>
 

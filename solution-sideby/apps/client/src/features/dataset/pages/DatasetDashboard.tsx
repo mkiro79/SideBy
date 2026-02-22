@@ -20,6 +20,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Loader2, RefreshCw } from 'lucide-react';
 import { SidebarProvider } from '@/shared/components/ui/sidebar.js';
 import { AppSidebar } from '@/shared/components/AppSidebar.js';
+import { MobileSidebarTrigger } from '@/shared/components/MobileSidebarTrigger.js';
 import { Button } from '@/shared/components/ui/button.js';
 import { Badge } from '@/shared/components/ui/badge.js';
 import { Separator } from '@/shared/components/ui/Separator.js';
@@ -372,6 +373,8 @@ export default function DatasetDashboard() {
         
         <main className="flex-1 overflow-auto">
           <div className="container max-w-7xl mx-auto py-8 px-6 space-y-8">
+            {/* Botón hamburguesa — solo en móvil */}
+            <MobileSidebarTrigger />
             {/* Header */}
             <div className="flex items-center justify-between flex-wrap gap-4">
               <div className="flex items-center gap-4">

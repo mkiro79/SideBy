@@ -105,6 +105,7 @@ export const appRouter = createBrowserRouter([
   },
   {
     path: '/privacy',
+    errorElement: <ErrorPage />,
     element: (
       <Suspense fallback={<PageLoader />}>
         <PrivacyPage />
@@ -113,6 +114,7 @@ export const appRouter = createBrowserRouter([
   },
   {
     path: '/terms',
+    errorElement: <ErrorPage />,
     element: (
       <Suspense fallback={<PageLoader />}>
         <TermsPage />
@@ -121,6 +123,7 @@ export const appRouter = createBrowserRouter([
   },
   {
     path: '/contact',
+    errorElement: <ErrorPage />,
     element: (
       <Suspense fallback={<PageLoader />}>
         <ContactPage />

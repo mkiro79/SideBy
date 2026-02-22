@@ -8,6 +8,7 @@
 import { BarChart3 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/shared/components/ui/button.js";
+import { CONTACT_EMAIL } from "@/config/contact.js";
 
 // ============================================================================
 // COMPONENT
@@ -152,10 +153,10 @@ export const TermsPage = () => {
             <p>
               Para cualquier consulta sobre estos términos, puede contactarnos en:{" "}
               <a
-                href="mailto:maribel.quiros.formacion@gmail.com"
+                href={`mailto:${CONTACT_EMAIL}`}
                 className="text-primary underline underline-offset-4"
               >
-                maribel.quiros.formacion@gmail.com
+                {CONTACT_EMAIL}
               </a>
             </p>
           </section>

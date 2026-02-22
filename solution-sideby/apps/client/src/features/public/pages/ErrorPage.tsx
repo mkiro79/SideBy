@@ -1,8 +1,8 @@
 /**
  * ErrorPage - Página de error global de SideBy
  *
- * Se muestra cuando una ruta falla (errorElement en React Router v6)
- * o cuando el usuario navega a una URL inválida de forma permanente.
+ * Se muestra cuando una ruta falla como errorElement en React Router v6.
+ * También puede usarse para manejar 404 u otros errores según la configuración del router.
  *
  * UX: Mensaje centrado + botón primario a /home.
  */
