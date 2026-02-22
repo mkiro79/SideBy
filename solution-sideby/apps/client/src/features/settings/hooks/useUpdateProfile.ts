@@ -12,6 +12,7 @@ import type {
   UserProfile,
 } from "../types/user-profile.types.js";
 import { USER_PROFILE_QUERY_KEY } from "./useUserProfile.js";
+import { useAuthStore } from "@/features/auth/store/auth.store.js";
 
 // ============================================================================
 // HOOK
@@ -35,6 +36,7 @@ import { USER_PROFILE_QUERY_KEY } from "./useUserProfile.js";
  */
 export const useUpdateProfile = () => {
   const queryClient = useQueryClient();
+  const updateUser = useAuthStore((s) => s.updateUser);
 
   return useMutation<UserProfile, Error, UpdateProfileRequest>({
     mutationFn: async (data: UpdateProfileRequest) => {
@@ -42,9 +44,11 @@ export const useUpdateProfile = () => {
       return response.data;
     },
 
-    // Tras éxito, invalidar el cache del perfil para refetch automático
+    // Tras éxito: sincroniza React Query cache Y el store de auth
+    // para que cualquier pantalla que lea user.name vea el valor actualizado
     onSuccess: (updatedProfile) => {
       queryClient.setQueryData(USER_PROFILE_QUERY_KEY, updatedProfile);
+      updateUser({ name: updatedProfile.name });
     },
   });
 };

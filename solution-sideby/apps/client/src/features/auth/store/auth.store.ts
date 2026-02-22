@@ -14,6 +14,7 @@ interface AuthState {
 
   // Actions
   setAuth: (user: User, token: string) => void;
+  updateUser: (partial: Partial<User>) => void;
   logout: () => void;
   clearError: () => void;
 }
@@ -37,6 +38,13 @@ export const useAuthStore = create<AuthState>()(
           token,
           isAuthenticated: true,
         });
+      },
+
+      // Action: Actualizar campos del usuario autenticado (ej: nombre)
+      updateUser: (partial: Partial<User>) => {
+        set((state) => ({
+          user: state.user ? { ...state.user, ...partial } : null,
+        }));
       },
 
       // Action: Cerrar sesión
