@@ -5,6 +5,26 @@
 
 Plataforma web para comparar datasets entre periodos y convertir datos en decisiones rápidas mediante visualización analítica y soporte de insights automáticos.
 
+---
+## Proyecto TFM BigSchool
+
+**Repositorio público**: [Repo Sideby](https://github.com/mkiro79/SideBy)
+**Wiki de documentación**: [Wiki Sideby](https://github.com/mkiro79/SideBy/wiki)
+**Slides de presentación**: [Slides Sideby](https://docs.google.com/presentation/d/1-eOqW7aXhX3nNeLUyWi6Qxawhpy4z45en0ZbOcVz_oM)
+**Aplicacion en producción**: -- pendiente despliegue --
+
+---
+
+## 📑 Índice de Navegación Rápida README
+
+- [Descripción & Stack](#a-descripción-general-del-proyecto)
+- [Instalación y Ejecución](#c-instalación-y-ejecución)
+- [Estructura del Proyecto](#d-estructura-del-proyecto)
+- [Funcionalidades Principales](#e-funcionalidades-principales)
+- [📚 Anexos - Documentación Completa](#-anexos---documentación-técnica-y-de-negocio) ← **Documentación detallada**
+
+---
+
 ## a) Descripción general del proyecto
 
 SideBy es un SaaS orientado a benchmarking comparativo (A/B) que permite:
@@ -19,7 +39,6 @@ El repositorio está organizado como **monorepo** con dos aplicaciones principal
 - `apps/api`: backend REST con Express + MongoDB.
 - `apps/client`: frontend React + Vite.
 
-Repositorio público: https://github.com/mkiro79/SideBy
 
 ## b) Stack tecnológico utilizado
 
@@ -200,12 +219,61 @@ SideBy/
 - `GET /api/docs.json`
 - Base API v1: `/api/v1`
 
-## Documentación complementaria
+---
 
-- `docs/UsesCases.md`
-- `docs/design-doc.md`
-- `docs/ROADMAP.md`
-- `SCRIPTS.md`
+## 📚 Anexos - Documentación Técnica y de Negocio
+
+> 💡 **Para nuevos desarrolladores**: Comienza por [Guía de Desarrollo Login](docs/DEV_LOGIN_GUIDE.md) y [Feature Flags](docs/FEATURE_FLAGS_GUIDE.md).  
+> 📊 **Para stakeholders**: Ver [Diagramas de Secuencia](docs/BUSINESS_SEQUENCE_DIAGRAMS.md) y [Casos de Uso](docs/UsesCases.md).
+
+### 📊 Para Stakeholders y Product Owners
+
+| Documento | Descripción | Audiencia |
+|-----------|-------------|-----------|
+| [**Diagramas de Secuencia de Negocio**](docs/BUSINESS_SEQUENCE_DIAGRAMS.md) | Flujos visuales de Auth, Datasets e Insights (Mermaid) | 👔 Negocio |
+| [**Casos de Uso**](docs/UsesCases.md) | Escenarios de usuario detallados con ejemplos reales | 👔 Negocio |
+| [**Roadmap**](docs/ROADMAP.md) | Planificación de funcionalidades y mejoras futuras | 👔 Negocio / 👨‍💻 Técnico |
+
+### 🔧 Para Equipo de Desarrollo
+
+| Documento | Descripción | Audiencia |
+|-----------|-------------|-----------|
+| [**Guía de Feature Flags**](docs/FEATURE_FLAGS_GUIDE.md) | Referencia completa de flags y variables de entorno | 👨‍💻 Dev / 🚀 DevOps |
+| [**Documento de Diseño Técnico**](docs/design-doc.md) | Arquitectura general del sistema (Clean Architecture) | 👨‍💻 Dev |
+| [**Guía de Desarrollo Login**](docs/DEV_LOGIN_GUIDE.md) | Setup de Google OAuth para desarrollo local | 👨‍💻 Dev |
+| [**Guía de Estilos**](docs/STYLE_GUIDE_SIDEBY.md) | Design system y componentes visuales | 🎨 Frontend |
+| [**Scripts de Automatización**](SCRIPTS.md) | Referencia de PowerShell y npm scripts | 🚀 DevOps |
+| [**Changelog**](CHANGELOG.md) | Historial de cambios por versión (semver) | 👨‍💻 Dev / 👔 PM |
+
+### 🏗️ RFCs - Architecture Decision Records
+
+Documentos de diseño técnico detallado (Request for Comments):
+
+| RFC | Título | Estado |
+|-----|--------|--------|
+| [RFC-001](docs/design/RFC-001-AUTH_IDENTITY.md) | Sistema de Autenticación e Identidad | ✅ Implementado |
+| [RFC-002](docs/design/RFC-002-DATA_INGESTION.md) | Ingesta y Procesamiento de Datos | ✅ Implementado |
+| [RFC-003-A](docs/design/RFC-003-A-SIMPLIFIED_MAPPING.md) | Auto-mapeo Simplificado (v2) | ✅ Implementado |
+| [RFC-003](docs/design/RFC-003-SCHEMA_MAPPING.md) | Mapeo de Esquemas (v1) | 📦 Deprecado |
+| [RFC-004](docs/design/RFC-004-DASHBOARD-TEMPLATE.md) | Templates de Dashboard | ✅ Implementado |
+| [RFC-005](docs/design/RFC-005-DASHBOARD-UX-IMPROVEMENTS.md) | Mejoras UX Dashboard | ✅ Implementado |
+| [RFC-006](docs/design/RFC-006-DASHBOARD-VISUALIZATION-ENHANCEMENTS.md) | Mejoras Visualización | ✅ Implementado |
+| [RFC-007](docs/design/RFC-007-DASHBOARD-PDF-EXPORT.md) | Exportación PDF | 🚧 Planificado |
+| [RFC-008](docs/design/RFC-008-AI-INSIGHTS-SERVICE.md) | Servicio de Insights con IA | ✅ Implementado |
+| [RFC-009](docs/design/RFC-009-WIZARD-STEP-3-REFACT-20260216.md) | Refactor Wizard Paso 3 | ✅ Implementado |
+| [RFC-010](docs/design/RFC-010-AI-INSIGHTS-SUMMARY-CACHE-PREVIO.md) | Cache de Insights | ✅ Implementado |
+| [RFC-011](docs/design/RFC-011-ADD-SENTRY-TO-OBSERVABILITY.md) | Integración Sentry | 🚧 Planificado |
+| [RFC-React-Query](docs/design/RFC-React-Query-Migration.md) | Migración a React Query | ✅ Implementado |
+
+**Leyenda**: ✅ Implementado | 🚧 Planificado | 📦 Deprecado
+
+### 📁 Recursos Adicionales
+
+- **Ejemplos de Datos**: [`docs/ejemplos/`](docs/ejemplos/) - Archivos CSV de muestra para testing
+- **Templates**: [`docs/templates/`](docs/templates/) - Plantillas de documentación
+- **Pruebas**: [`docs/pruebas/`](docs/pruebas/) - Documentación de testing y QA
+
+---
 
 ## Licencia
 
@@ -217,14 +285,18 @@ Este proyecto está bajo **licencia propietaria**.
 
 ## Notas operativas
 
-- El proyecto usa versionado semántico y changelog en `CHANGELOG.md`.
-- Para detener infraestructura Docker:
+- El proyecto usa **versionado semántico**. Consultar [`CHANGELOG.md`](CHANGELOG.md) para historial detallado.
+- Para más información sobre scripts y automatización, ver sección [📚 Anexos](#-anexos---documentación-técnica-y-de-negocio).
+
+**Comandos Docker útiles**:
+
+Para detener infraestructura:
 
 ```bash
 docker compose down
 ```
 
-- Para ver logs en tiempo real:
+Para ver logs en tiempo real:
 
 ```bash
 docker compose logs -f
