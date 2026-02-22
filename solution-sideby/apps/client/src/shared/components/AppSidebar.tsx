@@ -39,7 +39,7 @@ export function AppSidebar() {
     <>
       {/* Barra superior móvil - sticky, no tapa el contenido */}
       {isMobile && (
-        <div className="fixed top-0 left-0 right-0 z-40 flex h-14 items-center justify-between px-4 bg-sidebar border-b border-sidebar-border md:hidden">
+        <div className="fixed top-0 left-0 right-0 z-40 flex h-16 items-center justify-between px-4 bg-sidebar border-b border-sidebar-border md:hidden">
           {/* Marca */}
           <div className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">

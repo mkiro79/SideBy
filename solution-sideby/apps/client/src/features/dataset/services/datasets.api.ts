@@ -110,7 +110,13 @@ const extractErrorMessage = (error: unknown): string => {
           const f = first as Record<string, unknown>;
           return (typeof f.message === 'string' ? f.message : null)
             ?? (typeof f.msg === 'string' ? f.msg : null)
-            ?? JSON.stringify(first);
+            ?? (() => {
+              try {
+                return JSON.stringify(first);
+              } catch {
+                return 'Error de validación';
+              }
+            })();
         }
       }
       // Fallback: serializar el objeto completo para debugging

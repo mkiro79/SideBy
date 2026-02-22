@@ -101,7 +101,7 @@ export const DatasetCard = ({
             </div>
 
             {/* Overlay de hover con CTA contextual */}
-            <div className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-0 group-hover/card:opacity-100 transition-opacity duration-200 bg-background/60 backdrop-blur-[2px] rounded-sm">
+            <div className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-0 group-hover/card:opacity-100 transition-opacity duration-200 bg-background/80 backdrop-blur-sm rounded-sm">
               <span className="flex items-center gap-1.5 text-sm font-medium text-primary">
                 {hoverLabel}
                 <ArrowRight className="h-4 w-4" />
