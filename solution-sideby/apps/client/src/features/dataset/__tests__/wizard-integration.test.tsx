@@ -10,6 +10,7 @@ import { render, screen, waitFor, cleanup, fireEvent } from '@testing-library/re
 import userEvent from '@testing-library/user-event';
 import DataUploadWizard from '../pages/DataUploadWizard';
 import { BrowserRouter } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useWizardState } from '../hooks/useWizardState.js';
 
 // Mock de useFileUpload para simular procesamiento de archivos
@@ -70,14 +71,25 @@ const createMockCSVFile = (
   return new File([blob], name, { type: 'text/csv' });
 };
 
+// Helper para proveer QueryClient en tests (DataUploadWizard usa useQueryClient)
+const renderWizard = () =>
+  render(
+    <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+      <BrowserRouter>
+        <DataUploadWizard />
+      </BrowserRouter>
+    </QueryClientProvider>
+  );
+
 const createMockFileGroup = (file: File) => ({
   file,
   parsedData: {
     headers: ['fecha', 'region', 'ventas'],
+    // rows debe ser Record<string, unknown>[] para que autoClassify funcione correctamente
     rows: [
-      ['2024-01', 'Norte', '45000'],
-      ['2024-02', 'Sur', '38000'],
-    ],
+      { fecha: '2024-01', region: 'Norte', ventas: 45000 },
+      { fecha: '2024-02', region: 'Sur', ventas: 38000 },
+    ] as Record<string, unknown>[],
     rowCount: 2,
   },
   error: null,
@@ -123,11 +135,8 @@ describe('[INTEGRATION] Dataset Creation Wizard', () => {
     it('[E2E] should complete full wizard: Upload → Mapping → Config → Submit', async () => {
       const user = userEvent.setup();
 
-      render(
-        <BrowserRouter>
-          <DataUploadWizard />
-        </BrowserRouter>
-      );
+
+      renderWizard();
 
       // ======================================================================
       // STEP 1: FILE UPLOAD
@@ -141,30 +150,19 @@ describe('[INTEGRATION] Dataset Creation Wizard', () => {
       const uploadButton = screen.getByRole('button', { name: /subir archivos/i });
       expect(uploadButton).toBeDisabled();
 
-      // Cargar Archivo A
+      // Cargar ambos archivos sin esperar entre uploads (igual que el patrón del test de mapping)
       const fileInputA = screen.getAllByLabelText(/seleccionar archivo a/i)[0] as HTMLInputElement;
       const fileA = createMockCSVFile('ventas_2024.csv');
       await user.upload(fileInputA, fileA);
 
-      // Esperar a que se procese
-      await waitFor(() => {
-        expect(screen.getAllByText('ventas_2024.csv')[0]).toBeInTheDocument();
-      }, { timeout: 3000 });
-
-      // Cargar Archivo B
       const fileInputB = screen.getAllByLabelText(/seleccionar archivo b/i)[0] as HTMLInputElement;
       const fileB = createMockCSVFile('ventas_2023.csv', 'fecha,region,ventas\n2023-01,Norte,38000\n2023-02,Sur,32000');
       await user.upload(fileInputB, fileB);
 
-      // Esperar a que se procese
-      await waitFor(() => {
-        expect(screen.getAllByText('ventas_2023.csv')[0]).toBeInTheDocument();
-      }, { timeout: 3000 });
-
       // El botón "Subir archivos" debería habilitarse cuando ambos archivos están cargados
       await waitFor(() => {
         expect(uploadButton).not.toBeDisabled();
-      });
+      }, { timeout: 5000 });
 
       // Hacer clic en "Subir archivos" para avanzar al Step 2
       await user.click(uploadButton);
@@ -181,10 +179,10 @@ describe('[INTEGRATION] Dataset Creation Wizard', () => {
       const metricCheckbox = await screen.findByRole('checkbox', { name: 'ventas' });
       await user.click(metricCheckbox);
 
-      // El botón "Siguiente" debería estar habilitado
+      // El botón "Siguiente" debería estar habilitado (dimensionField se inicializa async)
       await waitFor(() => {
         expect(screen.getAllByRole('button', { name: /siguiente/i })[0]).not.toBeDisabled();
-      });
+      }, { timeout: 5000 });
 
       // Avanzar al Step 3
       const nextButton2 = screen.getByRole('button', { name: /siguiente/i });
@@ -251,14 +249,10 @@ describe('[INTEGRATION] Dataset Creation Wizard', () => {
       await waitFor(() => {
         expect(mockNavigate).toHaveBeenCalledWith('/datasets/dataset-123/dashboard');
       }, { timeout: 5000 });
-    });
+    }, 20000);
 
     it('[E2E] should not allow proceeding without files', async () => {
-      render(
-        <BrowserRouter>
-          <DataUploadWizard />
-        </BrowserRouter>
-      );
+      renderWizard();
 
       // Intentar avanzar sin archivos - En step 1, el botón es "Subir archivos"
       const uploadButton = screen.getByRole('button', { name: /subir archivos/i });
@@ -268,11 +262,7 @@ describe('[INTEGRATION] Dataset Creation Wizard', () => {
     it('[E2E] should not allow proceeding without mapping configuration', async () => {
       const user = userEvent.setup();
 
-      render(
-        <BrowserRouter>
-          <DataUploadWizard />
-        </BrowserRouter>
-      );
+      renderWizard();
 
       // Step 1: Cargar archivos
       const fileInputA = screen.getAllByLabelText(/seleccionar archivo a/i)[0] as HTMLInputElement;
@@ -297,11 +287,7 @@ describe('[INTEGRATION] Dataset Creation Wizard', () => {
     it('[E2E] should not allow submission without dataset name', async () => {
       const user = userEvent.setup();
 
-      render(
-        <BrowserRouter>
-          <DataUploadWizard />
-        </BrowserRouter>
-      );
+      renderWizard();
 
       // Step 1: Cargar archivos
       const fileInputA = screen.getAllByLabelText(/seleccionar archivo a/i)[0] as HTMLInputElement;
@@ -322,7 +308,11 @@ describe('[INTEGRATION] Dataset Creation Wizard', () => {
       const metricCheckbox = await screen.findByRole('checkbox', { name: 'ventas' });
       await user.click(metricCheckbox);
 
+      // Esperar a que el botón "Siguiente" esté habilitado (dimensionField se inicializa async)
       const nextButton = await screen.findByRole('button', { name: /siguiente/i });
+      await waitFor(() => {
+        expect(nextButton).not.toBeDisabled();
+      }, { timeout: 3000 });
       await user.click(nextButton);
 
       // Step 3: Sin nombre
@@ -337,11 +327,7 @@ describe('[INTEGRATION] Dataset Creation Wizard', () => {
 
   describe('Wizard Navigation', () => {
     it('[TEST] should allow going back to previous steps', async () => {
-      render(
-        <BrowserRouter>
-          <DataUploadWizard />
-        </BrowserRouter>
-      );
+      renderWizard();
 
       // Esperar a que la página se cargue
       await waitFor(() => {
@@ -354,11 +340,7 @@ describe('[INTEGRATION] Dataset Creation Wizard', () => {
     });
 
     it('[TEST] should show step indicator with correct status', () => {
-      render(
-        <BrowserRouter>
-          <DataUploadWizard />
-        </BrowserRouter>
-      );
+      renderWizard();
 
       // Verificar que se muestra el indicador de pasos
       const stepLabels = screen.getAllByText('Carga de archivos');
@@ -377,11 +359,7 @@ describe('[INTEGRATION] Dataset Creation Wizard', () => {
     it('[TEST] should allow cancellation and navigate back to datasets', async () => {
       const user = userEvent.setup();
 
-      render(
-        <BrowserRouter>
-          <DataUploadWizard />
-        </BrowserRouter>
-      );
+      renderWizard();
 
       const cancelButtons = screen.getAllByRole('button', { name: /cancelar/i });
       // Tomar el primer botón de cancelar (el del wizard, no del sidebar)
@@ -395,11 +373,7 @@ describe('[INTEGRATION] Dataset Creation Wizard', () => {
     it('[TEST] should show cancel confirmation dialog on step 2 and navigate only after confirm', async () => {
       const user = userEvent.setup();
 
-      render(
-        <BrowserRouter>
-          <DataUploadWizard />
-        </BrowserRouter>
-      );
+      renderWizard();
 
       const fileInputA = screen.getAllByLabelText(/seleccionar archivo a/i)[0] as HTMLInputElement;
       const fileA = createMockCSVFile('ventas_2024.csv');

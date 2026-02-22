@@ -54,13 +54,13 @@ const FormWrapper = () => {
 
 describe("GroupConfigFields", () => {
   describe("Renderizado", () => {
-    it("Renderiza el card con título correcto", () => {
+    it("Renderiza el card con tÃ­tulo correcto", () => {
       render(<FormWrapper />);
 
-      expect(screen.getByText("Configuración de grupos")).toBeInTheDocument();
+      expect(screen.getByText("ConfiguraciÃ³n de grupos")).toBeInTheDocument();
     });
 
-    it("Muestra el subtítulo descriptivo", () => {
+    it("Muestra el subtÃ­tulo descriptivo", () => {
       render(<FormWrapper />);
 
       expect(
@@ -68,7 +68,7 @@ describe("GroupConfigFields", () => {
       ).toBeInTheDocument();
     });
 
-    it("Renderiza la sección de Grupo A con sus campos", () => {
+    it("Renderiza la secciÃ³n de Grupo A con sus campos", () => {
       render(<FormWrapper />);
 
       expect(screen.getByText("Grupo A")).toBeInTheDocument();
@@ -82,7 +82,7 @@ describe("GroupConfigFields", () => {
       expect(groupAColorPicker.value).toBe("#3b82f6");
     });
 
-    it("Renderiza la sección de Grupo B con sus campos", () => {
+    it("Renderiza la secciÃ³n de Grupo B con sus campos", () => {
       render(<FormWrapper />);
 
       expect(screen.getByText("Grupo B")).toBeInTheDocument();
@@ -98,7 +98,7 @@ describe("GroupConfigFields", () => {
   });
 
   describe("Estado habilitado", () => {
-    it("Los campos de label están habilitados", () => {
+    it("Los campos de label estÃ¡n habilitados", () => {
       render(<FormWrapper />);
 
       const groupALabelInput = document.querySelector("#groupA-label") as HTMLInputElement;
@@ -108,7 +108,7 @@ describe("GroupConfigFields", () => {
       expect(groupBLabelInput.disabled).toBe(false);
     });
 
-    it("Los color pickers están habilitados", () => {
+    it("Los color pickers estÃ¡n habilitados", () => {
       render(<FormWrapper />);
 
       const groupAColorPicker = document.querySelector("#groupA-color") as HTMLInputElement;

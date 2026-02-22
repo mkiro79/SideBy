@@ -75,21 +75,22 @@ describe("KPIFieldsSection", () => {
       expect(screen.getByText("Campos KPI y Dimensiones")).toBeInTheDocument();
     });
 
-    it("Renderiza el campo Dimension Field con select", () => {
+    it("Renderiza el campo Dimension Field como solo lectura", () => {
       render(<FormWrapper />);
 
       expect(screen.getByText(/Campo de Dimensión/i)).toBeInTheDocument();
       
-      // Verificar que hay un trigger del Select (button con role combobox)
-      const dimensionSelect = screen.getByRole("combobox", { name: /Campo de Dimensión/i });
-      expect(dimensionSelect).toBeInTheDocument();
+      // El campo dimensión es solo lectura (no editable) — muestra el valor como texto
+      expect(screen.getByText("region")).toBeInTheDocument();
+      expect(screen.getByText("Solo lectura")).toBeInTheDocument();
     });
 
     it("Renderiza el campo Date Field con select (opcional)", () => {
       render(<FormWrapper />);
 
       expect(screen.getByText(/Campo de Fecha/i)).toBeInTheDocument();
-      expect(screen.getByText("(opcional)")).toBeInTheDocument();
+      // El componente tiene dos spans (opcional): dateField y categoricalFields
+      expect(screen.getAllByText("(opcional)").length).toBeGreaterThanOrEqual(1);
       
       const dateSelect = screen.getByRole("combobox", { name: /Campo de Fecha/i });
       expect(dateSelect).toBeInTheDocument();
@@ -127,14 +128,13 @@ describe("KPIFieldsSection", () => {
     });
   });
 
-  describe("Dimension Field Select", () => {
-    it("Muestra el valor seleccionado actual", () => {
+  describe("Dimension Field (Solo lectura)", () => {
+    it("Muestra el valor actual como texto estático", () => {
       render(<FormWrapper />);
 
-      const dimensionSelect = screen.getByRole("combobox", { name: /Campo de Dimensión/i });
-      
-      // El trigger del Select muestra el valor actual
-      expect(dimensionSelect).toHaveTextContent("region");
+      // El campo dimensión es solo lectura — muestra el valor como span, no como combobox
+      expect(screen.getByText("region")).toBeInTheDocument();
+      expect(screen.getByText("Solo lectura")).toBeInTheDocument();
     });
 
     it("Tiene el indicador de campo requerido", () => {
@@ -159,7 +159,8 @@ describe("KPIFieldsSection", () => {
     it("Muestra indicador de campo opcional", () => {
       render(<FormWrapper />);
 
-      expect(screen.getByText("(opcional)")).toBeInTheDocument();
+      // El componente renderiza (opcional) dos veces: dateField y categoricalFields
+      expect(screen.getAllByText("(opcional)").length).toBeGreaterThanOrEqual(1);
     });
   });
 
@@ -205,11 +206,11 @@ describe("KPIFieldsSection", () => {
     it("Cada fila tiene un select para el formato", () => {
       render(<FormWrapper />);
 
-      // Buscar todos los combobox (dimension + date + 2 format selects)
+      // Buscar todos los combobox (date + 2 format selects — dimension es solo lectura)
       const allSelects = screen.getAllByRole("combobox");
       
-      // Debería haber al menos 4 selects: dimension, date, format1, format2
-      expect(allSelects.length).toBeGreaterThanOrEqual(4);
+      // Debería haber al menos 3 selects: date, format1, format2
+      expect(allSelects.length).toBeGreaterThanOrEqual(3);
       
       // Verificar que hay selects con valores de formato
       const currencySelect = allSelects.find(
@@ -228,9 +229,9 @@ describe("KPIFieldsSection", () => {
     it("Los campos tienen los valores por defecto correctos", () => {
       render(<FormWrapper />);
 
-      // Dimension field
-      const dimensionSelect = screen.getByRole("combobox", { name: /Campo de Dimensión/i });
-      expect(dimensionSelect).toHaveTextContent("region");
+      // Dimension field (solo lectura — no es combobox)
+      expect(screen.getByText("region")).toBeInTheDocument();
+      expect(screen.getByText("Solo lectura")).toBeInTheDocument();
 
       // Date field
       const dateSelect = screen.getByRole("combobox", { name: /Campo de Fecha/i });
