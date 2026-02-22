@@ -109,4 +109,53 @@ describe("AIInsights", () => {
     expect(screen.getByText(/revisar campañas/i)).toBeInTheDocument();
     expect(screen.getByText(/desde caché/i)).toBeInTheDocument();
   });
+
+  it("debe mostrar botón Reintentar cuando isError=true y onRetry está definido", () => {
+    render(
+      <AIInsights
+        enabled={true}
+        hasRequested={true}
+        isLoading={false}
+        isError={true}
+        onGenerate={vi.fn()}
+        onRetry={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: /reintentar/i })).toBeInTheDocument();
+  });
+
+  it("debe no mostrar botón Reintentar cuando isError=true pero onRetry no está definido", () => {
+    render(
+      <AIInsights
+        enabled={true}
+        hasRequested={true}
+        isLoading={false}
+        isError={true}
+        onGenerate={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByRole("button", { name: /reintentar/i })).not.toBeInTheDocument();
+  });
+
+  it("debe ejecutar onRetry al hacer click en Reintentar", async () => {
+    const user = userEvent.setup();
+    const onRetry = vi.fn();
+
+    render(
+      <AIInsights
+        enabled={true}
+        hasRequested={true}
+        isLoading={false}
+        isError={true}
+        onGenerate={vi.fn()}
+        onRetry={onRetry}
+      />,
+    );
+
+    await user.click(screen.getByRole("button", { name: /reintentar/i }));
+
+    expect(onRetry).toHaveBeenCalledTimes(1);
+  });
 });

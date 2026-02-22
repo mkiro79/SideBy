@@ -20,6 +20,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Loader2, RefreshCw } from 'lucide-react';
 import { SidebarProvider } from '@/shared/components/ui/sidebar.js';
 import { AppSidebar } from '@/shared/components/AppSidebar.js';
+import { MobileSidebarTrigger } from '@/shared/components/MobileSidebarTrigger.js';
 import { Button } from '@/shared/components/ui/button.js';
 import { Badge } from '@/shared/components/ui/badge.js';
 import { Separator } from '@/shared/components/ui/Separator.js';
@@ -316,21 +317,16 @@ export default function DatasetDashboard() {
       <SidebarProvider defaultOpen={true}>
         <div className="flex min-h-screen w-full">
           <AppSidebar />
-          <main className="flex-1 flex items-center justify-center">
-            <div className="text-center space-y-4 px-6 max-w-md">
-              <h1 className="text-2xl font-bold text-destructive">¡Vaya!</h1>
-              <p className="text-muted-foreground">
-                Algo ha ocurrido de manera inesperada al cargar el dashboard.
-              </p>
-              <div className="flex justify-center gap-3">
-                <Button variant="outline" onClick={() => navigate('/datasets')}>
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Volver a la lista
+          <main className="flex-1 overflow-auto">
+            <div className="container max-w-7xl mx-auto py-8 px-6">
+              <div className="flex items-center gap-4 mb-6">
+                <Button variant="ghost" size="icon" onClick={() => navigate('/datasets')}>
+                  <ArrowLeft className="h-5 w-5" />
                 </Button>
-                <Button onClick={() => window.location.reload()}>
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Reintentar
-                </Button>
+                <div>
+                  <h1 className="text-2xl font-bold text-destructive">Error</h1>
+                  <p className="text-sm text-muted-foreground mt-1">{error}</p>
+                </div>
               </div>
             </div>
           </main>
@@ -376,7 +372,9 @@ export default function DatasetDashboard() {
         <AppSidebar />
         
         <main className="flex-1 overflow-auto">
-          <div className="container max-w-7xl mx-auto pt-16 pb-8 md:py-8 px-6 space-y-8">
+          <div className="container max-w-7xl mx-auto py-8 px-6 space-y-8">
+            {/* Botón hamburguesa — solo en móvil */}
+            <MobileSidebarTrigger />
             {/* Header */}
             <div className="flex items-center justify-between flex-wrap gap-4">
               <div className="flex items-center gap-4">
@@ -528,6 +526,7 @@ export default function DatasetDashboard() {
                 isLoading={insightsQuery.isLoading || insightsQuery.isFetching}
                 isError={insightsQuery.isError}
                 onGenerate={handleGenerateInsights}
+                onRetry={() => insightsQuery.refetch()}
                 data={insightsData}
                 resetReason={resetReason}
               />

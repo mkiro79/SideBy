@@ -1,71 +1,62 @@
 /**
- * ErrorPage - Página de error global de la aplicación
+ * ErrorPage - Página de error global de SideBy
  *
- * Se muestra cuando ocurre un error inesperado que rompe el rendering
- * de una ruta completa. Accesible desde el ErrorBoundary y el errorElement
- * del router de React Router v6.
+ * Se muestra cuando una ruta falla como errorElement en React Router v6.
+ * También puede usarse para manejar 404 u otros errores según la configuración del router.
  *
- * Comportamiento:
- * - Muestra un mensaje amigable al usuario
- * - Ofrece un botón para volver a /home
- * - No expone detalles técnicos del error al usuario final
+ * UX: Mensaje centrado + botón primario a /home.
  */
 
-import { useNavigate, useRouteError } from 'react-router-dom';
-import { AlertTriangle } from 'lucide-react';
-import { Button } from '@/shared/components/ui/button.js';
+import { useRouteError, isRouteErrorResponse, Link } from "react-router-dom";
+import { AlertTriangle } from "lucide-react";
+import { Button } from "@/shared/components/ui/button.js";
 
 // ============================================================================
 // COMPONENT
 // ============================================================================
 
-export function ErrorPage() {
-  const navigate = useNavigate();
-  // useRouteError captura el error lanzado por React Router v6
-  const routeError = useRouteError();
+export const ErrorPage = () => {
+  const error = useRouteError();
 
-  // Solo logueamos en desarrollo para no exponer info sensible
-  if (import.meta.env.DEV && routeError) {
-    console.error('[ErrorPage] Route error:', routeError);
+  // Determina el mensaje de error según el tipo
+  let message = "Ha ocurrido un error inesperado.";
+  let statusText = "Error";
+
+  if (isRouteErrorResponse(error)) {
+    statusText = `${error.status} – ${error.statusText}`;
+    if (error.status === 404) {
+      message = "La página que buscas no existe.";
+    } else if (error.status === 403) {
+      message = "No tienes permiso para acceder a esta página.";
+    } else {
+      message = error.data?.message || message;
+    }
+  } else if (error instanceof Error) {
+    message = error.message;
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-background px-6 text-center">
-      {/* Icono de alerta */}
-      <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-destructive/10">
-        <AlertTriangle className="h-10 w-10 text-destructive" />
+    <div className="flex min-h-screen flex-col items-center justify-center gap-8 bg-background px-4">
+      {/* Icono */}
+      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-destructive/10 text-destructive">
+        <AlertTriangle className="h-8 w-8" />
       </div>
 
-      {/* Mensaje principal */}
-      <h1 className="mb-3 text-3xl font-bold tracking-tight text-foreground">
-        ¡Vaya!
-      </h1>
-      <h2 className="mb-2 text-xl font-semibold text-foreground">
-        Algo ha ocurrido de manera inesperada
-      </h2>
-      <p className="mb-8 max-w-md text-sm text-muted-foreground">
-        Se ha producido un error inesperado. Puedes intentar volver al inicio
-        o recargar la página.
-      </p>
-
-      {/* Acciones */}
-      <div className="flex flex-col items-center gap-3 sm:flex-row">
-        <Button
-          size="lg"
-          onClick={() => navigate('/home', { replace: true })}
-        >
-          Volver al inicio
-        </Button>
-        <Button
-          size="lg"
-          variant="outline"
-          onClick={() => window.location.reload()}
-        >
-          Recargar página
-        </Button>
+      {/* Msg */}
+      <div className="max-w-md space-y-2 text-center">
+        <p className="text-sm font-medium text-muted-foreground">{statusText}</p>
+        <h1 className="text-2xl font-bold tracking-tight">
+          ¡Vaya! Algo ha ocurrido de manera inesperada.
+        </h1>
+        <p className="text-sm text-muted-foreground">{message}</p>
       </div>
+
+      {/* Acción */}
+      <Button asChild size="lg">
+        <Link to="/home">Volver al inicio</Link>
+      </Button>
     </div>
   );
-}
+};
 
 export default ErrorPage;

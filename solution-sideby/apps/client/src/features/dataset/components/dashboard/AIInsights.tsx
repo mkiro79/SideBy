@@ -12,6 +12,7 @@ interface AIInsightsProps {
   isLoading: boolean;
   isError: boolean;
   onGenerate: () => void;
+  onRetry?: () => void;
   data?: DatasetInsightsResponse;
   resetReason?: string;
 }
@@ -22,6 +23,7 @@ export const AIInsights: React.FC<AIInsightsProps> = ({
   isLoading,
   isError,
   onGenerate,
+  onRetry,
   data,
   resetReason,
 }) => {
@@ -94,6 +96,17 @@ export const AIInsights: React.FC<AIInsightsProps> = ({
                 Reintentar
               </Button>
             </AlertDescription>
+            {onRetry && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="mt-3"
+                onClick={onRetry}
+              >
+                Reintentar
+              </Button>
+            )}
           </Alert>
         )}
 

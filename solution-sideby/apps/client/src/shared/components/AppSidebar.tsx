@@ -1,9 +1,8 @@
 /**
  * AppSidebar - Barra lateral de navegación principal
- * Componente que proporciona la navegación principal de la aplicación SideBy.
- * Responsive: se colapsa como drawer (offcanvas) en resoluciones móviles.
+ * Componente que proporciona la navegación principal de la aplicación SideBy
  */
-import { Home, BarChart3, FileSpreadsheet, Settings, LogOut, Menu, X } from "lucide-react";
+import { Home, BarChart3, FileSpreadsheet, Settings, LogOut, Menu } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Sidebar,
@@ -28,7 +27,7 @@ export function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { logout } = useAuthStore();
-  const { toggleSidebar, openMobile, isMobile } = useSidebar();
+  const { toggleSidebar, isMobile } = useSidebar();
 
   const handleLogout = () => {
     logout();
@@ -36,36 +35,26 @@ export function AppSidebar() {
   };
 
   return (
-    <>
-      {/* Barra superior móvil - sticky, no tapa el contenido */}
-      {isMobile && (
-        <div className="fixed top-0 left-0 right-0 z-40 flex h-16 items-center justify-between px-4 bg-sidebar border-b border-sidebar-border md:hidden">
-          {/* Marca */}
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <BarChart3 className="h-4 w-4" />
-            </div>
-            <span className="font-bold text-base">SideBy</span>
-          </div>
-          {/* Toggle */}
-          <button
-            type="button"
-            onClick={toggleSidebar}
-            aria-label={openMobile ? 'Cerrar menú' : 'Abrir menú de navegación'}
-            className="flex h-9 w-9 items-center justify-center rounded-lg hover:bg-sidebar-accent transition-colors"
-          >
-            {openMobile ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </button>
-        </div>
-      )}
-
-      <Sidebar collapsible="offcanvas">
+    <Sidebar collapsible="offcanvas">
       <SidebarHeader>
-        <div className="flex items-center gap-2 px-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <BarChart3 className="h-5 w-5" />
+        <div className="flex items-center justify-between px-2">
+          <div className="flex items-center gap-2">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+              <BarChart3 className="h-5 w-5" />
+            </div>
+            <span className="font-bold text-lg">SideBy</span>
           </div>
-          <span className="font-bold text-lg">SideBy</span>
+          {/* Botón cerrar — solo visible en móvil */}
+          {isMobile && (
+            <button
+              type="button"
+              onClick={toggleSidebar}
+              className="flex h-8 w-8 items-center justify-center rounded-md text-sidebar-foreground hover:bg-sidebar-accent"
+              aria-label="Cerrar menú"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+          )}
         </div>
       </SidebarHeader>
       
@@ -98,6 +87,5 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarFooter>
     </Sidebar>
-    </>
   );
 }
