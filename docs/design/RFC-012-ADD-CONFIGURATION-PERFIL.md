@@ -13,7 +13,7 @@ Implementar la pantalla de **Configuración > Perfil** que permite al usuario au
 
 1. **Consultar** su información personal (nombre, email, método de autenticación).
 2. **Actualizar** su nombre de perfil.
-3. **Eliminar** su cuenta de forma permanente (hard delete con cascada en datasets e insights).
+3. **Eliminar** su cuenta de forma permanente (hard delete con cascada en datasets).
 
 ---
 

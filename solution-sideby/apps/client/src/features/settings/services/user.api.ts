@@ -7,70 +7,11 @@
  * - DELETE /api/v1/users/me          → Eliminar cuenta (hard delete)
  */
 
-import axios, { type AxiosInstance } from "axios";
+import { httpClient } from "@/infrastructure/api/httpClient.js";
 import type {
   UserProfileResponse,
   UpdateProfileRequest,
 } from "../types/user-profile.types.js";
-
-// ============================================================================
-// AXIOS INSTANCE
-// ============================================================================
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
-
-/**
- * Obtiene el token JWT almacenado por Zustand persist
- */
-const getAuthToken = (): string | null => {
-  const storedAuth = localStorage.getItem("sideby-auth-storage");
-  if (!storedAuth) return null;
-
-  try {
-    const parsed: unknown = JSON.parse(storedAuth);
-
-    if (
-      typeof parsed === "object" &&
-      parsed !== null &&
-      "state" in parsed &&
-      typeof (parsed as Record<string, unknown>).state === "object" &&
-      (parsed as Record<string, unknown>).state !== null
-    ) {
-      const state = (parsed as Record<string, unknown>).state as Record<
-        string,
-        unknown
-      >;
-      const maybeToken = state.token;
-      if (typeof maybeToken === "string" && maybeToken.trim() !== "") {
-        return maybeToken;
-      }
-    }
-
-    return null;
-  } catch {
-    return null;
-  }
-};
-
-const apiClient: AxiosInstance = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    "Content-Type": "application/json",
-  },
-  timeout: 10000,
-});
-
-apiClient.interceptors.request.use(
-  (config) => {
-    const token = getAuthToken();
-    if (token) {
-      config.headers = config.headers ?? {};
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error),
-);
 
 // ============================================================================
 // API FUNCTIONS
@@ -80,7 +21,7 @@ apiClient.interceptors.request.use(
  * Obtiene el perfil del usuario autenticado.
  */
 export const getUserProfile = async (): Promise<UserProfileResponse> => {
-  const response = await apiClient.get<UserProfileResponse>("/api/v1/users/me");
+  const response = await httpClient.get<UserProfileResponse>("/api/v1/users/me");
   return response.data;
 };
 
@@ -91,7 +32,7 @@ export const getUserProfile = async (): Promise<UserProfileResponse> => {
 export const updateUserProfile = async (
   data: UpdateProfileRequest,
 ): Promise<UserProfileResponse> => {
-  const response = await apiClient.put<UserProfileResponse>(
+  const response = await httpClient.put<UserProfileResponse>(
     "/api/v1/users/me/profile",
     data,
   );
@@ -104,5 +45,5 @@ export const updateUserProfile = async (
  * No hay vuelta atrás.
  */
 export const deleteUserAccount = async (): Promise<void> => {
-  await apiClient.delete("/api/v1/users/me");
+  await httpClient.delete("/api/v1/users/me");
 };

@@ -45,6 +45,10 @@ const ErrorResponseSchema = z
     error: z.object({
       message: z.string(),
       code: z.string(),
+      // Presente en errores de validación (fieldErrors de Zod)
+      details: z
+        .object({ fieldErrors: z.record(z.string(), z.array(z.string())) })
+        .optional(),
     }),
   })
   .openapi("ErrorResponse");
@@ -58,7 +62,7 @@ const ErrorResponseSchema = z
  */
 registry.registerPath({
   method: "get",
-  path: "/users/me",
+  path: "/api/v1/users/me",
   tags: ["Users"],
   summary: "Obtener perfil del usuario autenticado",
   description:
@@ -92,7 +96,7 @@ registry.registerPath({
  */
 registry.registerPath({
   method: "put",
-  path: "/users/me/profile",
+  path: "/api/v1/users/me/profile",
   tags: ["Users"],
   summary: "Actualizar perfil del usuario",
   description:
@@ -137,7 +141,7 @@ registry.registerPath({
  */
 registry.registerPath({
   method: "delete",
-  path: "/users/me",
+  path: "/api/v1/users/me",
   tags: ["Users"],
   summary: "Eliminar cuenta de usuario",
   description:

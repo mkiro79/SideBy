@@ -35,7 +35,7 @@ class MockDatasetRepository implements DatasetRepository {
     return [];
   }
 
-  async deleteByOwnerId(): Promise<void> {
+  async deleteByOwnerId(_ownerId: string): Promise<void> {
     return;
   }
 }

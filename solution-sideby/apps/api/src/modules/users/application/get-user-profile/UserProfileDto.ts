@@ -9,6 +9,6 @@ export interface UserProfileDto {
   /** Indica si el usuario se autenticó via Google OAuth */
   isGoogleUser: boolean;
   avatar?: string;
-  role: string;
+  role: "user" | "admin";
   createdAt: string;
 }
