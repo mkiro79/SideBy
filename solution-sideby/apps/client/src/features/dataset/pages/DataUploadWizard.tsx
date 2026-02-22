@@ -14,6 +14,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
 import { SidebarProvider } from '@/shared/components/ui/sidebar.js';
 import { AppSidebar } from '@/shared/components/AppSidebar.js';
+import { MobileSidebarTrigger } from '@/shared/components/MobileSidebarTrigger.js';
 import { getDataset } from '../services/datasets.api.js';
 import { Button } from '@/shared/components/ui/button.js';
 import { Card } from '@/shared/components/ui/card.js';
@@ -344,6 +345,9 @@ export default function DataUploadWizard() {
         
         <main className="flex-1 overflow-auto">
             <div className="container max-w-5xl mx-auto pt-16 pb-8 md:py-8 px-6 space-y-8">
+            {/* Botón hamburguesa — solo en móvil */}
+            <MobileSidebarTrigger />
+
             {/* Header */}
             <div className="flex items-center justify-between">
               <div>
