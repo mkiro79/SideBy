@@ -116,7 +116,6 @@ export default function DataUploadWizard() {
       .catch((err) => {
         if (import.meta.env.DEV) {
           // Log detallado solo en modo desarrollo para facilitar el debugging
-          // eslint-disable-next-line no-console
           console.error('[DataUploadWizard] Error loading dataset:', err);
         }
         setError('No se pudieron cargar los datos del dataset. Intenta de nuevo.');
