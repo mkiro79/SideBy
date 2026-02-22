@@ -3,6 +3,7 @@ import { LogOut, User, BarChart3 } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button.js';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card.js';
 import { useAuthStore } from '@/features/auth/store/auth.store.js';
+import { SideByWordmark } from '@/shared/components/SideByWordmark.js';
 
 // ============================================================================
 // HOME PAGE (Pantalla Principal después del Login)
@@ -35,7 +36,7 @@ export const HomePage = () => {
               <span className="text-xl font-bold text-primary-foreground">S</span>
             </div>
             <div>
-              <h1 className="text-xl font-bold">SideBy</h1>
+              <h1 className="text-xl font-bold"><SideByWordmark /></h1>
               <p className="text-xs text-muted-foreground">Analytics Platform</p>
             </div>
           </div>

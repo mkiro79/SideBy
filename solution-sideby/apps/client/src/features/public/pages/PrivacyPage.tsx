@@ -9,6 +9,7 @@ import { BarChart3 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/shared/components/ui/button.js";
 import { CONTACT_EMAIL } from "@/config/contact.js";
+import { SideByWordmark } from "@/shared/components/SideByWordmark.js";
 
 // ============================================================================
 // COMPONENT
@@ -24,7 +25,7 @@ export const PrivacyPage = () => {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
               <BarChart3 className="h-4 w-4 text-primary-foreground" />
             </div>
-            <span className="text-xl font-bold tracking-tight">SideBy</span>
+            <SideByWordmark className="text-xl font-bold tracking-tight" />
           </Link>
           <Button variant="outline" asChild>
             <Link to="/">Volver al inicio</Link>
@@ -45,7 +46,7 @@ export const PrivacyPage = () => {
             <h2 className="text-xl font-semibold mb-3">1. Responsable del Tratamiento</h2>
             <p>
               El responsable del tratamiento de los datos personales recogidos a través de
-              <strong> SideBy</strong> es SideBy (en adelante, «nosotros» o «la plataforma»),
+              {" "}<strong><SideByWordmark /></strong>{" "}es <SideByWordmark /> (en adelante, «nosotros» o «la plataforma»),
               con domicilio en España.
             </p>
             <p className="mt-2">
@@ -142,7 +143,7 @@ export const PrivacyPage = () => {
                 className="text-primary underline underline-offset-4"
               >
                 {CONTACT_EMAIL}
-              </a>
+              </a>{" "}
               . También tiene derecho a presentar una reclamación ante la Agencia Española de
               Protección de Datos (
               <a
@@ -152,7 +153,7 @@ export const PrivacyPage = () => {
                 className="text-primary underline underline-offset-4"
               >
                 www.aepd.es
-              </a>
+              </a>{" "}
               ).
             </p>
           </section>
@@ -160,7 +161,7 @@ export const PrivacyPage = () => {
           <section>
             <h2 className="text-xl font-semibold mb-3">8. Cookies</h2>
             <p>
-              SideBy utiliza cookies técnicas estrictamente necesarias para el funcionamiento
+              <SideByWordmark /> utiliza cookies técnicas estrictamente necesarias para el funcionamiento
               de la plataforma (gestión de sesión, autenticación). No utilizamos cookies de
               seguimiento ni publicidad de terceros.
             </p>
@@ -181,7 +182,7 @@ export const PrivacyPage = () => {
       {/* Footer mínimo */}
       <footer className="border-t border-border py-6">
         <div className="container mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
-          <span>© {new Date().getFullYear()} SideBy. Todos los derechos reservados.</span>
+          <span>© {new Date().getFullYear()} <SideByWordmark />. Todos los derechos reservados.</span>
           <nav className="flex items-center gap-6">
             <Link to="/terms" className="hover:text-foreground transition-colors">Términos</Link>
             <Link to="/contact" className="hover:text-foreground transition-colors">Contacto</Link>

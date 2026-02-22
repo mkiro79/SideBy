@@ -9,6 +9,7 @@ import { BarChart3 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/shared/components/ui/button.js";
 import { CONTACT_EMAIL } from "@/config/contact.js";
+import { SideByWordmark } from "@/shared/components/SideByWordmark.js";
 
 // ============================================================================
 // COMPONENT
@@ -24,7 +25,7 @@ export const TermsPage = () => {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
               <BarChart3 className="h-4 w-4 text-primary-foreground" />
             </div>
-            <span className="text-xl font-bold tracking-tight">SideBy</span>
+            <SideByWordmark className="text-xl font-bold tracking-tight" />
           </Link>
           <Button variant="outline" asChild>
             <Link to="/">Volver al inicio</Link>
@@ -44,7 +45,7 @@ export const TermsPage = () => {
           <section>
             <h2 className="text-xl font-semibold mb-3">1. Objeto del Servicio</h2>
             <p>
-              SideBy es una plataforma web que permite a los usuarios cargar, comparar y
+              <SideByWordmark /> es una plataforma web que permite a los usuarios cargar, comparar y
               analizar datasets CSV mediante visualizaciones comparativas e inteligencia
               artificial. El acceso al servicio se realiza mediante registro de cuenta de
               usuario.
@@ -54,7 +55,7 @@ export const TermsPage = () => {
           <section>
             <h2 className="text-xl font-semibold mb-3">2. Aceptación de los Términos</h2>
             <p>
-              El uso de SideBy implica la aceptación plena y sin reservas de los presentes
+              El uso de <SideByWordmark /> implica la aceptación plena y sin reservas de los presentes
               términos y condiciones. Si no está de acuerdo con alguno de ellos, le rogamos
               que no utilice el servicio.
             </p>
@@ -63,7 +64,7 @@ export const TermsPage = () => {
           <section>
             <h2 className="text-xl font-semibold mb-3">3. Licencia de Uso</h2>
             <p>
-              SideBy concede al usuario una licencia de uso personal, intransferible, no
+              <SideByWordmark /> concede al usuario una licencia de uso personal, intransferible, no
               exclusiva y revocable para acceder a las funcionalidades de la plataforma, sujeta
               al cumplimiento de estos términos. Queda expresamente prohibido:
             </p>
@@ -80,7 +81,7 @@ export const TermsPage = () => {
             <p>
               El usuario es responsable de mantener la confidencialidad de sus credenciales de
               acceso. Cualquier actividad realizada bajo su cuenta es de su exclusiva
-              responsabilidad. SideBy se reserva el derecho a suspender o cancelar cuentas que
+              responsabilidad. <SideByWordmark /> se reserva el derecho a suspender o cancelar cuentas que
               incumplan los presentes términos.
             </p>
           </section>
@@ -89,8 +90,8 @@ export const TermsPage = () => {
             <h2 className="text-xl font-semibold mb-3">5. Propiedad de los Datos</h2>
             <p>
               El usuario conserva en todo momento la propiedad de los datos que suba a la
-              plataforma. SideBy no reclama propiedad alguna sobre dichos datos. Al cargar
-              datos en SideBy, el usuario garantiza que tiene los derechos necesarios para
+              plataforma. <SideByWordmark /> no reclama propiedad alguna sobre dichos datos. Al cargar
+              datos en <SideByWordmark />, el usuario garantiza que tiene los derechos necesarios para
               hacerlo y que su uso no infringe derechos de terceros.
             </p>
           </section>
@@ -98,8 +99,8 @@ export const TermsPage = () => {
           <section>
             <h2 className="text-xl font-semibold mb-3">6. Propiedad Intelectual</h2>
             <p>
-              Todos los elementos que componen la plataforma SideBy (diseño, código, marcas,
-              logotipos, algoritmos) son propiedad de SideBy o de sus licenciantes y están
+              Todos los elementos que componen la plataforma <SideByWordmark /> (diseño, código, marcas,
+              logotipos, algoritmos) son propiedad de <SideByWordmark /> o de sus licenciantes y están
               protegidos por la legislación española e internacional en materia de propiedad
               intelectual e industrial. Queda prohibida su reproducción sin autorización expresa.
             </p>
@@ -108,10 +109,10 @@ export const TermsPage = () => {
           <section>
             <h2 className="text-xl font-semibold mb-3">7. Disponibilidad del Servicio</h2>
             <p>
-              SideBy procurará mantener el servicio disponible de forma continua, pero no
+              <SideByWordmark /> procurará mantener el servicio disponible de forma continua, pero no
               garantiza una disponibilidad del 100 %. El servicio podrá interrumpirse
               temporalmente por mantenimiento, actualizaciones o causas de fuerza mayor.
-              SideBy no será responsable de los daños que pudieran derivarse de dichas
+              <SideByWordmark /> no será responsable de los daños que pudieran derivarse de dichas
               interrupciones.
             </p>
           </section>
@@ -119,10 +120,10 @@ export const TermsPage = () => {
           <section>
             <h2 className="text-xl font-semibold mb-3">8. Limitación de Responsabilidad</h2>
             <p>
-              En la máxima medida permitida por la ley, SideBy no será responsable de daños
+              En la máxima medida permitida por la ley, <SideByWordmark /> no será responsable de daños
               indirectos, incidentales, especiales o consecuentes derivados del uso o la
               imposibilidad de uso del servicio, incluyendo pero no limitado a la pérdida de
-              datos o de beneficios. La responsabilidad total de SideBy frente al usuario no
+              datos o de beneficios. La responsabilidad total de <SideByWordmark /> frente al usuario no
               excederá en ningún caso el importe abonado por el usuario en los últimos doce
               meses.
             </p>
@@ -131,7 +132,7 @@ export const TermsPage = () => {
           <section>
             <h2 className="text-xl font-semibold mb-3">9. Modificación de los Términos</h2>
             <p>
-              SideBy se reserva el derecho de modificar los presentes términos en cualquier
+              <SideByWordmark /> se reserva el derecho de modificar los presentes términos en cualquier
               momento. Las modificaciones serán comunicadas a los usuarios mediante la
               plataforma o por correo electrónico con un preaviso razonable. El uso continuado
               del servicio tras la notificación implica la aceptación de los nuevos términos.
@@ -166,7 +167,7 @@ export const TermsPage = () => {
       {/* Footer mínimo */}
       <footer className="border-t border-border py-6">
         <div className="container mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
-          <span>© {new Date().getFullYear()} SideBy. Todos los derechos reservados.</span>
+          <span>© {new Date().getFullYear()} <SideByWordmark />. Todos los derechos reservados.</span>
           <nav className="flex items-center gap-6">
             <Link to="/privacy" className="hover:text-foreground transition-colors">Privacidad</Link>
             <Link to="/contact" className="hover:text-foreground transition-colors">Contacto</Link>

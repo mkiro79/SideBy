@@ -12,7 +12,9 @@
  */
 import { Button } from "@/shared/components/ui/button.js";
 import { Card, CardContent } from "@/shared/components/ui/card.js";
-import { FileSpreadsheet, Columns, Bot, BarChart3 } from "lucide-react";
+import { FileSpreadsheet, Columns, Bot } from "lucide-react";
+import { SideByLogo } from "@/shared/components/SideByLogo.js";
+import { SideByWordmark } from "@/shared/components/SideByWordmark.js";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/features/auth/store/auth.store.js";
 import { trackPageView, trackButtonClick } from "../services/mockServices.js";
@@ -73,10 +75,8 @@ export const Landing = () => {
       <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="container mx-auto flex h-16 items-center justify-between px-4">
           <Link to="/" className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-              <BarChart3 className="h-4 w-4 text-primary-foreground" />
-            </div>
-            <span className="text-xl font-bold tracking-tight">SideBy</span>
+            <SideByLogo size={32} />
+            <SideByWordmark className="text-xl font-bold tracking-tight" />
           </Link>
 
           <nav className="flex items-center gap-3">
@@ -100,7 +100,8 @@ export const Landing = () => {
             <div className="space-y-6 text-center lg:text-left">
               <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
                 Compara cualquier dato,{" "}
-                <span className="text-primary">SideBy</span> lado a lado
+                <SideByWordmark />{" "}
+                lado a lado
               </h1>
               <p className="text-lg text-muted-foreground max-w-xl mx-auto lg:mx-0">
                 Sube tus datasets, mapea tus métricas y deja que la IA descubra los insights.
@@ -235,14 +236,12 @@ export const Landing = () => {
       <footer className="border-t border-border py-8">
         <div className="container mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <div className="flex h-6 w-6 items-center justify-center rounded bg-primary">
-              <BarChart3 className="h-3 w-3 text-primary-foreground" />
-            </div>
-            <span className="text-sm font-medium">SideBy</span>
+            <SideByLogo size={20} />
+            <SideByWordmark className="text-sm font-medium" />
           </div>
           
           <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} SideBy. Todos los derechos reservados.
+            © {new Date().getFullYear()} <SideByWordmark />. Todos los derechos reservados.
           </p>
           
           <nav className="flex items-center gap-6 text-sm text-muted-foreground">
