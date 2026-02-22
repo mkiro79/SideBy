@@ -13,6 +13,7 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 - Añadida configuración de nginx que lee variable `$PORT` de Railway para bind dinámico
 - Agregado script `docker-entrypoint.sh` para interpolación de variables de entorno en nginx
 - Actualizado Dockerfile de producción para usar configuración dinámica de puerto
+- **CRÍTICO:** Añadidos ARG y ENV en Dockerfile para que variables `VITE_*` se inyecten durante el build
 - Añadido script `start` para preview local de producción (`vite preview`)
 
 **🧪 Validación:**
