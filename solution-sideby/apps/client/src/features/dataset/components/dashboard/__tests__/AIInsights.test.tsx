@@ -110,7 +110,7 @@ describe("AIInsights", () => {
     expect(screen.getByText(/desde caché/i)).toBeInTheDocument();
   });
 
-  it("debe mostrar botón Reintentar cuando isError=true y onRetry está definido", () => {
+  it("debe mostrar dos botones Reintentar cuando isError=true y onRetry está definido", () => {
     render(
       <AIInsights
         enabled={true}
@@ -122,10 +122,10 @@ describe("AIInsights", () => {
       />,
     );
 
-    expect(screen.getByRole("button", { name: /reintentar/i })).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: /reintentar/i })).toHaveLength(2);
   });
 
-  it("debe no mostrar botón Reintentar cuando isError=true pero onRetry no está definido", () => {
+  it("debe mostrar un único botón Reintentar cuando isError=true y onRetry no está definido", () => {
     render(
       <AIInsights
         enabled={true}
@@ -136,7 +136,7 @@ describe("AIInsights", () => {
       />,
     );
 
-    expect(screen.queryByRole("button", { name: /reintentar/i })).not.toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: /reintentar/i })).toHaveLength(1);
   });
 
   it("debe ejecutar onRetry al hacer click en Reintentar", async () => {
@@ -154,7 +154,8 @@ describe("AIInsights", () => {
       />,
     );
 
-    await user.click(screen.getByRole("button", { name: /reintentar/i }));
+    const retryButtons = screen.getAllByRole("button", { name: /reintentar/i });
+    await user.click(retryButtons[1]);
 
     expect(onRetry).toHaveBeenCalledTimes(1);
   });
