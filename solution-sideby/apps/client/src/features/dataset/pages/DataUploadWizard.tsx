@@ -10,11 +10,11 @@
  * @updated 2026-02-13 - Refactored for 2-phase API integration
  */
 
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
 import { SidebarProvider } from '@/shared/components/ui/sidebar.js';
 import { AppSidebar } from '@/shared/components/AppSidebar.js';
-import { MobileSidebarTrigger } from '@/shared/components/MobileSidebarTrigger.js';
+import { getDataset } from '../services/datasets.api.js';
 import { Button } from '@/shared/components/ui/button.js';
 import { Card } from '@/shared/components/ui/card.js';
 import { Separator } from '@/shared/components/ui/Separator.js';
@@ -29,6 +29,7 @@ import {
 } from '@/shared/components/ui/alert-dialog.js';
 import { toast } from '@/shared/services/toast.js';
 import { useState, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useWizardState } from '../hooks/useWizardState.js';
 import { useDatasetUpload } from '../hooks/useDatasetUpload.js';
 import { useDatasetMapping } from '../hooks/useDatasetMapping.js';
@@ -41,8 +42,12 @@ import type { UpdateMappingRequest } from '../types/api.types.js';
 
 export default function DataUploadWizard() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const location = useLocation();
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
+  // Indica que venimos del listado retomando un dataset en 'processing'.
+  // En este caso el paso 1 (upload) ya se completó y no se puede volver a él.
+  const [isResumingFromList, setIsResumingFromList] = useState(false);
+  const queryClient = useQueryClient();
   
   // Wizard state (Zustand)
   const {
@@ -57,41 +62,79 @@ export default function DataUploadWizard() {
     isLoading,
     nextStep,
     prevStep,
-    goToStep,
     reset,
     setDatasetId,
     setLoading,
     setError,
+    goToStep,
+    setFileA,
+    setFileB,
     canProceedToStep2,
     canProceedToStep3,
     canSubmit,
   } = useWizardState();
 
-  /**
-   * FIX-02: Limpiar estado del wizard al montar si es un flujo nuevo.
-   * Si llegan query params ?step=2&datasetId=xxx (FIX-02b - resume), 
-   * se inicializa en ese paso en lugar de resetear.
-   */
-  useEffect(() => {
-    const resumeStep = searchParams.get('step');
-    const resumeDatasetId = searchParams.get('datasetId');
+  // Recuperar dataset en processing desde el router state (FIX-02b)
+  const routerState = location.state as { datasetId?: string; step?: number } | null;
 
-    if (resumeStep && resumeDatasetId) {
-      // Flujo de reanudación: inicializar con el dataset existente
+  // Inicializar wizard si venimos de un dataset en estado 'processing'.
+  // Hace fetch del dataset para reconstruir parsedData con los headers reales de la API.
+  useEffect(() => {
+    if (!routerState?.datasetId) return;
+
+    const datasetIdToLoad = routerState.datasetId;
+    setIsResumingFromList(true);
+    reset();
+    setDatasetId(datasetIdToLoad);
+    setLoading(true);
+
+    getDataset(datasetIdToLoad)
+      .then((dataset) => {
+        const rows = dataset.data ?? [];
+        const allKeys = rows.length > 0 ? Object.keys(rows[0]) : [];
+        const headers = allKeys.filter((k) => k !== '_source_group');
+
+        const rowsA = rows
+          .filter((r) => r._source_group === 'groupA')
+          .map((r) => headers.reduce<Record<string, unknown>>((acc, h) => { acc[h] = r[h]; return acc; }, {}));
+
+        const rowsB = rows
+          .filter((r) => r._source_group === 'groupB')
+          .map((r) => headers.reduce<Record<string, unknown>>((acc, h) => { acc[h] = r[h]; return acc; }, {}));
+
+        setFileA({
+          parsedData: { headers, rows: rowsA, rowCount: rowsA.length },
+          isValid: true,
+          error: null,
+        });
+        setFileB({
+          parsedData: { headers, rows: rowsB, rowCount: rowsB.length },
+          isValid: true,
+          error: null,
+        });
+      })
+      .catch((err) => {
+        if (import.meta.env.DEV) {
+          // Log detallado solo en modo desarrollo para facilitar el debugging
+          console.error('[DataUploadWizard] Error loading dataset:', err);
+        }
+        setError('No se pudieron cargar los datos del dataset. Intenta de nuevo.');
+      })
+      .finally(() => {
+        setLoading(false);
+        if (routerState.step === 2) {
+          goToStep(2);
+        }
+      });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Intencionalmente vacío: solo ejecutar al montar
+
+  // Limpiar el estado del wizard al desmontar (FIX-02: evitar estado residual)
+  useEffect(() => {
+    return () => {
       reset();
-      setDatasetId(resumeDatasetId);
-      // Ir directamente al paso indicado sin pasar por validación de archivos
-      const targetStep = parseInt(resumeStep, 10);
-      if (targetStep === 2) {
-        goToStep(2);
-      }
-    } else {
-      // Flujo nuevo: resetear siempre para evitar datos contaminados del wizard anterior
-      reset();
-    }
-    // Solo ejecutar al montar
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    };
+  }, [reset]);
   
   // API hooks
   const { upload, isLoading: isUploading } = useDatasetUpload();
@@ -155,6 +198,9 @@ export default function DataUploadWizard() {
       
       // Guardar datasetId para FASE 2
       setDatasetId(result.datasetId);
+      
+      // Invalidar lista para que aparezca el dataset en 'processing'
+      queryClient.invalidateQueries({ queryKey: ['datasets'] });
       
       toast.success('Archivos subidos exitosamente', `${result.rowCount} filas procesadas`);
       
@@ -274,6 +320,8 @@ export default function DataUploadWizard() {
   const executeCancel = () => {
     setIsCancelDialogOpen(false);
     reset();
+    // Invalidar lista para reflejar cualquier dataset creado a medias
+    queryClient.invalidateQueries({ queryKey: ['datasets'] });
     navigate('/datasets');
   };
 
@@ -295,9 +343,7 @@ export default function DataUploadWizard() {
         <AppSidebar />
         
         <main className="flex-1 overflow-auto">
-          <div className="container max-w-5xl mx-auto py-8 px-6 space-y-8">
-            {/* Botón hamburguesa — solo en móvil */}
-            <MobileSidebarTrigger />
+            <div className="container max-w-5xl mx-auto pt-16 pb-8 md:py-8 px-6 space-y-8">
             {/* Header */}
             <div className="flex items-center justify-between">
               <div>
@@ -353,7 +399,7 @@ export default function DataUploadWizard() {
               <Button
                 variant="outline"
                 onClick={prevStep}
-                disabled={currentStep === 1 || isBusy}
+                disabled={currentStep === 1 || isBusy || (isResumingFromList && currentStep === 2)}
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 {' '}

@@ -480,7 +480,7 @@ export function ConfigurationStep() {
         </div>
       </Card>
       
-      {/* AI Configuration - Controlado por Feature Flag */}
+      {/* AI Configuration - Controlado por Feature Flag (FIX-02e: movido al final) */}
       {FEATURES.AI_ENABLED && (
         <Card className="p-6 space-y-6">
           <div className="flex items-center justify-between">
@@ -528,7 +528,7 @@ export function ConfigurationStep() {
           )}
         </Card>
       )}
-      
+
       {/* Info Alert */}
       <Alert>
         <Info className="h-4 w-4" />

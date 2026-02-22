@@ -27,7 +27,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/shared/components/ui/alert-dialog.js";
-import { FileSpreadsheet, Calendar, BarChart3, BarChart2, Trash2, Loader2, Edit2, Bot, Sparkles } from "lucide-react";
+import { FileSpreadsheet, Calendar, BarChart3, BarChart2, Trash2, Loader2, Edit2, Bot, Sparkles, ArrowRight } from "lucide-react";
 import type { DatasetSummary } from "../types/api.types.js";
 import { FEATURES } from "@/config/features.js";
 
@@ -82,19 +82,30 @@ export const DatasetCard = ({
     setIsDialogOpen(false);
   };
 
+  const isReady = dataset.status === 'ready';
+  const hoverLabel = isReady ? 'Ir al dashboard' : 'Continuar con la definición';
+
   return (
-    <Card className="transition-all hover:shadow-[var(--shadow-soft)]">
+    <Card className="group/card transition-all hover:shadow-[var(--shadow-soft)]">
       <CardContent className="p-4">
         <div className="flex items-start justify-between gap-4">
           {/* Contenido principal - Clickeable */}
           <button
             type="button"
-            className="flex flex-1 cursor-pointer items-start gap-4 text-left"
+            className="relative flex flex-1 cursor-pointer items-start gap-4 text-left overflow-hidden rounded-sm"
             onClick={() => onOpen(dataset.id)}
           >
             {/* Icono */}
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-primary/10">
               <BarChart3 className="h-6 w-6 text-primary" />
+            </div>
+
+            {/* Overlay de hover con CTA contextual */}
+            <div className="pointer-events-none absolute inset-0 flex items-center justify-center opacity-0 group-hover/card:opacity-100 transition-opacity duration-200 bg-background/80 backdrop-blur-sm rounded-sm">
+              <span className="flex items-center gap-1.5 text-sm font-medium text-primary">
+                {hoverLabel}
+                <ArrowRight className="h-4 w-4" />
+              </span>
             </div>
 
             {/* Información del dataset */}
@@ -159,7 +170,7 @@ export const DatasetCard = ({
 
           {/* Acciones - Botones de acción */}
           <div className="flex items-center gap-2 shrink-0">
-            <Tooltip content="Abrir dashboard">
+            <Tooltip content={isReady ? 'Abrir dashboard' : 'Continuar definición'}>
               <Button
                 variant="outline"
                 size="icon"
@@ -169,7 +180,7 @@ export const DatasetCard = ({
                 }}
                 disabled={isDeleting}
                 className="text-muted-foreground hover:text-primary"
-                aria-label="Abrir dashboard"
+                aria-label={isReady ? 'Abrir dashboard' : 'Continuar definición'}
               >
                 <BarChart2 className="h-4 w-4" />
               </Button>

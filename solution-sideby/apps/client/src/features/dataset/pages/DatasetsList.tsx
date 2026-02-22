@@ -15,7 +15,6 @@
 
 import { SidebarProvider } from "@/shared/components/ui/sidebar.js";
 import { AppSidebar } from "@/shared/components/AppSidebar.js";
-import { MobileSidebarTrigger } from "@/shared/components/MobileSidebarTrigger.js";
 import { Button } from "@/shared/components/ui/button.js";
 import { Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -37,23 +36,30 @@ export const DatasetsList = () => {
   const deleteMutation = useDeleteDataset();
 
   /**
-   * FIX-02b: Navega al dashboard o al wizard según estado del dataset.
-   * Si el dataset sigue en 'processing', lo redirige al Wizard paso 2
-   * para que el usuario pueda completar la configuración.
+   * Navega al dashboard de un dataset específico.
+   * Si el dataset está en estado 'processing', redirige al wizard paso 2
+   * para que el usuario termine de completar el alta.
    */
   const handleOpenDashboard = (id: string) => {
     const dataset = datasets.find((d) => d.id === id);
     if (dataset?.status === 'processing') {
-      navigate(`/datasets/upload?step=2&datasetId=${id}`);
-    } else {
-      navigate(`/datasets/${id}/dashboard`);
+      // Llevar al wizard paso 2 con el datasetId preconfigurado
+      navigate('/datasets/upload', { state: { datasetId: id, step: 2 } });
+      return;
     }
+    navigate(`/datasets/${id}/dashboard`);
   };
 
   /**
-   * Navega a la página de edición del dataset
+   * Navega a la página de edición del dataset.
+   * Si el dataset está en 'processing', lleva al wizard paso 2 para completar la definición.
    */
   const handleEdit = (id: string) => {
+    const dataset = datasets.find((d) => d.id === id);
+    if (dataset?.status === 'processing') {
+      navigate('/datasets/upload', { state: { datasetId: id, step: 2 } });
+      return;
+    }
     navigate(`/datasets/${id}`);
   };
 
@@ -84,11 +90,8 @@ export const DatasetsList = () => {
         <AppSidebar />
 
         <main className="flex-1 overflow-auto">
-          <div className="mx-auto w-full max-w-5xl py-6 space-y-6 px-4">
+          <div className="mx-auto w-full max-w-5xl pt-16 pb-6 md:py-6 space-y-6 px-4">
             
-            {/* Botón hamburguesa — solo en móvil */}
-            <MobileSidebarTrigger />
-
             {/* ================================================================
                 HEADER - Título y botón de crear
             ================================================================ */}

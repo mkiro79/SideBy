@@ -3,13 +3,16 @@
  *
  * Hook de Zustand que gestiona el estado completo del wizard de carga de datos.
  * Implementa navegación entre pasos, validación y reset.
- * Incluye persistencia en localStorage para mantener el estado entre sesiones.
+ *
+ * NOTA: Se eliminó la persistencia en localStorage (FIX-02) porque causaba
+ * que al volver al listado y crear un nuevo dataset se precargaran datos de
+ * la sesión anterior, dejando el listado inconsistente.
+ * El estado ahora vive solo en memoria y se resetea al desmontar el wizard.
  *
  * UPDATED: Fixed kpiFields optional chaining (2026-02-08)
  */
 
 import { create } from "zustand";
-import { persist, createJSONStorage } from "zustand/middleware";
 import type {
   WizardState,
   WizardStep,
@@ -111,193 +114,170 @@ interface WizardActions {
 }
 
 export const useWizardState = create<WizardState & WizardActions>()(
-  persist(
-    (set, get) => ({
-      ...initialState,
+  (set, get) => ({
+    ...initialState,
 
-      // ============================================================================
-      // NAVIGATION ACTIONS
-      // ============================================================================
+    // ============================================================================
+    // NAVIGATION ACTIONS
+    // ============================================================================
 
-      nextStep: () => {
-        const { currentStep, canProceedToStep2, canProceedToStep3 } = get();
+    nextStep: () => {
+      const { currentStep, canProceedToStep2, canProceedToStep3 } = get();
 
-        if (currentStep === 1 && canProceedToStep2()) {
-          set({ currentStep: 2 });
-        } else if (currentStep === 2 && canProceedToStep3()) {
-          set({ currentStep: 3 });
-        }
-      },
-
-      prevStep: () => {
-        const { currentStep } = get();
-        if (currentStep > 1) {
-          set({ currentStep: (currentStep - 1) as WizardStep });
-        }
-      },
-
-      goToStep: (step) => {
-        set({ currentStep: step });
-      },
-
-      // ============================================================================
-      // DATASET ID ACTIONS (NEW)
-      // ============================================================================
-
-      setDatasetId: (id) => {
-        set({ datasetId: id });
-      },
-
-      // ============================================================================
-      // FILE MANAGEMENT ACTIONS
-      // ============================================================================
-
-      setFileA: (fileGroup) => {
-        set((state) => ({
-          fileA: { ...state.fileA, ...fileGroup },
-        }));
-      },
-
-      setFileB: (fileGroup) => {
-        set((state) => ({
-          fileB: { ...state.fileB, ...fileGroup },
-        }));
-      },
-
-      clearFiles: () => {
-        set({
-          fileA: initialFileGroup,
-          fileB: initialFileGroup,
-        });
-      },
-
-      // ============================================================================
-      // MAPPING ACTIONS
-      // ============================================================================
-
-      setMapping: (mapping) => {
-        set((state) => ({
-          mapping: { ...state.mapping, ...mapping },
-        }));
-      },
-
-      addKPIField: (field) => {
-        set((state) => ({
-          mapping: {
-            ...state.mapping,
-            kpiFields: [...(state.mapping.kpiFields || []), field],
-          },
-        }));
-      },
-
-      removeKPIField: (fieldId) => {
-        set((state) => ({
-          mapping: {
-            ...state.mapping,
-            kpiFields: (state.mapping.kpiFields || []).filter(
-              (f) => f.id !== fieldId,
-            ),
-          },
-        }));
-      },
-
-      // ============================================================================
-      // CONFIGURATION ACTIONS
-      // ============================================================================
-
-      setMetadata: (metadata) => {
-        set((state) => ({
-          metadata: { ...state.metadata, ...metadata },
-        }));
-      },
-
-      setAIConfig: (config) => {
-        set((state) => ({
-          aiConfig: { ...state.aiConfig, ...config },
-        }));
-      },
-
-      setSourceConfig: (config) => {
-        set((state) => ({
-          sourceConfig: {
-            groupA: { ...state.sourceConfig.groupA, ...config.groupA },
-            groupB: { ...state.sourceConfig.groupB, ...config.groupB },
-          },
-        }));
-      },
-
-      // ============================================================================
-      // GLOBAL ACTIONS
-      // ============================================================================
-
-      setLoading: (isLoading) => {
-        set({ isLoading });
-      },
-
-      setError: (error) => {
-        set({ error });
-      },
-
-      reset: () => {
-        set(initialState);
-      },
-
-      // ============================================================================
-      // VALIDATION METHODS
-      // ============================================================================
-
-      canProceedToStep2: () => {
-        const { fileA, fileB } = get();
-        return (
-          fileA.isValid &&
-          fileB.isValid &&
-          fileA.parsedData !== null &&
-          fileB.parsedData !== null
-        );
-      },
-
-      canProceedToStep3: () => {
-        const { mapping } = get();
-        // dimensionField es opcional, solo requerimos al menos un KPI
-        return (mapping.kpiFields || []).length > 0;
-      },
-
-      canSubmit: () => {
-        const { metadata, sourceConfig, canProceedToStep2, canProceedToStep3 } =
-          get();
-        return (
-          canProceedToStep2() &&
-          canProceedToStep3() &&
-          metadata.name.trim() !== "" &&
-          sourceConfig.groupA.label.trim() !== "" &&
-          sourceConfig.groupB.label.trim() !== ""
-        );
-      },
-    }),
-    {
-      name: "sideby-wizard-storage", // Nombre de la clave en localStorage
-      storage: createJSONStorage(() => localStorage),
-      // No persistir archivos File (binarios), solo metadatos
-      partialize: (state) => ({
-        currentStep: state.currentStep,
-        datasetId: state.datasetId, // NEW: Persist datasetId
-        fileA: {
-          file: null, // No persistir el objeto File
-          parsedData: null, // No persistir datos parseados (evita exceder cuota)
-          error: state.fileA.error,
-          isValid: state.fileA.isValid,
-        },
-        fileB: {
-          file: null, // No persistir el objeto File
-          parsedData: null, // No persistir datos parseados (evita exceder cuota)
-          error: state.fileB.error,
-          isValid: state.fileB.isValid,
-        },
-        mapping: state.mapping,
-        metadata: state.metadata,
-        aiConfig: state.aiConfig,
-        sourceConfig: state.sourceConfig,
-      }),
+      if (currentStep === 1 && canProceedToStep2()) {
+        set({ currentStep: 2 });
+      } else if (currentStep === 2 && canProceedToStep3()) {
+        set({ currentStep: 3 });
+      }
     },
-  ),
+
+    prevStep: () => {
+      const { currentStep } = get();
+      if (currentStep > 1) {
+        set({ currentStep: (currentStep - 1) as WizardStep });
+      }
+    },
+
+    goToStep: (step) => {
+      set({ currentStep: step });
+    },
+
+    // ============================================================================
+    // DATASET ID ACTIONS (NEW)
+    // ============================================================================
+
+    setDatasetId: (id) => {
+      set({ datasetId: id });
+    },
+
+    // ============================================================================
+    // FILE MANAGEMENT ACTIONS
+    // ============================================================================
+
+    setFileA: (fileGroup) => {
+      set((state) => ({
+        fileA: { ...state.fileA, ...fileGroup },
+      }));
+    },
+
+    setFileB: (fileGroup) => {
+      set((state) => ({
+        fileB: { ...state.fileB, ...fileGroup },
+      }));
+    },
+
+    clearFiles: () => {
+      set({
+        fileA: initialFileGroup,
+        fileB: initialFileGroup,
+      });
+    },
+
+    // ============================================================================
+    // MAPPING ACTIONS
+    // ============================================================================
+
+    setMapping: (mapping) => {
+      set((state) => ({
+        mapping: { ...state.mapping, ...mapping },
+      }));
+    },
+
+    addKPIField: (field) => {
+      set((state) => ({
+        mapping: {
+          ...state.mapping,
+          kpiFields: [...(state.mapping.kpiFields || []), field],
+        },
+      }));
+    },
+
+    removeKPIField: (fieldId) => {
+      set((state) => ({
+        mapping: {
+          ...state.mapping,
+          kpiFields: (state.mapping.kpiFields || []).filter(
+            (f) => f.id !== fieldId,
+          ),
+        },
+      }));
+    },
+
+    // ============================================================================
+    // CONFIGURATION ACTIONS
+    // ============================================================================
+
+    setMetadata: (metadata) => {
+      set((state) => ({
+        metadata: { ...state.metadata, ...metadata },
+      }));
+    },
+
+    setAIConfig: (config) => {
+      set((state) => ({
+        aiConfig: { ...state.aiConfig, ...config },
+      }));
+    },
+
+    setSourceConfig: (config) => {
+      set((state) => ({
+        sourceConfig: {
+          groupA: { ...state.sourceConfig.groupA, ...config.groupA },
+          groupB: { ...state.sourceConfig.groupB, ...config.groupB },
+        },
+      }));
+    },
+
+    // ============================================================================
+    // GLOBAL ACTIONS
+    // ============================================================================
+
+    setLoading: (isLoading) => {
+      set({ isLoading });
+    },
+
+    setError: (error) => {
+      set({ error });
+    },
+
+    reset: () => {
+      set(initialState);
+    },
+
+    // ============================================================================
+    // VALIDATION METHODS
+    // ============================================================================
+
+    canProceedToStep2: () => {
+      const { fileA, fileB } = get();
+      return (
+        fileA.isValid &&
+        fileB.isValid &&
+        fileA.parsedData !== null &&
+        fileB.parsedData !== null
+      );
+    },
+
+    canProceedToStep3: () => {
+      const { mapping } = get();
+      // Requiere al menos un KPI y que dimensionField esté definido
+      return (
+        (mapping.kpiFields || []).length > 0 &&
+        mapping.dimensionField !== null &&
+        mapping.dimensionField !== ''
+      );
+    },
+
+    canSubmit: () => {
+      const { metadata, sourceConfig, canProceedToStep2, canProceedToStep3 } =
+        get();
+      return (
+        canProceedToStep2() &&
+        canProceedToStep3() &&
+        metadata.name.trim() !== "" &&
+        sourceConfig.groupA.label.trim() !== "" &&
+        sourceConfig.groupB.label.trim() !== ""
+      );
+    },
+  }),
 );

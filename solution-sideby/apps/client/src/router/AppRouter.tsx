@@ -132,6 +132,7 @@ export const appRouter = createBrowserRouter([
   },
   {
     path: '/login',
+    errorElement: <ErrorPage />,
     element: (
       <Suspense fallback={<PageLoader />}>
         <LoginPage />

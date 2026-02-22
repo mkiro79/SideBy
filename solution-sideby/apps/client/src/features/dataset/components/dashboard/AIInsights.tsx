@@ -84,8 +84,17 @@ export const AIInsights: React.FC<AIInsightsProps> = ({
         {hasRequested && isError && (
           <Alert variant="destructive">
             <AlertTitle>Error generando insights</AlertTitle>
-            <AlertDescription>
-              No se pudieron generar insights en este momento. Intenta de nuevo.
+            <AlertDescription className="space-y-3">
+              <p>No se pudieron generar insights en este momento.</p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={onGenerate}
+                className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+              >
+                Reintentar
+              </Button>
             </AlertDescription>
             {onRetry && (
               <Button

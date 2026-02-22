@@ -126,6 +126,18 @@ export function ColumnMappingStep({
     }
   }, [classifiedColumns.dateColumns, selectedDate]);
 
+  // Auto-seleccionar todas las dimensiones detectadas al montar (requerido por el backend)
+  useEffect(() => {
+    if (classifiedColumns.stringColumns.length > 0 && selectedDimensions.size === 0) {
+      Promise.resolve().then(() => {
+        const allDimensions = new Set(classifiedColumns.stringColumns);
+        setSelectedDimensions(allDimensions);
+        updateMapping(selectedDate, selectedMetrics, allDimensions);
+      });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [classifiedColumns.stringColumns, selectedDimensions.size, selectedDate, selectedMetrics]);
+
   // Handler para cambio de fecha
   const handleDateChange = (value: string) => {
     setSelectedDate(value);
@@ -360,7 +372,8 @@ export function ColumnMappingStep({
         </div>
 
         <p className="text-sm text-muted-foreground">
-          Selecciona las dimensiones para segmentar tus datos (opcional)
+          Selecciona las dimensiones para segmentar tus datos.{" "}
+          <span className="text-destructive font-medium">Se requiere al menos una.</span>
         </p>
 
         {classifiedColumns.stringColumns.length === 0 ? (
@@ -391,11 +404,18 @@ export function ColumnMappingStep({
           </div>
         )}
 
-        {selectedDimensions.size > 0 && (
+        {/* Contador y advertencia de validación */}
+        {selectedDimensions.size > 0 ? (
           <p className="text-sm text-muted-foreground">
             {selectedDimensions.size} dimensión(es) seleccionada(s)
           </p>
-        )}
+        ) : classifiedColumns.stringColumns.length > 0 ? (
+          <Alert variant="destructive" className="py-2">
+            <AlertDescription className="text-xs">
+              Debes seleccionar al menos una dimensión para continuar.
+            </AlertDescription>
+          </Alert>
+        ) : null}
       </Card>
     </div>
   );

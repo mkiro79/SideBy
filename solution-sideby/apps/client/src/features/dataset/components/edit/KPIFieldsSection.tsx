@@ -1,20 +1,24 @@
 /**
- * KPIFieldsSection - Sección de configuración de campos KPI
- * 
+ * KPIFieldsSection - Sección de configuración de campos KPI y dimensiones
+ *
  * Campos:
- * - schemaMapping.dimensionField (Select, requerido)
- * - schemaMapping.dateField (Select, opcional)
- * - schemaMapping.kpiFields (Tabla editable con useFieldArray)
- *   - Columnas: Original Name (read-only), Label (editable), Format (editable)
- * 
- * Este componente usa useFieldArray de react-hook-form para manejar
- * el array dinámico de kpiFields.
+ * - schemaMapping.dimensionField (solo lectura, no editable)
+ * - schemaMapping.dateField (Select filtrado por patrón fecha, opcional)
+ * - schemaMapping.kpiFields (Tabla editable con labels y formatos)
+ * - schemaMapping.categoricalFields (chips toggle para añadir/quitar)
+ *
+ * La dimensión NO es editable en el update porque está ligada a la estructura
+ * de los archivos originales cargados en el paso 1 del wizard.
+ * El campo de fecha sigue las mismas reglas que el paso 2 del wizard:
+ * solo muestra columnas cuyo nombre coincide con el patrón de fecha.
  */
 
-import { Controller, useFieldArray } from "react-hook-form";
+import { Controller, useFieldArray, useWatch } from "react-hook-form";
 import type { Control, FieldErrors } from "react-hook-form";
 import type { DatasetEditFormData } from "../../schemas/datasetEdit.schema.js";
 import { Input } from "@/shared/components/ui/Input.js";
+import { Badge } from "@/shared/components/ui/badge.js";
+import { Button } from "@/shared/components/ui/button.js";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/components/ui/card.js";
 import {
   Select,
@@ -31,6 +35,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/shared/components/ui/table.js";
+import { Plus, X } from "lucide-react";
+
+// ============================================================================
+// HELPERS
+// ============================================================================
+
+/** Patrón de detección de columnas de fecha (igual que wizard paso 2) */
+const DATE_COLUMN_PATTERN = /fecha|date|time|periodo|year|mes|month/i;
 
 // ============================================================================
 // PROPS
@@ -39,7 +51,7 @@ import {
 interface KPIFieldsSectionProps {
   control: Control<DatasetEditFormData>;
   errors: FieldErrors<DatasetEditFormData>;
-  /** Columnas disponibles del dataset (para selects de dimension/date) */
+  /** Columnas disponibles del dataset */
   availableColumns: string[];
 }
 
@@ -58,92 +70,105 @@ export const KPIFieldsSection = ({
     name: "schemaMapping.kpiFields",
   });
 
+  // Leer valores actuales para filtrar columnas disponibles
+  const dimensionField = useWatch({ control, name: "schemaMapping.dimensionField" });
+  const dateField = useWatch({ control, name: "schemaMapping.dateField" });
+  const currentKpiColumns = useWatch({ control, name: "schemaMapping.kpiFields" }) ?? [];
+  const categoricalFields = useWatch({ control, name: "schemaMapping.categoricalFields" }) ?? [];
+
+  // Columnas que coinciden con patrón de fecha (misma lógica que wizard step 2)
+  const dateColumns = availableColumns.filter((col) => DATE_COLUMN_PATTERN.test(col));
+
+  // Columnas candidatas para categorical: no son dimensión, no son KPI, no son fecha detectada ni el dateField seleccionado
+  const kpiColumnNames = currentKpiColumns.map((k) => k.columnName);
+  const categoricalCandidates = availableColumns.filter(
+    (col) =>
+      col !== dimensionField &&
+      col !== dateField &&
+      !kpiColumnNames.includes(col) &&
+      !DATE_COLUMN_PATTERN.test(col),
+  );
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Campos KPI y Dimensiones</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Dimension Field Select */}
+
+        {/* ================================================================
+            DIMENSIÓN - Solo lectura (no se puede cambiar sin resubir archivos)
+        ================================================================ */}
         <div className="space-y-2">
-          <label htmlFor="dimension-field" className="text-sm font-medium">
-            Campo de Dimensión <span className="text-destructive">*</span>
+          <label className="text-sm font-medium">
+            Campo de Dimensión
           </label>
-          <Controller
-            name="schemaMapping.dimensionField"
-            control={control}
-            render={({ field }) => (
-              <Select onValueChange={field.onChange} value={field.value}>
-                <SelectTrigger id="dimension-field">
-                  <SelectValue placeholder="Selecciona una columna para agrupar" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableColumns.map((col) => (
-                    <SelectItem key={col} value={col}>
-                      {col}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          />
-          {errors.schemaMapping?.dimensionField && (
-            <p className="text-sm text-destructive">
-              {errors.schemaMapping.dimensionField.message}
-            </p>
-          )}
+          <div className="flex items-center gap-2 rounded-md border bg-muted/40 px-3 py-2 min-h-10">
+            <span className="font-mono text-sm text-foreground">
+              {dimensionField || <span className="text-muted-foreground italic">No definido</span>}
+            </span>
+            <Badge variant="secondary" className="ml-auto text-xs shrink-0">
+              Solo lectura
+            </Badge>
+          </div>
           <p className="text-xs text-muted-foreground">
-            Columna principal para agrupar y comparar datos
+            La dimensión se define al cargar los archivos y no puede modificarse desde aquí
           </p>
         </div>
 
-        {/* Date Field Select (opcional) */}
-        <div className="space-y-2">
-          <label htmlFor="date-field" className="text-sm font-medium">
-            Campo de Fecha <span className="text-muted-foreground">(opcional)</span>
-          </label>
-          <Controller
-            name="schemaMapping.dateField"
-            control={control}
-            render={({ field }) => (
-              <Select
-                onValueChange={(value: string) => {
-                  // Convertir "none" a string vacío para el schema
-                  field.onChange(value === "none" ? "" : value);
-                }}
-                value={field.value || "none"}
-              >
-                <SelectTrigger id="date-field">
-                  <SelectValue placeholder="Selecciona una columna de fecha" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Ninguno</SelectItem>
-                  {availableColumns.map((col) => (
-                    <SelectItem key={col} value={col}>
-                      {col}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+        {/* ================================================================
+            CAMPO DE FECHA - Solo columnas que coincidan con patrón fecha
+        ================================================================ */}
+        {dateColumns.length > 0 && (
+          <div className="space-y-2">
+            <label htmlFor="date-field" className="text-sm font-medium">
+              Campo de Fecha{" "}
+              <span className="text-muted-foreground font-normal">(opcional)</span>
+            </label>
+            <Controller
+              name="schemaMapping.dateField"
+              control={control}
+              render={({ field }) => (
+                <Select
+                  onValueChange={(value: string) => {
+                    field.onChange(value === "none" ? "" : value);
+                  }}
+                  value={field.value || "none"}
+                >
+                  <SelectTrigger id="date-field">
+                    <SelectValue placeholder="Selecciona columna de fecha" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Ninguno</SelectItem>
+                    {dateColumns.map((col) => (
+                      <SelectItem key={col} value={col}>
+                        {col}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+            {errors.schemaMapping?.dateField && (
+              <p className="text-sm text-destructive">
+                {errors.schemaMapping.dateField.message}
+              </p>
             )}
-          />
-          {errors.schemaMapping?.dateField && (
-            <p className="text-sm text-destructive">
-              {errors.schemaMapping.dateField.message}
+            <p className="text-xs text-muted-foreground">
+              Columna temporal para análisis de tendencias
             </p>
-          )}
-          <p className="text-xs text-muted-foreground">
-            Columna temporal para análisis de tendencias
-          </p>
-        </div>
+          </div>
+        )}
 
-        {/* KPI Fields Table */}
+        {/* ================================================================
+            KPI FIELDS - Tabla editable (label + formato)
+        ================================================================ */}
         <div className="space-y-2">
-          <label htmlFor="kpi-fields-table" className="text-sm font-medium">
+          <label className="text-sm font-medium">
             Campos KPI <span className="text-destructive">*</span>
           </label>
           <div className="rounded-md border">
-            <Table id="kpi-fields-table">
+            <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[30%]">Columna Original</TableHead>
@@ -221,15 +246,86 @@ export const KPIFieldsSection = ({
               </TableBody>
             </Table>
           </div>
-          {errors.schemaMapping?.kpiFields && typeof errors.schemaMapping.kpiFields === 'object' && 'message' in errors.schemaMapping.kpiFields && (
-            <p className="text-sm text-destructive">
-              {errors.schemaMapping.kpiFields.message as string}
-            </p>
-          )}
+          {errors.schemaMapping?.kpiFields &&
+            typeof errors.schemaMapping.kpiFields === "object" &&
+            "message" in errors.schemaMapping.kpiFields && (
+              <p className="text-sm text-destructive">
+                {errors.schemaMapping.kpiFields.message as string}
+              </p>
+            )}
           <p className="text-xs text-muted-foreground">
             Personaliza los nombres y formatos de visualización para cada KPI
           </p>
         </div>
+
+        {/* ================================================================
+            CAMPOS CATEGÓRICOS - Chips toggle para añadir/quitar
+        ================================================================ */}
+        {categoricalCandidates.length > 0 && (
+          <Controller
+            name="schemaMapping.categoricalFields"
+            control={control}
+            render={({ field }) => {
+              const selected: string[] = field.value ?? [];
+
+              const toggle = (col: string) => {
+                const next = selected.includes(col)
+                  ? selected.filter((c) => c !== col)
+                  : [...selected, col];
+                field.onChange(next);
+              };
+
+              return (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">
+                    Campos Categóricos{" "}
+                    <span className="text-muted-foreground font-normal">(opcional)</span>
+                  </label>
+                  <div className="flex flex-wrap gap-2">
+                    {categoricalCandidates.map((col) => {
+                      const isActive = selected.includes(col);
+                      return (
+                        <Button
+                          key={col}
+                          type="button"
+                          variant={isActive ? "default" : "outline"}
+                          size="sm"
+                          className="h-7 gap-1 text-xs"
+                          onClick={() => toggle(col)}
+                        >
+                          {isActive ? (
+                            <X className="h-3 w-3" />
+                          ) : (
+                            <Plus className="h-3 w-3" />
+                          )}
+                          {col}
+                        </Button>
+                      );
+                    })}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Columnas de texto usadas para filtrar y segmentar los datos
+                  </p>
+                </div>
+              );
+            }}
+          />
+        )}
+
+        {/* Categóricos activos cuando no hay candidatos disponibles */}
+        {categoricalCandidates.length === 0 && (categoricalFields as string[]).length > 0 && (
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Campos Categóricos activos</label>
+            <div className="flex flex-wrap gap-1">
+              {(categoricalFields as string[]).map((col) => (
+                <Badge key={col} variant="secondary" className="text-xs">
+                  {col}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )}
+
       </CardContent>
     </Card>
   );

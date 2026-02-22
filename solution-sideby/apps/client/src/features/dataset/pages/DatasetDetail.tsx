@@ -14,13 +14,24 @@
  * Ver: docs/ROADMAP.md → RFC-004 → Backend: Soportar edición de sourceConfig
  */
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Save, Loader2 } from "lucide-react";
 
+import { SidebarProvider } from "@/shared/components/ui/sidebar.js";
+import { AppSidebar } from "@/shared/components/AppSidebar.js";
 import { Button } from "@/shared/components/ui/button.js";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/shared/components/ui/alert-dialog.js";
 import { toast } from "@/shared/services/toast.js";
 
 import { useDataset } from "../hooks/useDataset.js";
@@ -33,6 +44,7 @@ import { GeneralInfoFields } from "../components/edit/GeneralInfoFields.js";
 import { GroupConfigFields } from "../components/edit/GroupConfigFields.js";
 import { KPIFieldsSection } from "../components/edit/KPIFieldsSection.js";
 import { AIConfigFields } from "../components/edit/AIConfigFields.js";
+import { DatasetSummarySection } from "../components/edit/DatasetSummarySection.js";
 
 // ============================================================================
 // HELPER FUNCTIONS
@@ -126,6 +138,7 @@ const getAvailableColumns = (dataset: Dataset): string[] => {
 const DatasetDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [isUnsavedChangesDialogOpen, setIsUnsavedChangesDialogOpen] = useState(false);
 
   // React Query hooks
   const { dataset, isLoading, error } = useDataset(id || null);
@@ -135,9 +148,6 @@ const DatasetDetail = () => {
   const availableColumns = useMemo(() => {
     return dataset ? getAvailableColumns(dataset) : [];
   }, [dataset]);
-
-  // FIX-02c: En modo update (dataset 'ready'), ocultar campos estructurales
-  const isUpdateMode = dataset?.status === 'ready';
 
   // React Hook Form
   const {
@@ -180,7 +190,6 @@ const DatasetDetail = () => {
     if (!id) return;
 
     try {
-      // Construir payload para backend (SIN sourceConfig por limitación)
       await updateMutation.mutateAsync({
         id,
         payload: {
@@ -188,6 +197,18 @@ const DatasetDetail = () => {
             name: formData.meta.name,
             description: formData.meta.description || undefined,
           },
+          sourceConfig: formData.sourceConfig
+            ? {
+                groupA: {
+                  label: formData.sourceConfig.groupA?.label || undefined,
+                  color: formData.sourceConfig.groupA?.color || undefined,
+                },
+                groupB: {
+                  label: formData.sourceConfig.groupB?.label || undefined,
+                  color: formData.sourceConfig.groupB?.color || undefined,
+                },
+              }
+            : undefined,
           schemaMapping: formData.schemaMapping,
           dashboardLayout: formData.dashboardLayout,
           aiConfig: formData.aiConfig
@@ -215,15 +236,22 @@ const DatasetDetail = () => {
   };
 
   /**
-   * Navega de regreso a la lista
+   * Navega de regreso a la lista.
+   * Si hay cambios sin guardar, muestra un AlertDialog de confirmación.
    */
   const handleBack = () => {
     if (isDirty) {
-      const confirmed = globalThis.confirm(
-        "Tienes cambios sin guardar. ¿Estás seguro de salir?",
-      );
-      if (!confirmed) return;
+      setIsUnsavedChangesDialogOpen(true);
+      return;
     }
+    navigate("/datasets");
+  };
+
+  /**
+   * Confirma la navegación descartando cambios
+   */
+  const handleConfirmBack = () => {
+    setIsUnsavedChangesDialogOpen(false);
     navigate("/datasets");
   };
 
@@ -256,8 +284,35 @@ const DatasetDetail = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <form onSubmit={handleSubmit(onSubmit)} className="container max-w-4xl space-y-6">
+    <SidebarProvider defaultOpen={true}>
+      <div className="flex min-h-screen w-full">
+        <AppSidebar />
+        <main className="flex-1 overflow-auto">
+      {/* ================================================================
+          DIALOG - Confirmar salir con cambios sin guardar
+      ================================================================ */}
+      <AlertDialog open={isUnsavedChangesDialogOpen} onOpenChange={setIsUnsavedChangesDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Salir sin guardar?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tienes cambios sin guardar. Si sales ahora, se perderán todos los cambios realizados.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Seguir editando</AlertDialogCancel>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmBack}
+            >
+              Salir sin guardar
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <div className="mx-auto w-full max-w-4xl pt-16 pb-6 md:py-6 space-y-6 px-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -308,16 +363,19 @@ const DatasetDetail = () => {
         </div>
 
         {/* Form Sections */}
+        {/* Resumen visual de los archivos originales */}
+        <DatasetSummarySection
+          dataset={dataset}
+          columnCount={availableColumns.length}
+        />
+
         <GeneralInfoFields control={control} errors={errors} />
 
-        {/* FIX-02c: Ocultar campos estructurales en modo update (dataset ready) */}
-        {!isUpdateMode && (
-          <GroupConfigFields
-            control={control}
-            errors={errors}
-            disabled={true} // Disabled por limitación backend
-          />
-        )}
+        {/* Configuración de grupos: labels y colores editables */}
+        <GroupConfigFields
+          control={control}
+          errors={errors}
+        />
 
         <KPIFieldsSection
           control={control}
@@ -356,7 +414,10 @@ const DatasetDetail = () => {
           </Button>
         </div>
       </form>
-    </div>
+      </div>
+        </main>
+      </div>
+    </SidebarProvider>
   );
 };
 

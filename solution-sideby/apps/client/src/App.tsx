@@ -43,7 +43,7 @@ function App() {
           <RouterProvider router={appRouter} />
           <Toaster />
         </GoogleOAuthProvider>
-        
+      
         {/* React Query DevTools - Lazy loaded solo en modo desarrollo */}
         {ReactQueryDevtools && (
           <Suspense fallback={null}>
