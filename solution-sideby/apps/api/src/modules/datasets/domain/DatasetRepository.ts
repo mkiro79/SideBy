@@ -76,4 +76,11 @@ export interface DatasetRepository {
    * @returns Array de datasets abandonados
    */
   findAbandoned(cutoffDate: Date): Promise<Dataset[]>;
+
+  /**
+   * Elimina todos los datasets pertenecientes a un usuario (cascade delete).
+   *
+   * @param ownerId - ID del usuario propietario
+   */
+  deleteByOwnerId(ownerId: string): Promise<void>;
 }

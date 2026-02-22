@@ -11,8 +11,9 @@ Plataforma web para comparar datasets entre periodos y convertir datos en decisi
 - **Repositorio público**: [Repo Sideby](https://github.com/mkiro79/SideBy)
 - **Wiki de documentación**: [Wiki Sideby](https://github.com/mkiro79/SideBy/wiki)
 - **Slides de presentación**: [Slides Sideby](https://docs.google.com/presentation/d/1-eOqW7aXhX3nNeLUyWi6Qxawhpy4z45en0ZbOcVz_oM)
-- **Aplicacion en producción**: [App Sideby](https://sideby-client-production.up.railway.app/)
-
+- **Web en producción**: [App Sideby](https://sideby-client-production.up.railway.app/)
+- **Api en producción**: [API Sideby](https://sideby-api-production.up.railway.app/api/docs/) 
+- **Ejemplo de dataset**: [Dataset ejemplo A](https://github.com/mkiro79/SideBy/blob/1a080783a32aa929d699d5b1584918f81c628717/docs/ejemplos/performance_daily_2024.csv) | [Dataset ejemplo B](https://github.com/mkiro79/SideBy/blob/1a080783a32aa929d699d5b1584918f81c628717/docs/ejemplos/performance_daily_2023.csv)
 ---
 
 ## 📑 Índice de Navegación Rápida README

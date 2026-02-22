@@ -48,6 +48,10 @@ class MockDatasetRepository implements DatasetRepository {
     return [];
   }
 
+  async deleteByOwnerId(_ownerId: string): Promise<void> {
+    return;
+  }
+
   // Helper para insertar datasets de prueba
   seed(dataset: Dataset): void {
     this.datasets.set(dataset.id, dataset);

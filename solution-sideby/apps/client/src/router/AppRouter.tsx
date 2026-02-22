@@ -21,6 +21,7 @@ const DatasetsList = lazy(() => import('@/features/dataset/pages/DatasetsList.js
 const DataUploadWizard = lazy(() => import('@/features/dataset/pages/DataUploadWizard.js'));
 const DatasetDetail = lazy(() => import('@/features/dataset/pages/DatasetDetail.js'));
 const DatasetDashboard = lazy(() => import('@/features/dataset/pages/DatasetDashboard.js'));
+const SettingsPage = lazy(() => import('@/features/settings/pages/SettingsPage.js'));
 
 // ============================================================================
 // LOADING FALLBACK
@@ -129,6 +130,21 @@ export const appRouter = createBrowserRouter([
         <ContactPage />
       </Suspense>
     ),
+  },
+  {
+    path: '/settings',
+    errorElement: <ErrorPage />,
+    element: <ProtectedRoute />,
+    children: [
+      {
+        index: true,
+        element: (
+          <Suspense fallback={<PageLoader />}>
+            <SettingsPage />
+          </Suspense>
+        ),
+      },
+    ],
   },
   {
     path: '/login',

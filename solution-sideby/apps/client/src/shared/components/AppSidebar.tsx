@@ -5,7 +5,7 @@
 import { Home, FileSpreadsheet, Settings, LogOut, Menu } from "lucide-react";
 import { SideByLogo } from "@/shared/components/SideByLogo.js";
 import { SideByWordmark } from "@/shared/components/SideByWordmark.js";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import {
   Sidebar,
   SidebarContent,
@@ -16,7 +16,7 @@ import {
   SidebarMenuButton,
   useSidebar,
 } from "@/shared/components/ui/sidebar";
-import { useAuthStore } from "@/features/auth/store/auth.store.js";
+import { useLogout } from "@/features/auth/hooks/useLogout.js";
 
 const menuItems = [
   { icon: Home, label: "Inicio", path: "/home" },
@@ -27,14 +27,8 @@ const menuItems = [
 
 export function AppSidebar() {
   const location = useLocation();
-  const navigate = useNavigate();
-  const { logout } = useAuthStore();
   const { toggleSidebar, isMobile } = useSidebar();
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login', { replace: true });
-  };
+  const logout = useLogout();
 
   return (
     <Sidebar collapsible="offcanvas">
@@ -79,7 +73,7 @@ export function AppSidebar() {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton onClick={handleLogout}>
+            <SidebarMenuButton onClick={logout}>
               <LogOut className="h-5 w-5" />
               <span>Cerrar Sesión</span>
             </SidebarMenuButton>

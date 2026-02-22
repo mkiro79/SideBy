@@ -1,8 +1,8 @@
-import { useNavigate } from 'react-router-dom';
 import { LogOut, User, BarChart3 } from 'lucide-react';
 import { Button } from '@/shared/components/ui/button.js';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card.js';
 import { useAuthStore } from '@/features/auth/store/auth.store.js';
+import { useLogout } from '@/features/auth/hooks/useLogout.js';
 import { SideByWordmark } from '@/shared/components/SideByWordmark.js';
 
 // ============================================================================
@@ -10,13 +10,8 @@ import { SideByWordmark } from '@/shared/components/SideByWordmark.js';
 // ============================================================================
 
 export const HomePage = () => {
-  const navigate = useNavigate();
-  const { user, logout } = useAuthStore();
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login', { replace: true });
-  };
+  const { user } = useAuthStore();
+  const logout = useLogout();
 
   if (!user) {
     return (
@@ -53,7 +48,7 @@ export const HomePage = () => {
               <p className="text-sm font-medium">{user.name}</p>
               <p className="text-xs text-muted-foreground">{user.role}</p>
             </div>
-            <Button onClick={handleLogout} variant="outline" size="sm">
+            <Button onClick={logout} variant="outline" size="sm">
               <LogOut className="h-4 w-4" />
               Logout
             </Button>

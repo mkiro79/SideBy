@@ -32,4 +32,10 @@ export interface IUserRepository {
    * @returns The user entity or null if not found
    */
   findById(id: string): Promise<User | null>;
+
+  /**
+   * Elimina un usuario de la persistencia por su ID
+   * @param id - ID del usuario a eliminar
+   */
+  deleteById(id: string): Promise<void>;
 }
