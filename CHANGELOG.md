@@ -7,6 +7,17 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### [HOTFIX] Client Railway Deploy - Nginx PORT Configuration (2026-02-22)
+
+**🎨 Frontend (`apps/client`):**
+- Añadida configuración de nginx que lee variable `$PORT` de Railway para bind dinámico
+- Agregado script `docker-entrypoint.sh` para interpolación de variables de entorno en nginx
+- Actualizado Dockerfile de producción para usar configuración dinámica de puerto
+- Añadido script `start` para preview local de producción (`vite preview`)
+
+**🧪 Validación:**
+- Build de cliente en verde (`npm run build:client`)
+
 ### [HOTFIX] API Logger - Pino LOG_LEVEL Normalization (2026-02-22)
 
 **⚙️ Backend (`apps/api`):**
