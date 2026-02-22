@@ -6,7 +6,6 @@
  * - Captura errores y muestra la UI de fallback predeterminada
  * - Muestra el fallback personalizado cuando se proporciona
  * - El botón "Volver al inicio" llama a window.location.replace con '/home'
- * - El botón "Recargar página" llama a window.location.reload
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
@@ -68,7 +67,11 @@ describe("ErrorBoundary", () => {
         </ErrorBoundary>,
       );
 
-      expect(screen.getByText("¡Vaya!")).toBeInTheDocument();
+      expect(
+        screen.getByRole("heading", {
+          name: "¡Vaya! Algo ha ocurrido de manera inesperada.",
+        }),
+      ).toBeInTheDocument();
     });
 
     it("Muestra el mensaje de error descriptivo", () => {
@@ -79,7 +82,7 @@ describe("ErrorBoundary", () => {
       );
 
       expect(
-        screen.getByText("Algo ha ocurrido de manera inesperada"),
+        screen.getByText(/Se ha producido un error inesperado/i),
       ).toBeInTheDocument();
     });
 
@@ -95,16 +98,14 @@ describe("ErrorBoundary", () => {
       ).toBeInTheDocument();
     });
 
-    it("Muestra el botón 'Recargar página'", () => {
+    it("No muestra botón de recarga en el fallback actual", () => {
       render(
         <ErrorBoundary>
           <BrokenComponent shouldThrow={true} />
         </ErrorBoundary>,
       );
 
-      expect(
-        screen.getByRole("button", { name: /recargar página/i }),
-      ).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: /recargar página/i })).not.toBeInTheDocument();
     });
   });
 
@@ -129,25 +130,14 @@ describe("ErrorBoundary", () => {
       expect(replaceMock).toHaveBeenCalledWith("/home");
     });
 
-    it("El botón 'Recargar página' llama a window.location.reload", () => {
-      const reloadMock = vi.fn();
-      Object.defineProperty(window, "location", {
-        value: { ...window.location, reload: reloadMock },
-        writable: true,
-        configurable: true,
-      });
-
+    it("No renderiza botón de recarga en el fallback por defecto", () => {
       render(
         <ErrorBoundary>
           <BrokenComponent shouldThrow={true} />
         </ErrorBoundary>,
       );
 
-      fireEvent.click(
-        screen.getByRole("button", { name: /recargar página/i }),
-      );
-
-      expect(reloadMock).toHaveBeenCalled();
+      expect(screen.queryByRole("button", { name: /recargar página/i })).not.toBeInTheDocument();
     });
   });
 
