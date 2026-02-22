@@ -136,7 +136,7 @@ export function ColumnMappingStep({
       });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [classifiedColumns.stringColumns]);
+  }, [classifiedColumns.stringColumns, selectedDimensions.size, selectedDate, selectedMetrics]);
 
   // Handler para cambio de fecha
   const handleDateChange = (value: string) => {

@@ -72,17 +72,19 @@ export const KPIFieldsSection = ({
 
   // Leer valores actuales para filtrar columnas disponibles
   const dimensionField = useWatch({ control, name: "schemaMapping.dimensionField" });
+  const dateField = useWatch({ control, name: "schemaMapping.dateField" });
   const currentKpiColumns = useWatch({ control, name: "schemaMapping.kpiFields" }) ?? [];
   const categoricalFields = useWatch({ control, name: "schemaMapping.categoricalFields" }) ?? [];
 
   // Columnas que coinciden con patrón de fecha (misma lógica que wizard step 2)
   const dateColumns = availableColumns.filter((col) => DATE_COLUMN_PATTERN.test(col));
 
-  // Columnas candidatas para categorical: no son dimensión, no son KPI, no son fecha detectada
+  // Columnas candidatas para categorical: no son dimensión, no son KPI, no son fecha detectada ni el dateField seleccionado
   const kpiColumnNames = currentKpiColumns.map((k) => k.columnName);
   const categoricalCandidates = availableColumns.filter(
     (col) =>
       col !== dimensionField &&
+      col !== dateField &&
       !kpiColumnNames.includes(col) &&
       !DATE_COLUMN_PATTERN.test(col),
   );

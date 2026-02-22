@@ -53,8 +53,8 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
   handleGoHome = () => {
     this.setState({ hasError: false, error: null });
-    // Navegación forzada fuera del contexto de React Router
-    window.location.href = '/home';
+    // Navegación forzada fuera del contexto de React Router usando replace para no agregar al historial
+    window.location.replace('/home');
   };
 
   handleReload = () => {

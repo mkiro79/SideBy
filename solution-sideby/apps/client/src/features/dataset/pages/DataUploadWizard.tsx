@@ -113,7 +113,12 @@ export default function DataUploadWizard() {
           error: null,
         });
       })
-      .catch(() => {
+      .catch((err) => {
+        if (import.meta.env.DEV) {
+          // Log detallado solo en modo desarrollo para facilitar el debugging
+          // eslint-disable-next-line no-console
+          console.error('[DataUploadWizard] Error loading dataset:', err);
+        }
         setError('No se pudieron cargar los datos del dataset. Intenta de nuevo.');
       })
       .finally(() => {
@@ -130,8 +135,7 @@ export default function DataUploadWizard() {
     return () => {
       reset();
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [reset]);
   
   // API hooks
   const { upload, isLoading: isUploading } = useDatasetUpload();
