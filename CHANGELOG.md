@@ -7,6 +7,17 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### [HOTFIX] API Railway Deploy - Env & Path Alias Resolution (2026-02-22)
+
+**⚙️ Backend (`apps/api`):**
+- Corregido arranque en producción para no depender de archivo local `.env` en Railway
+- Añadida carga segura de variables con `dotenv/config` para mantener compatibilidad local
+- Corregida resolución de aliases `@/*` en artefactos compilados de TypeScript para runtime ESM en Railway
+
+**🧪 Validación:**
+- Build backend en verde (`npm run build:api`)
+- Verificada importación en `dist` del módulo `auth.swagger.js` sin `ERR_MODULE_NOT_FOUND`
+
 ### [RFC-010] AI Insights Summary - Trigger Control & Local Reuse (2026-02-20)
 
 **🎨 Frontend (`apps/client`):**

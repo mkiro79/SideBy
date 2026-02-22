@@ -11,7 +11,7 @@ Plataforma web para comparar datasets entre periodos y convertir datos en decisi
 - **Repositorio público**: [Repo Sideby](https://github.com/mkiro79/SideBy)
 - **Wiki de documentación**: [Wiki Sideby](https://github.com/mkiro79/SideBy/wiki)
 - **Slides de presentación**: [Slides Sideby](https://docs.google.com/presentation/d/1-eOqW7aXhX3nNeLUyWi6Qxawhpy4z45en0ZbOcVz_oM)
-- **Aplicacion en producción**: -- pendiente despliegue --
+- **Aplicacion en producción**: [App Sideby](https://sideby-client-production.up.railway.app/)
 
 ---
 
