@@ -20,14 +20,15 @@ const PATTERNS = [
 
 // Patrones específicos para Dockerfile/docker-compose
 const DOCKER_PATTERNS = [
-  /ENV\s+\w+\s*=\s*["']?(?!\$\{)[^"'\s]+["']?(?!\})/gi, // ENV VAR=value (no ${VAR})
-  /ARG\s+\w+\s*=\s*["']?(?!\$\{)[^"'\s]+["']?(?!\})/gi,
+  /ENV\s+\w+\s*=\s*["']?(?!\$)[^"'\s]+["']?/gi, // ENV VAR=value (no $VAR or ${VAR})
+  /ARG\s+\w+\s*=\s*["']?(?!\$)[^"'\s]+["']?/gi,
 ];
 
 const EXCLUDED_PATTERNS = [
   /password\s*=\s*process\.env/gi,
   /secret\s*=\s*process\.env/gi,
   /=\s*["']?\$\{[^}]+\}["']?/g, // Allow ${VAR}
+  /=\s*["']?\$\w+["']?/g, // Allow $VAR (Dockerfile syntax)
   /=\s*["']?<[^>]+>["']?/g, // Allow placeholders like <YOUR_KEY>
   /mongodb(\+srv)?:\/\/\$\{[^}]+\}:\$\{[^}]+\}@/g, // Allow MongoDB URIs with ${VAR} credentials
 ];
