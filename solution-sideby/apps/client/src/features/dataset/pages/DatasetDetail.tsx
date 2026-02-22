@@ -21,6 +21,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Save, Loader2 } from "lucide-react";
 
 import { SidebarProvider } from "@/shared/components/ui/sidebar.js";
+import { MobileSidebarTrigger } from "@/shared/components/MobileSidebarTrigger.js";
 import { AppSidebar } from "@/shared/components/AppSidebar.js";
 import { Button } from "@/shared/components/ui/button.js";
 import {
@@ -312,6 +313,9 @@ const DatasetDetail = () => {
       </AlertDialog>
 
       <div className="mx-auto w-full max-w-4xl pt-16 pb-6 md:py-6 space-y-6 px-4">
+      {/* Botón hamburguesa — solo en móvil */}
+      <MobileSidebarTrigger />
+
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">

@@ -15,6 +15,7 @@
 
 import { SidebarProvider } from "@/shared/components/ui/sidebar.js";
 import { AppSidebar } from "@/shared/components/AppSidebar.js";
+import { MobileSidebarTrigger } from "@/shared/components/MobileSidebarTrigger.js";
 import { Button } from "@/shared/components/ui/button.js";
 import { Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -91,7 +92,9 @@ export const DatasetsList = () => {
 
         <main className="flex-1 overflow-auto">
           <div className="mx-auto w-full max-w-5xl pt-16 pb-6 md:py-6 space-y-6 px-4">
-            
+            {/* Botón hamburguesa — solo en móvil */}
+            <MobileSidebarTrigger />
+
             {/* ================================================================
                 HEADER - Título y botón de crear
             ================================================================ */}
