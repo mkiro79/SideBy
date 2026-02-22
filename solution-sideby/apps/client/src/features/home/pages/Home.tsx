@@ -7,6 +7,7 @@ import { Badge } from "@/shared/components/ui/badge";
 import { FileSpreadsheet, BarChart3, Bot } from "lucide-react";
 import { useAuthStore } from "@/features/auth/store/auth.store.js";
 import { useNavigate } from "react-router-dom";
+import { SideByWordmark } from "@/shared/components/SideByWordmark.js";
 
 const features = [
   { icon: FileSpreadsheet, title: "Sube tus Datasets", description: "Importa archivos CSV con tus datos actuales", id: "upload-datasets" },
@@ -35,7 +36,7 @@ const Home = () => {
             <div className="flex items-start justify-between">
               <div className="space-y-2">
                 <h1 className="text-3xl font-bold tracking-tight">¡Hola, {userName}! 👋</h1>
-                <p className="text-lg text-muted-foreground">Bienvenido a SideBy</p>
+                <p className="text-lg text-muted-foreground">Bienvenido a <SideByWordmark /></p>
               </div>
               <Badge variant="secondary">Freemium</Badge>
             </div>

@@ -2,7 +2,9 @@
  * AppSidebar - Barra lateral de navegación principal
  * Componente que proporciona la navegación principal de la aplicación SideBy
  */
-import { Home, BarChart3, FileSpreadsheet, Settings, LogOut, Menu } from "lucide-react";
+import { Home, FileSpreadsheet, Settings, LogOut, Menu } from "lucide-react";
+import { SideByLogo } from "@/shared/components/SideByLogo.js";
+import { SideByWordmark } from "@/shared/components/SideByWordmark.js";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Sidebar,
@@ -39,10 +41,8 @@ export function AppSidebar() {
       <SidebarHeader>
         <div className="flex items-center justify-between px-2">
           <div className="flex items-center gap-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <BarChart3 className="h-5 w-5" />
-            </div>
-            <span className="font-bold text-lg">SideBy</span>
+            <SideByLogo size={36} />
+            <SideByWordmark className="font-bold text-lg" />
           </div>
           {/* Botón cerrar — solo visible en móvil */}
           {isMobile && (

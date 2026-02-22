@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
-import { Mail, Lock, Eye, EyeOff, BarChart3 } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { SideByLogo } from '@/shared/components/SideByLogo.js';
+import { SideByWordmark } from '@/shared/components/SideByWordmark.js';
 import { Button } from '@/shared/components/ui/button.js';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui/card.js';
 import { Input } from '@/shared/components/ui/Input.js';
@@ -41,15 +43,13 @@ export const LoginPage = () => {
         <Card className="border-slate-200 dark:border-slate-800 shadow-2xl backdrop-blur-sm">
           {/* Logo y Branding - Spacing según 8px grid */}
           <CardHeader className="space-y-6 text-center pb-8 pt-10">
-            {/* Logo con gradiente brand */}
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-blue-600 to-indigo-600 shadow-lg shadow-blue-500/30">
-              <BarChart3 className="h-10 w-10 text-white" strokeWidth={2} />
-            </div>
+            {/* Logo */}
+            <SideByLogo size={80} className="mx-auto" />
             
             {/* Títulos con tipografía Geist */}
             <div className="space-y-2">
               <CardTitle className="text-3xl font-bold tracking-tight bg-gradient-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-300 bg-clip-text text-transparent">
-                SideBy
+                <SideByWordmark />
               </CardTitle>
               <CardDescription className="text-base text-slate-600 dark:text-slate-400 max-w-sm mx-auto">
                 Inicia sesión para acceder a tus reportes y comparativas
