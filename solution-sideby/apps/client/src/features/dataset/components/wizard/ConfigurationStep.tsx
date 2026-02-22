@@ -76,55 +76,6 @@ export function ConfigurationStep() {
         </p>
       </div>
       
-      {/* AI Configuration - Controlado por Feature Flag */}
-      {FEATURES.AI_ENABLED && (
-        <Card className="p-6 space-y-6">
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-primary" />
-                <h3 className="text-lg font-semibold">Análisis con IA</h3>
-                <Badge variant="secondary">Beta</Badge>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Genera insights automáticos y recomendaciones basadas en tus datos
-              </p>
-            </div>
-            
-            {/* Toggle Switch */}
-            <label htmlFor="ai-toggle" className="relative inline-flex items-center cursor-pointer">
-              <span className="sr-only">Habilitar análisis con IA</span>
-              <input
-                id="ai-toggle"
-                type="checkbox"
-                checked={aiConfig.enabled}
-                onChange={(e) => setAIConfig({ enabled: e.target.checked })}
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-muted rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-            </label>
-          </div>
-          
-          {/* Contexto adicional (solo si AI está habilitado) */}
-          {aiConfig.enabled && (
-            <div className="space-y-2 pt-4 border-t">
-              <Label htmlFor="ai-context">Contexto adicional para el análisis</Label>
-              <Textarea
-                id="ai-context"
-                value={aiConfig.userContext}
-                onChange={(e) => setAIConfig({ userContext: e.target.value })}
-                placeholder="Ej: Este dataset compara ventas de productos en diferentes regiones. Prioriza análisis de crecimiento en la región Sur..."
-                rows={3}
-                maxLength={300}
-              />
-              <p className="text-xs text-muted-foreground">
-                Proporciona contexto para obtener insights más relevantes (opcional)
-              </p>
-            </div>
-          )}
-        </Card>
-      )}
-      
       {/* Resumen Completo con Métricas del Dataset Unificado */}
       <Card className="p-6 space-y-6">
         <div className="space-y-2">
@@ -528,6 +479,55 @@ export function ConfigurationStep() {
           </div>
         </div>
       </Card>
+      
+      {/* AI Configuration - Controlado por Feature Flag */}
+      {FEATURES.AI_ENABLED && (
+        <Card className="p-6 space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-primary" />
+                <h3 className="text-lg font-semibold">Análisis con IA</h3>
+                <Badge variant="secondary">Beta</Badge>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Genera insights automáticos y recomendaciones basadas en tus datos
+              </p>
+            </div>
+            
+            {/* Toggle Switch */}
+            <label htmlFor="ai-toggle" className="relative inline-flex items-center cursor-pointer">
+              <span className="sr-only">Habilitar análisis con IA</span>
+              <input
+                id="ai-toggle"
+                type="checkbox"
+                checked={aiConfig.enabled}
+                onChange={(e) => setAIConfig({ enabled: e.target.checked })}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-muted rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+            </label>
+          </div>
+          
+          {/* Contexto adicional (solo si AI está habilitado) */}
+          {aiConfig.enabled && (
+            <div className="space-y-2 pt-4 border-t">
+              <Label htmlFor="ai-context">Contexto adicional para el análisis</Label>
+              <Textarea
+                id="ai-context"
+                value={aiConfig.userContext}
+                onChange={(e) => setAIConfig({ userContext: e.target.value })}
+                placeholder="Ej: Este dataset compara ventas de productos en diferentes regiones. Prioriza análisis de crecimiento en la región Sur..."
+                rows={3}
+                maxLength={300}
+              />
+              <p className="text-xs text-muted-foreground">
+                Proporciona contexto para obtener insights más relevantes (opcional)
+              </p>
+            </div>
+          )}
+        </Card>
+      )}
       
       {/* Info Alert */}
       <Alert>

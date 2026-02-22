@@ -2,6 +2,7 @@
 import { lazy, Suspense } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { ProtectedRoute } from './ProtectedRoute.js';
+import { ErrorPage } from '@/features/public/pages/ErrorPage.js';
 
 // ============================================================================
 // LAZY LOADED PAGES
@@ -9,6 +10,9 @@ import { ProtectedRoute } from './ProtectedRoute.js';
 
 // Public pages
 const Landing = lazy(() => import('@/features/public/pages/Landing.js'));
+const PrivacyPage = lazy(() => import('@/features/public/pages/PrivacyPage.js').then(m => ({ default: m.PrivacyPage })));
+const TermsPage = lazy(() => import('@/features/public/pages/TermsPage.js').then(m => ({ default: m.TermsPage })));
+const ContactPage = lazy(() => import('@/features/public/pages/ContactPage.js').then(m => ({ default: m.ContactPage })));
 const LoginPage = lazy(() => import('@/features/auth/pages/LoginPage.js').then(m => ({ default: m.LoginPage })));
 
 // Protected pages  
@@ -38,6 +42,7 @@ const PageLoader = () => (
 export const appRouter = createBrowserRouter([
   {
     path: '/',
+    errorElement: <ErrorPage />,
     element: (
       <Suspense fallback={<PageLoader />}>
         <Landing />
@@ -46,6 +51,7 @@ export const appRouter = createBrowserRouter([
   },
   {
     path: '/home',
+    errorElement: <ErrorPage />,
     element: <ProtectedRoute />,
     children: [
       {
@@ -60,6 +66,7 @@ export const appRouter = createBrowserRouter([
   },
   {
     path: '/datasets',
+    errorElement: <ErrorPage />,
     element: <ProtectedRoute />,
     children: [
       {
@@ -95,6 +102,33 @@ export const appRouter = createBrowserRouter([
         ),
       },
     ],
+  },
+  {
+    path: '/privacy',
+    errorElement: <ErrorPage />,
+    element: (
+      <Suspense fallback={<PageLoader />}>
+        <PrivacyPage />
+      </Suspense>
+    ),
+  },
+  {
+    path: '/terms',
+    errorElement: <ErrorPage />,
+    element: (
+      <Suspense fallback={<PageLoader />}>
+        <TermsPage />
+      </Suspense>
+    ),
+  },
+  {
+    path: '/contact',
+    errorElement: <ErrorPage />,
+    element: (
+      <Suspense fallback={<PageLoader />}>
+        <ContactPage />
+      </Suspense>
+    ),
   },
   {
     path: '/login',

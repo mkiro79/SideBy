@@ -10,10 +10,11 @@
  * @updated 2026-02-13 - Refactored for 2-phase API integration
  */
 
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Check } from 'lucide-react';
 import { SidebarProvider } from '@/shared/components/ui/sidebar.js';
 import { AppSidebar } from '@/shared/components/AppSidebar.js';
+import { MobileSidebarTrigger } from '@/shared/components/MobileSidebarTrigger.js';
 import { Button } from '@/shared/components/ui/button.js';
 import { Card } from '@/shared/components/ui/card.js';
 import { Separator } from '@/shared/components/ui/Separator.js';
@@ -27,7 +28,7 @@ import {
   AlertDialogTitle,
 } from '@/shared/components/ui/alert-dialog.js';
 import { toast } from '@/shared/services/toast.js';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useWizardState } from '../hooks/useWizardState.js';
 import { useDatasetUpload } from '../hooks/useDatasetUpload.js';
 import { useDatasetMapping } from '../hooks/useDatasetMapping.js';
@@ -40,6 +41,7 @@ import type { UpdateMappingRequest } from '../types/api.types.js';
 
 export default function DataUploadWizard() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
   
   // Wizard state (Zustand)
@@ -55,6 +57,7 @@ export default function DataUploadWizard() {
     isLoading,
     nextStep,
     prevStep,
+    goToStep,
     reset,
     setDatasetId,
     setLoading,
@@ -63,6 +66,32 @@ export default function DataUploadWizard() {
     canProceedToStep3,
     canSubmit,
   } = useWizardState();
+
+  /**
+   * FIX-02: Limpiar estado del wizard al montar si es un flujo nuevo.
+   * Si llegan query params ?step=2&datasetId=xxx (FIX-02b - resume), 
+   * se inicializa en ese paso en lugar de resetear.
+   */
+  useEffect(() => {
+    const resumeStep = searchParams.get('step');
+    const resumeDatasetId = searchParams.get('datasetId');
+
+    if (resumeStep && resumeDatasetId) {
+      // Flujo de reanudación: inicializar con el dataset existente
+      reset();
+      setDatasetId(resumeDatasetId);
+      // Ir directamente al paso indicado sin pasar por validación de archivos
+      const targetStep = parseInt(resumeStep, 10);
+      if (targetStep === 2) {
+        goToStep(2);
+      }
+    } else {
+      // Flujo nuevo: resetear siempre para evitar datos contaminados del wizard anterior
+      reset();
+    }
+    // Solo ejecutar al montar
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   
   // API hooks
   const { upload, isLoading: isUploading } = useDatasetUpload();
@@ -267,6 +296,8 @@ export default function DataUploadWizard() {
         
         <main className="flex-1 overflow-auto">
           <div className="container max-w-5xl mx-auto py-8 px-6 space-y-8">
+            {/* Botón hamburguesa — solo en móvil */}
+            <MobileSidebarTrigger />
             {/* Header */}
             <div className="flex items-center justify-between">
               <div>
