@@ -12,7 +12,7 @@ y este proyecto adhiere a [Semantic Versioning](https://semver.org/lang/es/).
 **⚙️ Backend (`apps/api`):**
 - Corregido arranque en producción para no depender de archivo local `.env` en Railway
 - Añadida carga segura de variables con `dotenv/config` para mantener compatibilidad local
-- Corregida resolución de aliases `@/*` en build de TypeScript usando `tsc-alias`
+- Corregida resolución de aliases `@/*` en artefactos compilados de TypeScript para runtime ESM en Railway
 
 **🧪 Validación:**
 - Build backend en verde (`npm run build:api`)
