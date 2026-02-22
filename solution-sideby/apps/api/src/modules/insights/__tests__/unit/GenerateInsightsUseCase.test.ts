@@ -34,6 +34,10 @@ class MockDatasetRepository implements DatasetRepository {
   async findAbandoned(): Promise<Dataset[]> {
     return [];
   }
+
+  async deleteByOwnerId(): Promise<void> {
+    return;
+  }
 }
 
 describe("GenerateInsightsUseCase", () => {

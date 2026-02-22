@@ -47,6 +47,10 @@ export class MongoUserRepository implements IUserRepository {
 
     return UserMapper.toDomain(document as UserDocument);
   }
+
+  async deleteById(id: string): Promise<void> {
+    await UserModel.findByIdAndDelete(id);
+  }
 }
 
 /**

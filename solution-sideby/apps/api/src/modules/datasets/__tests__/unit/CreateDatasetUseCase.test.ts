@@ -55,6 +55,12 @@ class MockDatasetRepository implements DatasetRepository {
     );
   }
 
+  async deleteByOwnerId(ownerId: string): Promise<void> {
+    Array.from(this.datasets.entries())
+      .filter(([, d]) => d.ownerId === ownerId)
+      .forEach(([id]) => this.datasets.delete(id));
+  }
+
   // Helper para tests
   reset(): void {
     this.datasets.clear();

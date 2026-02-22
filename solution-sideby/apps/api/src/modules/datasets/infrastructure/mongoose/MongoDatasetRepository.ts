@@ -273,6 +273,28 @@ export class MongoDatasetRepository implements DatasetRepository {
   }
 
   /**
+   * Elimina todos los datasets de un usuario (cascade delete al eliminar cuenta).
+   */
+  async deleteByOwnerId(ownerId: string): Promise<void> {
+    try {
+      logger.debug({ ownerId }, "Deleting all datasets for owner");
+
+      const result = await DatasetModel.deleteMany({ ownerId });
+
+      logger.info(
+        { ownerId, deletedCount: result.deletedCount },
+        "Datasets deleted for owner",
+      );
+    } catch (error) {
+      logger.error(
+        { err: error, ownerId },
+        "Failed to delete datasets for owner",
+      );
+      throw new Error("Error al eliminar los datasets del usuario");
+    }
+  }
+
+  /**
    * Mapea un documento de MongoDB a una entidad de dominio.
    *
    * @param doc - Documento de Mongoose

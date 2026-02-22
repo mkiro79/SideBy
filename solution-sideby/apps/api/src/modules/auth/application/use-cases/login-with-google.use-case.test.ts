@@ -20,6 +20,7 @@ describe("LoginWithGoogleUseCase", () => {
       findByEmail: vi.fn(),
       findByGoogleId: vi.fn(),
       findById: vi.fn(),
+      deleteById: vi.fn(),
     };
 
    mockGoogleAuthService = {
