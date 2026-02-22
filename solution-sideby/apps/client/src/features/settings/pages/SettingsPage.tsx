@@ -25,8 +25,17 @@ const SettingsPage = () => {
             <div className="space-y-1">
               <h1 className="text-2xl font-bold tracking-tight">Configuración</h1>
               <p className="text-sm text-muted-foreground">
-                Gestiona las preferencias de tu cuenta y personaliza la aplicación.
+                Gestiona las preferencias de tu cuenta.
               </p>
+            </div>
+
+            {/* Tabs — preparado para futuras secciones (Notificaciones, Seguridad…) */}
+            <div className="border-b border-border">
+              <nav className="-mb-px flex gap-1">
+                <span className="inline-flex items-center gap-2 rounded-t-md bg-muted px-4 py-2 text-sm font-medium text-foreground border border-b-0 border-border cursor-default select-none">
+                  Perfil
+                </span>
+              </nav>
             </div>
 
             {/* Contenido principal */}
