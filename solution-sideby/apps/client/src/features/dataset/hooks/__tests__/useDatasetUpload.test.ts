@@ -144,43 +144,41 @@ describe("useDatasetUpload", () => {
     const fileA = new File(["content"], "file.csv");
     const fileB = new File(["content"], "file.csv");
 
-    vi.mocked(datasetsApi.uploadFiles).mockImplementation(
-      () =>
-        new Promise((resolve) =>
-          setTimeout(
-            () =>
-              resolve({
-                success: true,
-                data: {
-                  datasetId: "dataset-123",
-                  status: "processing",
-                  rowCount: 100,
-                  groupA: { fileName: "fileA.csv", rowCount: 50 },
-                  groupB: { fileName: "fileB.csv", rowCount: 50 },
-                },
-              }),
-            50,
-          ),
-        ),
+    // Promesa diferida: controlamos exactamente cuándo resuelve para evitar
+    // race conditions de timing que hacen el test flaky en CI.
+    let resolveUpload!: (value: import("../../types/api.types.js").UploadFilesResponse) => void;
+    const deferredUpload = new Promise<import("../../types/api.types.js").UploadFilesResponse>(
+      (resolve) => { resolveUpload = resolve; }
     );
+
+    vi.mocked(datasetsApi.uploadFiles).mockReturnValue(deferredUpload);
 
     const { result } = renderHook(() => useDatasetUpload());
 
-    // Act - Iniciar upload (no esperar)
+    // Act - Iniciar upload sin await para poder inspeccionar el estado intermedio
     const uploadPromise = result.current.upload({ fileA, fileB });
 
-    // Assert - Debe estar en loading
-    await waitFor(
-      () => {
-        expect(result.current.isLoading).toBe(true);
+    // Assert - isLoading debe ser true mientras la promesa está pendiente
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(true);
+    });
+
+    // Resolver la promesa manualmente (controlado, sin depender de setTimeout)
+    resolveUpload({
+      success: true,
+      data: {
+        datasetId: "dataset-123",
+        status: "processing",
+        rowCount: 100,
+        groupA: { fileName: "fileA.csv", rowCount: 50 },
+        groupB: { fileName: "fileB.csv", rowCount: 50 },
       },
-      { timeout: 100 },
-    );
+    });
 
     // Esperar a que termine
     await uploadPromise;
 
-    // Assert - Ya no debe estar en loading
+    // Assert - isLoading debe volver a false tras completarse
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
     });
