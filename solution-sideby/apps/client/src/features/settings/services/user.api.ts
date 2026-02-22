@@ -21,7 +21,8 @@ import type {
  * Obtiene el perfil del usuario autenticado.
  */
 export const getUserProfile = async (): Promise<UserProfileResponse> => {
-  const response = await httpClient.get<UserProfileResponse>("/api/v1/users/me");
+  const response =
+    await httpClient.get<UserProfileResponse>("/api/v1/users/me");
   return response.data;
 };
 
