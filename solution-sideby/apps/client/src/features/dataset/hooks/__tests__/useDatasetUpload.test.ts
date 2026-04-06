@@ -8,6 +8,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
 import { useDatasetUpload } from "../useDatasetUpload.js";
+import { createQueryClientWrapper } from "@/test/utils/react-query.js";
 import * as datasetsApi from "../../services/datasets.api.js";
 import type { UploadFilesResponse } from "../../types/api.types.js";
 
@@ -23,7 +24,9 @@ describe("useDatasetUpload", () => {
 
   it("debe tener estado inicial correcto", () => {
     // Arrange & Act
-    const { result } = renderHook(() => useDatasetUpload());
+    const { result } = renderHook(() => useDatasetUpload(), {
+      wrapper: createQueryClientWrapper(),
+    });
 
     // Assert
     expect(result.current.isLoading).toBe(false);
@@ -50,11 +53,12 @@ describe("useDatasetUpload", () => {
       data: mockResponse,
     });
 
-    const { result } = renderHook(() => useDatasetUpload());
+    const { result } = renderHook(() => useDatasetUpload(), {
+      wrapper: createQueryClientWrapper(),
+    });
 
     // Act
-    const uploadPromise = result.current.upload({ fileA, fileB });
-    const uploadedData = await uploadPromise;
+    const uploadedData = await result.current.upload({ fileA, fileB });
 
     // Assert - Success state
     await waitFor(() => {
@@ -77,7 +81,9 @@ describe("useDatasetUpload", () => {
       new Error(errorMessage),
     );
 
-    const { result } = renderHook(() => useDatasetUpload());
+    const { result } = renderHook(() => useDatasetUpload(), {
+      wrapper: createQueryClientWrapper(),
+    });
 
     // Act & Assert
     await expect(result.current.upload({ fileA, fileB })).rejects.toThrow(
@@ -99,7 +105,9 @@ describe("useDatasetUpload", () => {
       "String error", // No es una instancia de Error
     );
 
-    const { result } = renderHook(() => useDatasetUpload());
+    const { result } = renderHook(() => useDatasetUpload(), {
+      wrapper: createQueryClientWrapper(),
+    });
 
     // Act
     await expect(result.current.upload({ fileA, fileB })).rejects.toBeDefined();
@@ -120,7 +128,9 @@ describe("useDatasetUpload", () => {
       new Error("Test error"),
     );
 
-    const { result } = renderHook(() => useDatasetUpload());
+    const { result } = renderHook(() => useDatasetUpload(), {
+      wrapper: createQueryClientWrapper(),
+    });
 
     // Act - Generar error
     await expect(result.current.upload({ fileA, fileB })).rejects.toThrow();
@@ -129,7 +139,7 @@ describe("useDatasetUpload", () => {
       expect(result.current.error).toBe("Test error");
     });
 
-    // Act - Reset con waitFor para esperar actualización de estado
+    // Act - Reset
     result.current.reset();
 
     // Assert
@@ -144,18 +154,23 @@ describe("useDatasetUpload", () => {
     const fileA = new File(["content"], "file.csv");
     const fileB = new File(["content"], "file.csv");
 
-    // Promesa diferida: controlamos exactamente cuándo resuelve para evitar
-    // race conditions de timing que hacen el test flaky en CI.
-    let resolveUpload!: (value: import("../../types/api.types.js").UploadFilesResponse) => void;
-    const deferredUpload = new Promise<import("../../types/api.types.js").UploadFilesResponse>(
-      (resolve) => { resolveUpload = resolve; }
-    );
+    // Promesa diferida: controlamos exactamente cuándo resuelve
+    let resolveUpload!: (
+      value: import("../../types/api.types.js").UploadFilesResponse,
+    ) => void;
+    const deferredUpload = new Promise<
+      import("../../types/api.types.js").UploadFilesResponse
+    >((resolve) => {
+      resolveUpload = resolve;
+    });
 
     vi.mocked(datasetsApi.uploadFiles).mockReturnValue(deferredUpload);
 
-    const { result } = renderHook(() => useDatasetUpload());
+    const { result } = renderHook(() => useDatasetUpload(), {
+      wrapper: createQueryClientWrapper(),
+    });
 
-    // Act - Iniciar upload sin await para poder inspeccionar el estado intermedio
+    // Act - Iniciar upload sin await
     const uploadPromise = result.current.upload({ fileA, fileB });
 
     // Assert - isLoading debe ser true mientras la promesa está pendiente
@@ -163,7 +178,7 @@ describe("useDatasetUpload", () => {
       expect(result.current.isLoading).toBe(true);
     });
 
-    // Resolver la promesa manualmente (controlado, sin depender de setTimeout)
+    // Resolver la promesa manualmente
     resolveUpload({
       success: true,
       data: {
@@ -178,9 +193,10 @@ describe("useDatasetUpload", () => {
     // Esperar a que termine
     await uploadPromise;
 
-    // Assert - isLoading debe volver a false tras completarse
+    // Assert - isLoading debe volver a false
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
     });
   });
 });
+

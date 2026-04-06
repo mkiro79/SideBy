@@ -17,7 +17,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, cleanup, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { ColumnMappingStep } from "../components/wizard/ColumnMappingStep.simplified.js";
+import { ColumnMappingStep } from "../components/wizard/ColumnMappingStep.js";
 import type { WizardState } from "../types/wizard.types.js";
 
 // Helper para crear mock states con valores por defecto

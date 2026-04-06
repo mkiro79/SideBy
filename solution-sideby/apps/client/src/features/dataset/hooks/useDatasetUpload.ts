@@ -25,7 +25,7 @@
  * ```
  */
 
-import { useState } from "react";
+import { useMutation } from "@tanstack/react-query";
 import { uploadFiles } from "../services/datasets.api.js";
 import type {
   UploadFilesRequest,
@@ -33,8 +33,9 @@ import type {
 } from "../types/api.types.js";
 
 export function useDatasetUpload() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const mutation = useMutation({
+    mutationFn: (request: UploadFilesRequest) => uploadFiles(request),
+  });
 
   /**
    * Sube dos archivos CSV al backend para crear un nuevo dataset
@@ -46,34 +47,16 @@ export function useDatasetUpload() {
   const upload = async (
     request: UploadFilesRequest,
   ): Promise<UploadFilesResponse["data"]> => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const response = await uploadFiles(request);
-      return response.data;
-    } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Error desconocido";
-      setError(errorMessage);
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  /**
-   * Resetea el estado del hook (error y loading)
-   */
-  const reset = () => {
-    setError(null);
-    setIsLoading(false);
+    const response = await mutation.mutateAsync(request);
+    return response.data;
   };
 
   return {
     upload,
-    isLoading,
-    error,
-    reset,
+    isLoading: mutation.isPending,
+    error: mutation.error
+      ? ((mutation.error as Error).message ?? "Error desconocido")
+      : null,
+    reset: mutation.reset,
   };
 }

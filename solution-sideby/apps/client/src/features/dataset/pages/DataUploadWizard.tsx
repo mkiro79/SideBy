@@ -36,7 +36,7 @@ import { useDatasetUpload } from '../hooks/useDatasetUpload.js';
 import { useDatasetMapping } from '../hooks/useDatasetMapping.js';
 import { StepIndicator } from '../components/wizard/StepIndicator.js';
 import { FileUploadStep } from '../components/wizard/FileUploadStep.js';
-import { ColumnMappingStep } from '../components/wizard/ColumnMappingStep.simplified.js';
+import { ColumnMappingStep } from '../components/wizard/ColumnMappingStep.js';
 import { ConfigurationStep } from '../components/wizard/ConfigurationStep.js';
 import type { StepStatus } from '../types/wizard.types.js';
 import type { UpdateMappingRequest } from '../types/api.types.js';
