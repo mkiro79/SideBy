@@ -17,7 +17,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, fireEvent, cleanup, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { ColumnMappingStep } from "../components/wizard/ColumnMappingStep.simplified.js";
+import { ColumnMappingStep } from "../components/wizard/ColumnMappingStep.js";
 import type { WizardState } from "../types/wizard.types.js";
 
 // Helper para crear mock states con valores por defecto
@@ -339,6 +339,9 @@ describe("[TDD] ColumnMappingStep - Simplified Auto-Mapping UI", () => {
         />
       );
 
+      // Limpiar llamadas de inicialización antes de contar interacciones del usuario
+      mockSetMapping.mockClear();
+
       // Seleccionar 4 métricas
       fireEvent.click(screen.getByRole("checkbox", { name: /m1/i }));
       fireEvent.click(screen.getByRole("checkbox", { name: /m2/i }));
@@ -434,6 +437,9 @@ describe("[TDD] ColumnMappingStep - Simplified Auto-Mapping UI", () => {
         />
       );
 
+      // Limpiar llamadas de inicialización antes de contar interacciones del usuario
+      mockSetMapping.mockClear();
+
       const ventasCheckbox = screen.getByRole("checkbox", { name: /ventas/i });
 
       // Check y uncheck
@@ -507,15 +513,19 @@ describe("[TDD] ColumnMappingStep - Simplified Auto-Mapping UI", () => {
         />
       );
 
-      // Seleccionar todas las dimensiones (5)
+      // Limpiar llamadas de inicialización antes de contar interacciones del usuario
+      mockSetMapping.mockClear();
+
+      // Desmarcar 5 dimensiones (todas ya están auto-seleccionadas)
+      // Nota: al desmarcar la última (d5 → size=0), el efecto de auto-selección se dispara nuevamente (+1 call)
       fireEvent.click(screen.getByRole("checkbox", { name: /^d1$/i }));
       fireEvent.click(screen.getByRole("checkbox", { name: /^d2$/i }));
       fireEvent.click(screen.getByRole("checkbox", { name: /^d3$/i }));
       fireEvent.click(screen.getByRole("checkbox", { name: /^d4$/i }));
       fireEvent.click(screen.getByRole("checkbox", { name: /^d5$/i }));
 
-      // Todas deben estar habilitadas (sin límite)
-      expect(mockSetMapping).toHaveBeenCalledTimes(5);
+      // 5 interacciones + 1 llamada del efecto de re-selección al quedar 0 dimensiones
+      expect(mockSetMapping).toHaveBeenCalledTimes(6);
     });
 
     it("[RED] should allow unchecking dimensions", () => {
@@ -527,8 +537,8 @@ describe("[TDD] ColumnMappingStep - Simplified Auto-Mapping UI", () => {
             name: "test.csv",
             size: 100,
             preview: {
-              headers: ["fecha", "ventas", "region"],
-              rows: [["2024-01-01", "1000", "Norte"]],
+              headers: ["fecha", "ventas", "region", "categoria"],
+              rows: [["2024-01-01", "1000", "Norte", "A"]],
             },
           },
         ],
@@ -541,10 +551,14 @@ describe("[TDD] ColumnMappingStep - Simplified Auto-Mapping UI", () => {
         />
       );
 
+      // Limpiar llamadas de inicialización antes de contar interacciones del usuario
+      mockSetMapping.mockClear();
+
       const regionCheckbox = screen.getByRole("checkbox", { name: /region/i });
 
-      fireEvent.click(regionCheckbox); // Check
-      fireEvent.click(regionCheckbox); // Uncheck
+      // Con 2 dimensiones auto-seleccionadas, desmarcar una no dispara el efecto de re-selección (size queda en 1)
+      fireEvent.click(regionCheckbox); // Uncheck region (size: 2→1)
+      fireEvent.click(regionCheckbox); // Re-check region (size: 1→2)
 
       expect(mockSetMapping).toHaveBeenCalledTimes(2);
     });

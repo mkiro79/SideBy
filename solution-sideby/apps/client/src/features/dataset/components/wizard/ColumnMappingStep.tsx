@@ -1,207 +1,293 @@
 /**
- * Column Mapping Step Component
+ * ColumnMappingStep - RFC-003-A Simplified Auto-Mapping UI
  * 
- * Paso 2: Configurar mapping de columnas (dimensión + KPIs)
- * Incluye vista previa lado a lado de ambos archivos
+ * Componente simplificado para mapeo de columnas con auto-detección.
+ * 
+ * Estructura:
+ * 1. Dropdown para seleccionar columna de fecha
+ * 2. Checkboxes para métricas (máximo 4)
+ * 3. Checkboxes para dimensiones (sin límite)
+ * 
+ * NO permite:
+ * - Renombrar KPIs
+ * - Cambiar tipos de columna
+ * - Agregar agregaciones
  */
 
-import { useState } from 'react';
-import { Plus, X, TrendingUp, Star, Calendar } from 'lucide-react';
-import { Button } from '@/shared/components/ui/button.js';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select.js';
-import { Input } from '@/shared/components/ui/Input.js';
-import { Label } from '@/shared/components/ui/Label.js';
-import { Badge } from '@/shared/components/ui/badge.js';
-import { Card } from '@/shared/components/ui/card.js';
-import { Alert, AlertDescription } from '@/shared/components/ui/alert.js';
-import { Checkbox } from '@/shared/components/ui/checkbox.js';
-import { useWizardState } from '../../hooks/useWizardState.js';
-import { FilePreview } from '../FilePreview.js';
-import type { KPIMappingField, KPIFormat } from '../../types/wizard.types.js';
+import { useEffect, useState, useMemo } from "react";
+import { Calendar, TrendingUp, Tag } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/shared/components/ui/select.js";
+import { Label } from "@/shared/components/ui/Label.js";
+import { Card } from "@/shared/components/ui/card.js";
+import { Alert, AlertDescription } from "@/shared/components/ui/alert.js";
+import { Checkbox } from "@/shared/components/ui/checkbox.js";
+import { FilePreview } from "../FilePreview.js";
+import { autoClassifyColumns } from "../../utils/autoClassify.js";
+import { inferKPIFormat } from "../../utils/inferKPIFormat.js";
+import { useWizardState } from "../../hooks/useWizardState.js";
+import type { WizardState, ColumnMapping } from "../../types/wizard.types.js";
 
-export function ColumnMappingStep() {
-  const { fileA, fileB, mapping, setMapping, addKPIField, removeKPIField } = useWizardState();
+export interface ColumnMappingStepProps {
+  readonly state?: WizardState;
+  readonly setMapping?: (mapping: ColumnMapping) => void;
+}
+
+interface ClassifiedColumns {
+  dateColumns: string[];
+  numericColumns: string[];
+  stringColumns: string[];
+}
+
+const MAX_METRICS = 4;
+
+export function ColumnMappingStep({
+  state,
+  setMapping: setMappingProp,
+}: ColumnMappingStepProps) {
+  // Soporte para ambos modos: legacy (sin props) usando hook, o nuevo (con props)
+  const hookState = useWizardState();
   
-  const [newKPIColumn, setNewKPIColumn] = useState('');
-  const [newKPILabel, setNewKPILabel] = useState('');
-  const [newKPIFormat, setNewKPIFormat] = useState<KPIFormat>('number');
+  // Usar props si están disponibles, sino el hook legacy
+  const wizardState = state || hookState;
+  const setMappingFn = setMappingProp || hookState.setMapping;
   
-  const availableColumns = fileA.parsedData?.headers || [];
-  const dimensionField = mapping.dimensionField;
-  const kpiFields = mapping.kpiFields || [];
-  const categoricalFields = mapping.categoricalFields || [];
-  
-  // Columnas no usadas (disponibles para KPIs)
-  const availableKPIColumns = availableColumns.filter(
-    (col) =>
-      col !== dimensionField &&
-      col !== mapping.dateField &&
-      !(kpiFields || []).some((kpi) => kpi.columnName === col)
+  // Estado local para las selecciones
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [selectedMetrics, setSelectedMetrics] = useState<Set<string>>(
+    new Set()
   );
+  const [selectedDimensions, setSelectedDimensions] = useState<Set<string>>(
+    new Set()
+  );
+
+  // Obtener datos - soportar ambos formatos (RFC-003-A uploadedFiles[] O legacy fileA)
+  const uploadedFile = wizardState.uploadedFiles?.[0];
+  const legacyFile = wizardState.fileA;
+
+  // Extraer headers y rows del formato disponible (memoizados para estabilidad)
+  const headers = useMemo(() => {
+    return uploadedFile 
+      ? uploadedFile.preview?.headers || []
+      : legacyFile?.parsedData?.headers || [];
+  }, [uploadedFile, legacyFile]);
   
-  // Columnas disponibles para categorical (strings, excluye dimensión, KPIs, fecha)
-  const availableCategoricalColumns = availableColumns.filter((col) => {
-    if (col === dimensionField || col === mapping.dateField) return false;
-    if ((kpiFields || []).some((kpi) => kpi.columnName === col)) return false;
+  // Convertir rows de Record<string, unknown>[] a string[][]
+  const rows: string[][] = useMemo(() => {
+    if (uploadedFile) {
+      return uploadedFile.preview?.rows || [];
+    } 
+    if (legacyFile?.parsedData) {
+      return legacyFile.parsedData.rows.map(row => 
+        headers.map(header => {
+          const value = row[header];
+          if (value === null || value === undefined) return '';
+          if (typeof value === 'string') return value;
+          if (typeof value === 'number') return value.toString();
+          if (typeof value === 'boolean') return value.toString();
+          // Objetos/arrays: stringify
+          return JSON.stringify(value);
+        })
+      );
+    }
+    return [];
+  }, [uploadedFile, legacyFile, headers]);
+
+  // Auto-clasificar columnas al montar
+  const classifiedColumns: ClassifiedColumns = useMemo(() => {
+    if (headers.length === 0 || rows.length === 0) {
+      return { dateColumns: [], numericColumns: [], stringColumns: [] };
+    }
+
+    // Transformar rows de string[][] a Record<string, unknown>[]
+    const transformedRows = rows.map((row) => {
+      const rowObject: Record<string, unknown> = {};
+      headers.forEach((header, index) => {
+        rowObject[header] = row[index];
+      });
+      return rowObject;
+    });
+
+    return autoClassifyColumns(headers, transformedRows);
+  }, [headers, rows]);
+
+  // Inicializar selección de fecha con la primera columna de fecha detectada
+  useEffect(() => {
+    if (classifiedColumns.dateColumns.length > 0 && selectedDate === null) {
+      const defaultDate = classifiedColumns.dateColumns[0];
+      setSelectedDate(defaultDate);
+      updateMapping(defaultDate, selectedMetrics, selectedDimensions);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [classifiedColumns.dateColumns, selectedDate, selectedMetrics, selectedDimensions]);
+
+  // Auto-seleccionar todas las dimensiones detectadas al montar (requerido por el backend)
+  useEffect(() => {
+    if (classifiedColumns.stringColumns.length > 0 && selectedDimensions.size === 0) {
+      const allDimensions = new Set(classifiedColumns.stringColumns);
+      const effectiveDate = selectedDate ?? classifiedColumns.dateColumns[0] ?? null;
+      setSelectedDimensions(allDimensions);
+      updateMapping(effectiveDate, selectedMetrics, allDimensions);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [classifiedColumns.stringColumns, classifiedColumns.dateColumns, selectedDimensions.size, selectedDate, selectedMetrics]);
+
+  // Handler para cambio de fecha
+  const handleDateChange = (value: string) => {
+    setSelectedDate(value);
     
-    // Detectar si es string analizando múltiples filas (hasta 10)
-    const rows = fileA.parsedData?.rows || [];
-    if (rows.length === 0) return false;
+    // Actualizar mapping
+    updateMapping(value, selectedMetrics, selectedDimensions);
+  };
+
+  // Handler para toggle de métrica
+  const handleMetricToggle = (column: string, checked: boolean) => {
+    const newMetrics = new Set(selectedMetrics);
     
-    const samplesToCheck = Math.min(rows.length, 10);
-    let stringCount = 0;
-    
-    for (let i = 0; i < samplesToCheck; i++) {
-      const value = rows[i][col];
-      if (value !== null && value !== undefined && typeof value === 'string') {
-        stringCount++;
+    if (checked) {
+      if (newMetrics.size < MAX_METRICS) {
+        newMetrics.add(column);
       }
+    } else {
+      newMetrics.delete(column);
     }
     
-    // Considerar categórica si >80% de las muestras son strings
-    return (stringCount / samplesToCheck) > 0.8;
-  });
-  
-  // Detectar posibles columnas de fecha
-  const dateColumns = availableColumns.filter((col) =>
-    /fecha|date|time|periodo|year|mes|month/i.test(col)
-  );
-  
-  /**
-   * Handler para agregar KPI
-   */
-  const handleAddKPI = () => {
-    if (!newKPIColumn || !newKPILabel) return;
+    setSelectedMetrics(newMetrics);
+    updateMapping(selectedDate, newMetrics, selectedDimensions);
+  };
+
+  // Handler para toggle de dimensión
+  const handleDimensionToggle = (column: string, checked: boolean) => {
+    const newDimensions = new Set(selectedDimensions);
     
-    const newField: KPIMappingField = {
-      id: `kpi_${Date.now()}`,
-      columnName: newKPIColumn,
-      label: newKPILabel,
-      format: newKPIFormat,
-      highlighted: false, // Por defecto no destacado
+    if (checked) {
+      newDimensions.add(column);
+    } else {
+      newDimensions.delete(column);
+    }
+    
+    setSelectedDimensions(newDimensions);
+    updateMapping(selectedDate, selectedMetrics, newDimensions);
+  };
+
+  // Actualizar el mapping global
+  const updateMapping = (
+    date: string | null,
+    metrics: Set<string>,
+    dimensions: Set<string>
+  ) => {
+    const newMapping: ColumnMapping = {
+      dimensionField: null,
+      dateField: null,
+      kpiFields: [],
     };
+
+    // Agregar fecha
+    if (date) {
+      newMapping.dateField = date;
+    }
+
+    // En el wizard simplificado, solo las primeras MAX_METRICS métricas se marcan como destacadas
+    newMapping.kpiFields = Array.from(metrics).map((metric, index) => ({
+      id: metric,
+      columnName: metric,
+      label: metric,
+      format: inferKPIFormat(metric),
+      highlighted: index < MAX_METRICS,
+    }));
+
+    // Agregar primera dimensión como dimensionField (requerido para canProceedToStep3)
+    const dimensionsArray = Array.from(dimensions);
+    if (dimensionsArray.length > 0) {
+      newMapping.dimensionField = dimensionsArray[0];
+    }
     
-    addKPIField(newField);
-    
-    // Reset form
-    setNewKPIColumn('');
-    setNewKPILabel('');
-    setNewKPIFormat('number');
+    // ✅ Agregar TODAS las dimensiones como categoricalFields para filtros en dashboard
+    newMapping.categoricalFields = dimensionsArray;
+
+    setMappingFn(newMapping);
   };
-  
-  /**
-   * Handler para toggle de KPI destacado
-   */
-  const handleToggleHighlighted = (kpiId: string) => {
-    const updatedKPIs = (kpiFields || []).map((kpi) => {
-      if (kpi.id === kpiId) {
-        return { ...kpi, highlighted: !kpi.highlighted };
-      }
-      return kpi;
-    });
-    
-    setMapping({ kpiFields: updatedKPIs });
-  };
-  
-  /**
-   * Handler para toggle de campo categórico
-   */
-  const handleToggleCategorical = (columnName: string) => {
-    const currentCategorical = categoricalFields || [];
-    const isSelected = currentCategorical.includes(columnName);
-    
-    const updatedCategorical = isSelected
-      ? currentCategorical.filter((col) => col !== columnName)
-      : [...currentCategorical, columnName];
-    
-    setMapping({ categoricalFields: updatedCategorical });
-  };
-  
-  // Contar KPIs destacados
-  const highlightedCount = (kpiFields || []).filter((kpi) => kpi.highlighted).length;
-  
+
+  // Renderizar secciones solo si hay datos
+  if (headers.length === 0 || rows.length === 0) {
+    return (
+      <div className="space-y-6">
+        <Alert variant="destructive">
+          <AlertDescription>
+            No hay datos disponibles para mapear. Por favor, carga un archivo primero.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="space-y-2">
-        <h2 className="text-2xl font-bold">Mapeo de columnas</h2>
+      <div>
+        <h2 className="text-2xl font-bold mb-2">Mapeo de Columnas</h2>
         <p className="text-muted-foreground">
-          Define qué columna contiene las dimensiones (ej: categorías, regiones) y cuáles son los KPIs numéricos (ej: ventas, inventario).
+          Selecciona la columna de fecha, las métricas a analizar y las
+          dimensiones para segmentar.
         </p>
       </div>
-      
-      {/* Vista previa lado a lado */}
-      {fileA.parsedData && fileB.parsedData && (
-        <div className="space-y-3">
-          <h3 className="text-sm font-semibold">Vista previa de los archivos</h3>
-          <div className="grid gap-6 lg:grid-cols-2">
+
+      {/* Vista Previa de Archivos (Side-by-Side) */}
+      {(wizardState.fileA || wizardState.fileB) && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {wizardState.fileA?.parsedData && wizardState.fileA.file && (
             <FilePreview
-              fileName={fileA.file?.name || 'Archivo A'}
-              label="Archivo A (Datos Actuales)"
+              fileName={wizardState.fileA.file.name}
+              label="Archivo A"
               variant="primary"
-              headers={fileA.parsedData.headers}
-              rows={fileA.parsedData.rows.slice(0, 5)}
-              totalRows={fileA.parsedData.rowCount}
+              headers={wizardState.fileA.parsedData.headers}
+              rows={wizardState.fileA.parsedData.rows.slice(0, 3)}
+              totalRows={wizardState.fileA.parsedData.rowCount}
+              fileSize={`${(wizardState.fileA.file.size / 1024).toFixed(1)} KB`}
             />
+          )}
+          
+          {wizardState.fileB?.parsedData && wizardState.fileB.file && (
             <FilePreview
-              fileName={fileB.file?.name || 'Archivo B'}
-              label="Archivo B (Datos Comparativos)"
+              fileName={wizardState.fileB.file.name}
+              label="Archivo B"
               variant="comparative"
-              headers={fileB.parsedData.headers}
-              rows={fileB.parsedData.rows.slice(0, 5)}
-              totalRows={fileB.parsedData.rowCount}
+              headers={wizardState.fileB.parsedData.headers}
+              rows={wizardState.fileB.parsedData.rows.slice(0, 3)}
+              totalRows={wizardState.fileB.parsedData.rowCount}
+              fileSize={`${(wizardState.fileB.file.size / 1024).toFixed(1)} KB`}
             />
-          </div>
+          )}
         </div>
       )}
-      
-      {/* Dimension Field Selection */}
+
+      {/* Sección 1: Selección de Fecha */}
       <Card className="p-6 space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="dimension-field">
-            Campo de dimensión <span className="text-destructive">*</span>
-          </Label>
-          <p className="text-sm text-muted-foreground">
-            La columna que agrupa tus datos (ej: "Producto", "Región", "Categoría")
-          </p>
+        <div className="flex items-center gap-2">
+          <Calendar className="h-5 w-5 text-primary" />
+          <h3 className="text-lg font-semibold">Columna de Fecha</h3>
         </div>
-        
-        <Select
-          value={dimensionField || ''}
-          onValueChange={(value: string) => setMapping({ dimensionField: value })}
-        >
-          <SelectTrigger id="dimension-field" className="w-full">
-            <SelectValue placeholder="Selecciona la columna de dimensión" />
-          </SelectTrigger>
-          <SelectContent>
-            {availableColumns.map((col) => (
-              <SelectItem key={col} value={col}>
-                {col}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        
-        {/* Selector de columna de fecha (opcional) */}
-        {dateColumns.length > 0 && (
-          <div className="pt-4 border-t space-y-3">
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-muted-foreground" />
-              <Label htmlFor="date-field">Columna de fecha (opcional)</Label>
-            </div>
-            <p className="text-sm text-muted-foreground">
-              Detectamos posibles columnas de fecha. Selecciona una para análisis temporal.
-            </p>
-            <Select
-              value={mapping.dateField || 'none'}
-              onValueChange={(value: string) => setMapping({ dateField: value === 'none' ? null : value })}
-            >
-              <SelectTrigger id="date-field">
-                <SelectValue placeholder="Ninguna (omitir análisis temporal)" />
+
+        {classifiedColumns.dateColumns.length === 0 ? (
+          <Alert variant="destructive">
+            <AlertDescription>
+              No se detectó ninguna columna de fecha automáticamente.
+            </AlertDescription>
+          </Alert>
+        ) : (
+          <div className="space-y-2">
+            <Label htmlFor="date-select">Selecciona la columna de fecha</Label>
+            <Select value={selectedDate || ""} onValueChange={handleDateChange}>
+              <SelectTrigger id="date-select">
+                <SelectValue placeholder="Selecciona una columna de fecha" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">Ninguna</SelectItem>
-                {dateColumns.map((col) => (
+                {classifiedColumns.dateColumns.map((col) => (
                   <SelectItem key={col} value={col}>
                     {col}
                   </SelectItem>
@@ -210,229 +296,125 @@ export function ColumnMappingStep() {
             </Select>
           </div>
         )}
-      </Card>
-      
-      {/* KPI Fields Configuration */}
-      <Card className="p-6 space-y-6">
-        <div className="space-y-2">
-          <Label>
-            Campos KPI <span className="text-destructive">*</span>
-          </Label>
-          <p className="text-sm text-muted-foreground">
-            Columnas numéricas que quieres comparar entre ambos archivos
-          </p>
-        </div>
         
-        {/* Lista de KPIs configurados */}
-        {(kpiFields || []).length > 0 && (
-          <div className="space-y-3">
-            {highlightedCount < 4 ? (
-              <Alert>
-                <Star className="h-4 w-4" />
-                <AlertDescription>
-                  <strong>KPIs Destacados:</strong> Marca hasta 4 KPIs como destacados para mostrarlos en las tarjetas principales del dashboard ({highlightedCount}/4 seleccionados).
-                </AlertDescription>
-              </Alert>
-            ) : (
-              <Alert variant="warning">
-                <AlertDescription>
-                  Has alcanzado el límite de 4 KPIs destacados. Desmarca uno para destacar otro.
-                </AlertDescription>
-              </Alert>
-            )}
-            
-            {(kpiFields || []).map((kpi) => (
-              <div
-                key={kpi.id}
-                className="flex items-center justify-between p-3 bg-accent/50 rounded-lg"
-              >
-                <div className="flex items-center gap-3 flex-1">
-                  <TrendingUp className="w-5 h-5 text-primary" />
-                  <div className="flex-1">
-                    <p className="font-medium">{kpi.label}</p>
-                    <p className="text-sm text-muted-foreground">
-                      Columna: <code className="text-xs">{kpi.columnName}</code>
-                    </p>
-                  </div>
-                  <Badge variant="outline">{formatLabels[kpi.format]}</Badge>
-                </div>
-                
-                <div className="flex items-center gap-2">
-                  {/* Toggle para destacar */}
-                  <div className="flex items-center gap-1.5">
-                    <Checkbox
-                      id={`highlight-${kpi.id}`}
-                      checked={kpi.highlighted || false}
-                      onCheckedChange={() => handleToggleHighlighted(kpi.id)}
-                      disabled={!kpi.highlighted && highlightedCount >= 4}
-                    />
-                    <Label
-                      htmlFor={`highlight-${kpi.id}`}
-                      className="text-xs cursor-pointer flex items-center gap-1"
-                    >
-                      <Star
-                        className={`w-3.5 h-3.5 ${kpi.highlighted ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground'}`}
-                      />
-                      Destacar
-                    </Label>
-                  </div>
-                  
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => removeKPIField(kpi.id)}
-                    aria-label={`Eliminar ${kpi.label}`}
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-        
-        {/* Formulario para agregar nuevo KPI */}
-        <div className="space-y-4 pt-4 border-t">
-          <Label>Agregar nuevo KPI</Label>
-          
-          <div className="grid gap-4">
-            {/* Columna fuente */}
-            <div className="space-y-2">
-              <Label htmlFor="kpi-column">Columna</Label>
-              <Select
-                value={newKPIColumn}
-                onValueChange={setNewKPIColumn}
-                disabled={availableKPIColumns.length === 0}
-              >
-                <SelectTrigger id="kpi-column">
-                  <SelectValue placeholder="Selecciona una columna" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableKPIColumns.map((col) => (
-                    <SelectItem key={col} value={col}>
-                      {col}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            {/* Label personalizado */}
-            <div className="space-y-2">
-              <Label htmlFor="kpi-label">Etiqueta para mostrar</Label>
-              <Input
-                id="kpi-label"
-                value={newKPILabel}
-                onChange={(e) => setNewKPILabel(e.target.value)}
-                placeholder="Ej: Ventas totales"
-              />
-            </div>
-            
-            {/* Formato */}
-            <div className="space-y-2">
-              <Label htmlFor="kpi-format">Formato</Label>
-              <Select
-                value={newKPIFormat}
-                onValueChange={(value: string) => setNewKPIFormat(value as KPIFormat)}
-              >
-                <SelectTrigger id="kpi-format">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="number">Número</SelectItem>
-                  <SelectItem value="currency">Moneda ($)</SelectItem>
-                  <SelectItem value="percentage">Porcentaje (%)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            {/* Botón agregar */}
-            <Button
-              onClick={handleAddKPI}
-              disabled={!newKPIColumn || !newKPILabel || availableKPIColumns.length === 0}
-              className="w-full"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Agregar KPI
-            </Button>
-          </div>
-        </div>
-        
-        {/* Alert si no hay columnas disponibles */}
-        {availableKPIColumns.length === 0 && (kpiFields || []).length === 0 && (
-          <Alert variant="warning">
+        {/* Mensaje informativo cuando no hay fecha seleccionada */}
+        {selectedDate === null && (
+          <Alert>
             <AlertDescription>
-              {dimensionField
-                ? 'No hay más columnas disponibles para KPIs. Cambia el campo de dimensión si necesitas usar otra columna.'
-                : 'Primero selecciona un campo de dimensión.'}
+              Sin fecha = no habrá gráfico de evolución temporal
             </AlertDescription>
           </Alert>
         )}
       </Card>
-      
-      {/* Categorical Fields Selection */}
+
+      {/* Sección 2: Selección de Métricas */}
       <Card className="p-6 space-y-4">
-        <div className="space-y-2">
-          <Label>Campos categóricos (opcional)</Label>
-          <p className="text-sm text-muted-foreground">
-            Selecciona columnas de texto para crear filtros en el dashboard (ej: "Canal", "Región", "Tipo de Cliente")
-          </p>
+        <div className="flex items-center gap-2">
+          <TrendingUp className="h-5 w-5 text-primary" />
+          <h3 className="text-lg font-semibold">Métricas</h3>
         </div>
-        
-        {availableCategoricalColumns.length > 0 ? (
-          <div className="space-y-2">
-            {availableCategoricalColumns.map((col) => (
-              <div
-                key={col}
-                className="flex items-center gap-3 p-3 bg-accent/30 rounded-lg hover:bg-accent/50 transition-colors"
-              >
-                <Checkbox
-                  id={`categorical-${col}`}
-                  checked={categoricalFields.includes(col)}
-                  onCheckedChange={() => handleToggleCategorical(col)}
-                />
-                <Label
-                  htmlFor={`categorical-${col}`}
-                  className="flex-1 cursor-pointer font-normal"
-                >
-                  {col}
-                </Label>
-                {categoricalFields.includes(col) && (
-                  <Badge variant="secondary" className="text-xs">
-                    Filtrable
-                  </Badge>
-                )}
-              </div>
-            ))}
-          </div>
-        ) : (
+
+        <p className="text-sm text-muted-foreground">
+          Selecciona hasta {MAX_METRICS} métricas para analizar (máximo{" "}
+          {MAX_METRICS} métricas)
+        </p>
+
+        {classifiedColumns.numericColumns.length === 0 ? (
           <Alert>
             <AlertDescription>
-              No hay columnas de texto disponibles para usar como filtros categóricos.
+              No se detectaron métricas numéricas en tus datos.
             </AlertDescription>
           </Alert>
+        ) : (
+          <div className="space-y-3">
+            {classifiedColumns.numericColumns.map((col) => {
+              const isChecked = selectedMetrics.has(col);
+              const isDisabled =
+                !isChecked && selectedMetrics.size >= MAX_METRICS;
+
+              return (
+                <div key={col} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`metric-${col}`}
+                    checked={isChecked}
+                    disabled={isDisabled}
+                    onCheckedChange={(checked: boolean) =>
+                      handleMetricToggle(col, checked)
+                    }
+                    aria-label={col}
+                  />
+                  <Label
+                    htmlFor={`metric-${col}`}
+                    className={isDisabled ? "text-muted-foreground" : ""}
+                  >
+                    {col}
+                  </Label>
+                </div>
+              );
+            })}
+          </div>
         )}
-        
-        {categoricalFields.length > 0 && (
+
+        {selectedMetrics.size > 0 && (
+          <p className="text-sm text-muted-foreground">
+            {selectedMetrics.size} de {MAX_METRICS} métricas seleccionadas
+          </p>
+        )}
+      </Card>
+
+      {/* Sección 3: Selección de Dimensiones */}
+      <Card className="p-6 space-y-4">
+        <div className="flex items-center gap-2">
+          <Tag className="h-5 w-5 text-primary" />
+          <h3 className="text-lg font-semibold">Dimensiones</h3>
+        </div>
+
+        <p className="text-sm text-muted-foreground">
+          Selecciona las dimensiones para segmentar tus datos.{" "}
+          <span className="text-destructive font-medium">Se requiere al menos una.</span>
+        </p>
+
+        {classifiedColumns.stringColumns.length === 0 ? (
           <Alert>
-            <AlertDescription className="text-sm">
-              ✅ {categoricalFields.length} campo(s) seleccionado(s): {categoricalFields.join(', ')}
+            <AlertDescription>
+              No se detectaron dimensiones categóricas en tus datos.
             </AlertDescription>
           </Alert>
+        ) : (
+          <div className="space-y-3">
+            {classifiedColumns.stringColumns.map((col) => {
+              const isChecked = selectedDimensions.has(col);
+
+              return (
+                <div key={col} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`dimension-${col}`}
+                    checked={isChecked}
+                    onCheckedChange={(checked: boolean) =>
+                      handleDimensionToggle(col, checked)
+                    }
+                    aria-label={col}
+                  />
+                  <Label htmlFor={`dimension-${col}`}>{col}</Label>
+                </div>
+              );
+            })}
+          </div>
         )}
+
+        {/* Contador y advertencia de validación */}
+        {selectedDimensions.size > 0 ? (
+          <p className="text-sm text-muted-foreground">
+            {selectedDimensions.size} dimensión(es) seleccionada(s)
+          </p>
+        ) : classifiedColumns.stringColumns.length > 0 ? (
+          <Alert variant="destructive" className="py-2">
+            <AlertDescription className="text-xs">
+              Debes seleccionar al menos una dimensión para continuar.
+            </AlertDescription>
+          </Alert>
+        ) : null}
       </Card>
     </div>
   );
 }
-
-// ============================================================================
-// CONSTANTS
-// ============================================================================
-
-const formatLabels: Record<KPIFormat, string> = {
-  number: 'Número',
-  currency: 'Moneda',
-  percentage: 'Porcentaje',
-  date: 'Fecha',
-  string: 'Texto',
-};
