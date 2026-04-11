@@ -119,24 +119,23 @@ export function ColumnMappingStep({
   // Inicializar selección de fecha con la primera columna de fecha detectada
   useEffect(() => {
     if (classifiedColumns.dateColumns.length > 0 && selectedDate === null) {
-      // Inicialización en el siguiente tick para evitar setState síncrono
-      Promise.resolve().then(() => {
-        setSelectedDate(classifiedColumns.dateColumns[0]);
-      });
+      const defaultDate = classifiedColumns.dateColumns[0];
+      setSelectedDate(defaultDate);
+      updateMapping(defaultDate, selectedMetrics, selectedDimensions);
     }
-  }, [classifiedColumns.dateColumns, selectedDate]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [classifiedColumns.dateColumns, selectedDate, selectedMetrics, selectedDimensions]);
 
   // Auto-seleccionar todas las dimensiones detectadas al montar (requerido por el backend)
   useEffect(() => {
     if (classifiedColumns.stringColumns.length > 0 && selectedDimensions.size === 0) {
-      Promise.resolve().then(() => {
-        const allDimensions = new Set(classifiedColumns.stringColumns);
-        setSelectedDimensions(allDimensions);
-        updateMapping(selectedDate, selectedMetrics, allDimensions);
-      });
+      const allDimensions = new Set(classifiedColumns.stringColumns);
+      const effectiveDate = selectedDate ?? classifiedColumns.dateColumns[0] ?? null;
+      setSelectedDimensions(allDimensions);
+      updateMapping(effectiveDate, selectedMetrics, allDimensions);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [classifiedColumns.stringColumns, selectedDimensions.size, selectedDate, selectedMetrics]);
+  }, [classifiedColumns.stringColumns, classifiedColumns.dateColumns, selectedDimensions.size, selectedDate, selectedMetrics]);
 
   // Handler para cambio de fecha
   const handleDateChange = (value: string) => {
@@ -193,14 +192,13 @@ export function ColumnMappingStep({
       newMapping.dateField = date;
     }
 
-    // Agregar métricas como kpiFields con formato inferido
-    // En el wizard simplificado, solo las primeras 4 métricas se marcan como destacadas (límite del esquema)
+    // En el wizard simplificado, solo las primeras MAX_METRICS métricas se marcan como destacadas
     newMapping.kpiFields = Array.from(metrics).map((metric, index) => ({
       id: metric,
       columnName: metric,
       label: metric,
       format: inferKPIFormat(metric),
-      highlighted: index < 4, // ✅ Máximo 4 KPIs destacados según el esquema
+      highlighted: index < MAX_METRICS,
     }));
 
     // Agregar primera dimensión como dimensionField (requerido para canProceedToStep3)
