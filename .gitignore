@@ -1,3 +1,6 @@
+# SDD tooling
+.atl/
+
 # Essential .gitignore for Node/Mongo
 docker-compose.override.yml" > .gitignore
 
